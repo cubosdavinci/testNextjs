@@ -1,5 +1,5 @@
 import { getAddress } from "ethers"
-import { EscrowPaymentAuthorization } from "./types/EscrowPaymentAuthorization"
+import type { EscrowPaymentAuthorization } from "./types/EscrowPaymentAuthorization"
 import { RawPaymentSchema } from "./zod/RawPaymentSchema"
 
 export function normalizeToAuthorization(raw: unknown): EscrowPaymentAuthorization {

@@ -1,7 +1,11 @@
 import { z } from "zod";
-import { Web3AddressSchema } from "./Web3AddressSchema";
-import { UUIDToUint128Schema } from "./UUIDToUint128Schema";
-import { ChainIdSchema } from "./ChainIdSchema";
+import { UUIDToUint128Schema } from "./utils/SchemaUUIDToUint128";
+import { ChainIdSchema } from "./utils/ChainIdSchema";
+import { TotalSchema } from "./utils/TotalSchema";
+import { TaxesSchema } from "./utils/TaxesSchema";
+import { PlatformFeeSchema } from "./utils/PlatformFeeSchema";
+import { uintTypeValidator } from "./uintTypeValidator";
+import { addressValidator } from "./addressValidator";
 
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -9,15 +13,15 @@ const UUID_REGEX =
 export const RawPaymentSchema = z.object({
   orderId: UUIDToUint128Schema,
   userId: z.string(),
+  buyerAddress: addressValidator("buyerAddress"),
+  sellerAddress: addressValidator("sellerAddress"),
 
-  buyerAddress: Web3AddressSchema,
-  sellerAddress: Web3AddressSchema,
+  total: uintTypeValidator("total", 256),
+  taxes: uintTypeValidator("taxes", 256),
+  platformFee: uintTypeValidator("platformFee", 256),
 
-  total: Uint256StringSchema,
-  taxes: Uint256StringSchema,
-  platformFee: Uint256StringSchema,
 
-  erc20Token: Web3AddressSchema,
+  erc20Token: addressValidator("erc20Token"),
   erc20TokenDecimals: z.string(),
   erc20TokenSymbol: z.string(),
 

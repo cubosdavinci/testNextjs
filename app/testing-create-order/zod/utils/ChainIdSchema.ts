@@ -8,7 +8,7 @@ export const ChainIdSchema = z
     const n = BigInt(val)
 
     if (!fitsUint(n, 256)) {
-      throw new Error("Does not fit uint256")
+      throw new Error("chianId field: Does not fit uint256")
     }
 
     if (n <= BigInt(0)) {
