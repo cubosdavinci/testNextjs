@@ -7,7 +7,7 @@ import { fitsUint } from "./utils/U_INT_MAX_VALUES"
  * @param bits - bit-width (8, 128, 256, etc.)
  * @param positiveOnly - enforce >0 if true (default false)
  */
-export const uintTypeValidator = (
+export const validateUINType = (
   field: string,
   bits: 8 | 16 | 32 | 64 | 128 | 256,
   positiveOnly = true

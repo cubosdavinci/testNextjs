@@ -30,35 +30,21 @@ contract EscrowV1 is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradeab
     struct Order {
         address buyer;
         address seller;
-        address paymentToken;
-        uint256 total;
-        uint256 taxes;
-        uint256 platformFee;
+        uint256 amount;   // total ETH paid by buyer (price + tax)
+        uint16  taxBps;   // tax rate (e.g. 100 = 1%)
         uint256 createdAt;
         OrderState state;
-    } 
-
-    struct OrderPayload {
-    bytes16 orderId;        // uint128
-    address buyer;          // buyer address
-    address seller;         // seller address
-    address paymentToken;   // ERC20 or address(0)
-    uint256 total;          // total amount paid
-    uint256 taxes;          // absolute tax amount
-    uint256 platformFee;    // absolute platform fee
-    uint256 chainId;        // replay protection
-    address escrowContract; // must match this contract
-    uint256 deadline;       // expiry
-}
+    }
 
     /*//////////////////////////////////////////////////////////////
                                Storage
     //////////////////////////////////////////////////////////////*/
     mapping(bytes16 => Order) public orders;
     address public serverSigner;
-    address public platformTaxTreasury;
-    address public platformFeeTreasury;
+    address public platformTreasury;
+    uint16  public platformFeeBps;
     uint24  public releaseDelay;
+
     ContractState public contractState;
 
     /*//////////////////////////////////////////////////////////////
@@ -83,49 +69,22 @@ contract EscrowV1 is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradeab
     }
 
     function initialize(
-        address _serverSigner,
-        address _platformTaxTreasury,
-        address _platformFeeTreasury,        
+        address _platformTreasury,
+        uint16 _feeBps,
         uint24 _releaseDelay
     ) external initializer {
         __Ownable_init(msg.sender);
         __ReentrancyGuard_init();
 
-        require(_serverSigner != address(0), "Invalid server signer");
-        require(_platformTaxTreasury != address(0), "Invalid taxes address");
-        require(_platformFeeTreasury != address(0), "Invalid fees address");
+        require(_feeBps <= 1000, "Fee too high");
+        require(_releaseDelay >= 1 hours, "Delay too short");
+        require(_releaseDelay <= 7 days, "Delay too long");
 
-        serverSigner = _serverSigner;
-        platformTaxTreasury = _platformTaxTreasury;
-        platformFeeTreasury = _platformFeeTreasury;
+        platformTreasury = _platformTreasury;
+        platformFeeBps = _feeBps;
         releaseDelay = _releaseDelay;
+
         contractState = ContractState.Active;
-    }
-
-    // Internal helper to hash payload
-    function _hashOrderPayload(OrderPayload calldata orderPayload) internal view returns (bytes32) {
-        return keccak256(
-            abi.encode(
-                orderPayload.orderId,
-                orderPayload.buyer,
-                orderPayload.seller,
-                orderPayload.paymentToken,
-                orderPayload.total,
-                orderPayload.taxes,
-                orderPayload.platformFee,
-                orderPayload.chainId,
-                orderPayload.escrowContract,
-                orderPayload.deadline
-            )
-        );
-    }
-
-
-    // Internal helper to verify signature
-    using ECDSA for bytes32;
-    function _verifyServerSignature(OrderPayload calldata orderPayload, bytes calldata signature) internal view returns (bool) {        
-        bytes32 digest = ECDSA.toEthSignedMessageHash(_hashOrderPayload(orderPayload));
-        return ECDSA.recover(digest, signature) == serverSigner;
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -147,7 +106,7 @@ contract EscrowV1 is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradeab
     /*//////////////////////////////////////////////////////////////
                                Core
     //////////////////////////////////////////////////////////////*/
-    function registerEscrow(
+    function createEscrow(
         bytes16 orderId,
         address seller,
         uint16 taxBps
@@ -220,11 +179,35 @@ contract EscrowV1 is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradeab
         );
 
         o.state = OrderState.Released;
-        payable(platformTaxTreasury).transfer(o.taxes);
-        payable(platformFeeTreasury).transfer(o.platformFee);
-        payable(o.seller).transfer(o.total - o.taxtes - o.platformFee);
+
+        (
+            ,
+            uint256 platformFee,
+            uint256 sellerAmount
+        ) = _splitAmount(o.amount, o.taxBps);
+
+        payable(platformTreasury).transfer(platformFee);
+        payable(o.seller).transfer(sellerAmount);
 
         emit OrderReleased(orderId, o.seller, sellerAmount);
     }
 
+    function _splitAmount(
+        uint256 amount,
+        uint16 taxBps
+    )
+        internal
+        view
+        returns (
+            uint256 taxAmount,
+            uint256 platformFee,
+            uint256 sellerAmount
+        )
+    {
+        taxAmount = (amount * taxBps) / (10_000 + taxBps);
+        uint256 price = amount - taxAmount;
+
+        platformFee = (price * platformFeeBps) / 10_000;
+        sellerAmount = price - platformFee + taxAmount;
+    }
 }
