@@ -11,12 +11,28 @@ import * as Contracts from "./index.js";
 declare module "@nomicfoundation/hardhat-ethers/types" {
   interface HardhatEthersHelpers extends HardhatEthersHelpersBase {
   getContractFactory(name: 'EscrowV1', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.EscrowV1__factory>
+getContractFactory(name: 'EscrowV1', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.EscrowV1__factory>
+getContractFactory(name: 'ProxyAdmin', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.ProxyAdmin__factory>
+getContractFactory(name: 'ITransparentUpgradeableProxy', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.ITransparentUpgradeableProxy__factory>
+getContractFactory(name: 'TransparentUpgradeableProxy', signerOrOptions?: ethers.Signer | FactoryOptions): Promise<Contracts.TransparentUpgradeableProxy__factory>
 
   getContractAt(name: 'EscrowV1', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.EscrowV1>
+getContractAt(name: 'EscrowV1', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.EscrowV1>
+getContractAt(name: 'ProxyAdmin', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.ProxyAdmin>
+getContractAt(name: 'ITransparentUpgradeableProxy', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.ITransparentUpgradeableProxy>
+getContractAt(name: 'TransparentUpgradeableProxy', address: string | ethers.Addressable, signer?: ethers.Signer): Promise<Contracts.TransparentUpgradeableProxy>
 
   deployContract(name: 'EscrowV1', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.EscrowV1>
+deployContract(name: 'EscrowV1', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.EscrowV1>
+deployContract(name: 'ProxyAdmin', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.ProxyAdmin>
+deployContract(name: 'ITransparentUpgradeableProxy', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.ITransparentUpgradeableProxy>
+deployContract(name: 'TransparentUpgradeableProxy', signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.TransparentUpgradeableProxy>
 
   deployContract(name: 'EscrowV1', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.EscrowV1>
+deployContract(name: 'EscrowV1', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.EscrowV1>
+deployContract(name: 'ProxyAdmin', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.ProxyAdmin>
+deployContract(name: 'ITransparentUpgradeableProxy', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.ITransparentUpgradeableProxy>
+deployContract(name: 'TransparentUpgradeableProxy', args: any[], signerOrOptions?: ethers.Signer | DeployContractOptions): Promise<Contracts.TransparentUpgradeableProxy>
 
     // default types
     getContractFactory(

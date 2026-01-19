@@ -1,60 +1,55 @@
 'use client'
 
-import { useState, useTransition } from 'react'
-import { ethers } from 'ethers'
-import { createOrderAction } from './actions'
-import { EscrowV1_ABI } from './ABI/registerEscrow'
+import { useEffect } from 'react'
+import { useActionState } from 'react'
+import { createOrderAction } from './actions/createOrderAction'
+import type { CreateOrderState} from './actions/createOrderAction'
+//import { EscrowV1_ABI } from './ABI/registerEscrow'
 
-export default function PayWithCrypto() {
-  const [isPending, startTransition] = useTransition()
-  const [txHash, setTxHash] = useState<string | null>(null)
+type PayWithCryptoProps = {
+  productId: string
+  licenseId: string
+}
 
-  async function pay() {
-    if (!(window as any).ethereum) {
-      alert('MetaMask not found')
-      return
-    }
+export default function PayWithCrypto({ productId, licenseId }: PayWithCryptoProps) {
+  // Server action hook
+  const [data, createOrder, pending] = useActionState<CreateOrderState, FormData>(createOrderAction, {})
 
-    // 1. Call server action
-    const { order, signature } = await createOrderAction(
-      'prod_123',
-      'lic_456'
-    )
+  // Automatically trigger payOrder when server response arrives
+  useEffect(() => {
+    if (data?.errors /*&& data.errors.length > 0*/) {
+  // Show all error messages
+  //const messages = data.errors.map((e: any) => e.message).join('\n')
+  console.log(`Errors:\n${data.errors.message}`)
+} else if (data?.order) {
+  // No errors, show order and signature
+  console.log(`Order: ${JSON.stringify(data.order)}\nSignature: ${data.signature}`)
+} else {
+  console.log('Unknown error')
+}
+   /* if (data?.order) {
+      // Only call payOrder if order exists
+      
+      payOrder(data.order)
+    }*/
+  }, [data])
 
-    // 2. MetaMask
-    const provider = new ethers.BrowserProvider(
-      (window as any).ethereum
-    )
-    const signer = await provider.getSigner()
-
-    // 3. Escrow contract
-    const escrow = new ethers.Contract(
-      process.env.NEXT_PUBLIC_AMOY_ESCROW_CONTRACT_ADDRESS!,
-      EscrowV1_ABI,
-      signer
-    )
-
-    // 4. Send transaction
-    const tx = await escrow.registerEscrow(order, signature)
-    await tx.wait()
-
-    setTxHash(tx.hash)
+  // Placeholder function for now
+  const payOrder = (order: any) => {
+    // Implementation to be done later
+    console.log('payOrder triggered with:', order)
   }
 
+  
   return (
-    <div>
-      <button
-        onClick={() => startTransition(() => pay())}
-        disabled={isPending}
-      >
-        {isPending ? 'Processing...' : 'Pay with Crypto (MetaMask)'}
-      </button>
+    <form action={createOrder}>
+      {/* Hidden inputs instead of radio/visible inputs */}
+      <input type="hidden" name="productId" value={productId} />
+      <input type="hidden" name="licenseId" value={licenseId} />
 
-      {txHash && (
-        <p>
-          Tx sent: <code>{txHash}</code>
-        </p>
-      )}
-    </div>
+      <button type="submit" disabled={pending}>
+        {pending ? "Processing..." : "Create Order"}
+      </button>
+    </form>
   )
 }

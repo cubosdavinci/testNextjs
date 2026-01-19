@@ -4,30 +4,39 @@
 import type { BaseContract, BigNumberish, BytesLike, FunctionFragment, Result, Interface, EventFragment, AddressLike, ContractRunner, ContractMethod, Listener } from "ethers"
 import type { TypedContractEvent, TypedDeferredTopicFilter, TypedEventLog, TypedLogDescription, TypedListener, TypedContractMethod } from "./common.js"
   
+export declare namespace EscrowV1 {
+      
+    export type OrderPayloadStruct = {orderId: BytesLike, buyer: AddressLike, seller: AddressLike, paymentToken: AddressLike, total: BigNumberish, taxes: BigNumberish, platformFee: BigNumberish, deadline: BigNumberish}
+
+    export type OrderPayloadStructOutput = [orderId: string, buyer: string, seller: string, paymentToken: string, total: bigint, taxes: bigint, platformFee: bigint, deadline: bigint] & {orderId: string, buyer: string, seller: string, paymentToken: string, total: bigint, taxes: bigint, platformFee: bigint, deadline: bigint }
+  
+    }
 
   export interface EscrowV1Interface extends Interface {
-    getFunction(nameOrSignature: "confirmDelivery" | "confirmDelivery(bytes16)" | "contractState" | "contractState()" | "createEscrow" | "createEscrow(bytes16,address,uint16)" | "initialize" | "initialize(address,uint16,uint24)" | "openDispute" | "openDispute(bytes16)" | "orders" | "orders(bytes16)" | "owner" | "owner()" | "platformFeeBps" | "platformFeeBps()" | "platformTreasury" | "platformTreasury()" | "releaseAfterTimeout" | "releaseAfterTimeout(bytes16)" | "releaseDelay" | "releaseDelay()" | "renounceOwnership" | "renounceOwnership()" | "resolveDispute" | "resolveDispute(bytes16,bool)" | "setContractState" | "setContractState(uint8)" | "transferOwnership" | "transferOwnership(address)"): FunctionFragment;
+    getFunction(nameOrSignature: "confirmDelivery" | "confirmDelivery(bytes16)" | "contractState" | "contractState()" | "eip712Domain" | "eip712Domain()" | "initialize" | "initialize(address,address,address,uint24)" | "openDispute" | "openDispute(bytes16)" | "orders" | "orders(bytes16)" | "owner" | "owner()" | "platformFeeTreasury" | "platformFeeTreasury()" | "platformTaxTreasury" | "platformTaxTreasury()" | "registerEscrow" | "registerEscrow((bytes16,address,address,address,uint256,uint256,uint256,uint256),bytes)" | "releaseAfterTimeout" | "releaseAfterTimeout(bytes16)" | "releaseDelay" | "releaseDelay()" | "renounceOwnership" | "renounceOwnership()" | "resolveDispute" | "resolveDispute(bytes16,bool)" | "serverSigner" | "serverSigner()" | "setContractState" | "setContractState(uint8)" | "transferOwnership" | "transferOwnership(address)" | "usedOrderIds" | "usedOrderIds(bytes16)"): FunctionFragment;
 
-    getEvent(nameOrSignatureOrTopic: "ContractStateChanged" | "ContractStateChanged(uint8)" | "EscrowCreated" | "EscrowCreated(bytes16,address,address,uint256,uint16)" | "Initialized" | "Initialized(uint64)" | "OrderDisputed" | "OrderDisputed(bytes16)" | "OrderRefunded" | "OrderRefunded(bytes16,address,uint256)" | "OrderReleased" | "OrderReleased(bytes16,address,uint256)" | "OwnershipTransferred" | "OwnershipTransferred(address,address)"): EventFragment;
+    getEvent(nameOrSignatureOrTopic: "ContractStateChanged" | "ContractStateChanged(uint8)" | "EIP712DomainChanged" | "EIP712DomainChanged()" | "EscrowRegistered" | "EscrowRegistered(bytes16,address,uint8,address)" | "Initialized" | "Initialized(uint64)" | "OrderDisputed" | "OrderDisputed(bytes16)" | "OrderRefunded" | "OrderRefunded(bytes16,address,uint256)" | "OrderReleased" | "OrderReleased(bytes16,address,uint256)" | "OwnershipTransferred" | "OwnershipTransferred(address,address)"): EventFragment;
 
     encodeFunctionData(functionFragment: 'confirmDelivery', values: [BytesLike]): string;
 encodeFunctionData(functionFragment: 'confirmDelivery(bytes16)', values: [BytesLike]): string;
 encodeFunctionData(functionFragment: 'contractState', values?: undefined): string;
 encodeFunctionData(functionFragment: 'contractState()', values?: undefined): string;
-encodeFunctionData(functionFragment: 'createEscrow', values: [BytesLike, AddressLike, BigNumberish]): string;
-encodeFunctionData(functionFragment: 'createEscrow(bytes16,address,uint16)', values: [BytesLike, AddressLike, BigNumberish]): string;
-encodeFunctionData(functionFragment: 'initialize', values: [AddressLike, BigNumberish, BigNumberish]): string;
-encodeFunctionData(functionFragment: 'initialize(address,uint16,uint24)', values: [AddressLike, BigNumberish, BigNumberish]): string;
+encodeFunctionData(functionFragment: 'eip712Domain', values?: undefined): string;
+encodeFunctionData(functionFragment: 'eip712Domain()', values?: undefined): string;
+encodeFunctionData(functionFragment: 'initialize', values: [AddressLike, AddressLike, AddressLike, BigNumberish]): string;
+encodeFunctionData(functionFragment: 'initialize(address,address,address,uint24)', values: [AddressLike, AddressLike, AddressLike, BigNumberish]): string;
 encodeFunctionData(functionFragment: 'openDispute', values: [BytesLike]): string;
 encodeFunctionData(functionFragment: 'openDispute(bytes16)', values: [BytesLike]): string;
 encodeFunctionData(functionFragment: 'orders', values: [BytesLike]): string;
 encodeFunctionData(functionFragment: 'orders(bytes16)', values: [BytesLike]): string;
 encodeFunctionData(functionFragment: 'owner', values?: undefined): string;
 encodeFunctionData(functionFragment: 'owner()', values?: undefined): string;
-encodeFunctionData(functionFragment: 'platformFeeBps', values?: undefined): string;
-encodeFunctionData(functionFragment: 'platformFeeBps()', values?: undefined): string;
-encodeFunctionData(functionFragment: 'platformTreasury', values?: undefined): string;
-encodeFunctionData(functionFragment: 'platformTreasury()', values?: undefined): string;
+encodeFunctionData(functionFragment: 'platformFeeTreasury', values?: undefined): string;
+encodeFunctionData(functionFragment: 'platformFeeTreasury()', values?: undefined): string;
+encodeFunctionData(functionFragment: 'platformTaxTreasury', values?: undefined): string;
+encodeFunctionData(functionFragment: 'platformTaxTreasury()', values?: undefined): string;
+encodeFunctionData(functionFragment: 'registerEscrow', values: [EscrowV1.OrderPayloadStruct, BytesLike]): string;
+encodeFunctionData(functionFragment: 'registerEscrow((bytes16,address,address,address,uint256,uint256,uint256,uint256),bytes)', values: [EscrowV1.OrderPayloadStruct, BytesLike]): string;
 encodeFunctionData(functionFragment: 'releaseAfterTimeout', values: [BytesLike]): string;
 encodeFunctionData(functionFragment: 'releaseAfterTimeout(bytes16)', values: [BytesLike]): string;
 encodeFunctionData(functionFragment: 'releaseDelay', values?: undefined): string;
@@ -36,29 +45,35 @@ encodeFunctionData(functionFragment: 'renounceOwnership', values?: undefined): s
 encodeFunctionData(functionFragment: 'renounceOwnership()', values?: undefined): string;
 encodeFunctionData(functionFragment: 'resolveDispute', values: [BytesLike, boolean]): string;
 encodeFunctionData(functionFragment: 'resolveDispute(bytes16,bool)', values: [BytesLike, boolean]): string;
+encodeFunctionData(functionFragment: 'serverSigner', values?: undefined): string;
+encodeFunctionData(functionFragment: 'serverSigner()', values?: undefined): string;
 encodeFunctionData(functionFragment: 'setContractState', values: [BigNumberish]): string;
 encodeFunctionData(functionFragment: 'setContractState(uint8)', values: [BigNumberish]): string;
 encodeFunctionData(functionFragment: 'transferOwnership', values: [AddressLike]): string;
 encodeFunctionData(functionFragment: 'transferOwnership(address)', values: [AddressLike]): string;
+encodeFunctionData(functionFragment: 'usedOrderIds', values: [BytesLike]): string;
+encodeFunctionData(functionFragment: 'usedOrderIds(bytes16)', values: [BytesLike]): string;
 
     decodeFunctionResult(functionFragment: 'confirmDelivery', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'confirmDelivery(bytes16)', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'contractState', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'contractState()', data: BytesLike): Result;
-decodeFunctionResult(functionFragment: 'createEscrow', data: BytesLike): Result;
-decodeFunctionResult(functionFragment: 'createEscrow(bytes16,address,uint16)', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'eip712Domain', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'eip712Domain()', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'initialize', data: BytesLike): Result;
-decodeFunctionResult(functionFragment: 'initialize(address,uint16,uint24)', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'initialize(address,address,address,uint24)', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'openDispute', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'openDispute(bytes16)', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'orders', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'orders(bytes16)', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'owner', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'owner()', data: BytesLike): Result;
-decodeFunctionResult(functionFragment: 'platformFeeBps', data: BytesLike): Result;
-decodeFunctionResult(functionFragment: 'platformFeeBps()', data: BytesLike): Result;
-decodeFunctionResult(functionFragment: 'platformTreasury', data: BytesLike): Result;
-decodeFunctionResult(functionFragment: 'platformTreasury()', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'platformFeeTreasury', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'platformFeeTreasury()', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'platformTaxTreasury', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'platformTaxTreasury()', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'registerEscrow', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'registerEscrow((bytes16,address,address,address,uint256,uint256,uint256,uint256),bytes)', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'releaseAfterTimeout', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'releaseAfterTimeout(bytes16)', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'releaseDelay', data: BytesLike): Result;
@@ -67,10 +82,14 @@ decodeFunctionResult(functionFragment: 'renounceOwnership', data: BytesLike): Re
 decodeFunctionResult(functionFragment: 'renounceOwnership()', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'resolveDispute', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'resolveDispute(bytes16,bool)', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'serverSigner', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'serverSigner()', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'setContractState', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'setContractState(uint8)', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'transferOwnership', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'transferOwnership(address)', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'usedOrderIds', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'usedOrderIds(bytes16)', data: BytesLike): Result;
   }
 
   
@@ -86,10 +105,22 @@ decodeFunctionResult(functionFragment: 'transferOwnership(address)', data: Bytes
 
   
 
-    export namespace EscrowCreatedEvent {
-      export type InputTuple = [orderId: BytesLike, buyer: AddressLike, seller: AddressLike, amount: BigNumberish, taxBps: BigNumberish];
-      export type OutputTuple = [orderId: string, buyer: string, seller: string, amount: bigint, taxBps: bigint];
-      export interface OutputObject {orderId: string, buyer: string, seller: string, amount: bigint, taxBps: bigint };
+    export namespace EIP712DomainChangedEvent {
+      export type InputTuple = [];
+      export type OutputTuple = [];
+      export interface OutputObject {};
+      export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>
+      export type Filter = TypedDeferredTopicFilter<Event>
+      export type Log = TypedEventLog<Event>
+      export type LogDescription = TypedLogDescription<Event>
+    }
+
+  
+
+    export namespace EscrowRegisteredEvent {
+      export type InputTuple = [orderId: BytesLike, buyer: AddressLike, state: BigNumberish, seller: AddressLike];
+      export type OutputTuple = [orderId: string, buyer: string, state: bigint, seller: string];
+      export interface OutputObject {orderId: string, buyer: string, state: bigint, seller: string };
       export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>
       export type Filter = TypedDeferredTopicFilter<Event>
       export type Log = TypedEventLog<Event>
@@ -222,30 +253,30 @@ decodeFunctionResult(functionFragment: 'transferOwnership(address)', data: Bytes
     
 
     
-    createEscrow: TypedContractMethod<
-      [orderId: BytesLike, seller: AddressLike, taxBps: BigNumberish, ],
-      [void],
-      'payable'
+    eip712Domain: TypedContractMethod<
+      [],
+      [[string, string, string, bigint, string, string, bigint[]] & {fields: string, name: string, version: string, chainId: bigint, verifyingContract: string, salt: string, extensions: bigint[] }],
+      'view'
     >
     
     
-    "createEscrow(bytes16,address,uint16)": TypedContractMethod<
-      [orderId: BytesLike, seller: AddressLike, taxBps: BigNumberish, ],
-      [void],
-      'payable'
+    "eip712Domain()": TypedContractMethod<
+      [],
+      [[string, string, string, bigint, string, string, bigint[]] & {fields: string, name: string, version: string, chainId: bigint, verifyingContract: string, salt: string, extensions: bigint[] }],
+      'view'
     >
     
 
     
     initialize: TypedContractMethod<
-      [_platformTreasury: AddressLike, _feeBps: BigNumberish, _releaseDelay: BigNumberish, ],
+      [_serverSigner: AddressLike, _platformTaxTreasury: AddressLike, _platformFeeTreasury: AddressLike, _releaseDelay: BigNumberish, ],
       [void],
       'nonpayable'
     >
     
     
-    "initialize(address,uint16,uint24)": TypedContractMethod<
-      [_platformTreasury: AddressLike, _feeBps: BigNumberish, _releaseDelay: BigNumberish, ],
+    "initialize(address,address,address,uint24)": TypedContractMethod<
+      [_serverSigner: AddressLike, _platformTaxTreasury: AddressLike, _platformFeeTreasury: AddressLike, _releaseDelay: BigNumberish, ],
       [void],
       'nonpayable'
     >
@@ -269,14 +300,14 @@ decodeFunctionResult(functionFragment: 'transferOwnership(address)', data: Bytes
     
     orders: TypedContractMethod<
       [arg0: BytesLike, ],
-      [[string, string, bigint, bigint, bigint, bigint] & {buyer: string, seller: string, amount: bigint, taxBps: bigint, createdAt: bigint, state: bigint }],
+      [[string, string, string, bigint, bigint, bigint, bigint, bigint] & {buyer: string, seller: string, paymentToken: string, total: bigint, taxes: bigint, platformFee: bigint, createdAt: bigint, state: bigint }],
       'view'
     >
     
     
     "orders(bytes16)": TypedContractMethod<
       [arg0: BytesLike, ],
-      [[string, string, bigint, bigint, bigint, bigint] & {buyer: string, seller: string, amount: bigint, taxBps: bigint, createdAt: bigint, state: bigint }],
+      [[string, string, string, bigint, bigint, bigint, bigint, bigint] & {buyer: string, seller: string, paymentToken: string, total: bigint, taxes: bigint, platformFee: bigint, createdAt: bigint, state: bigint }],
       'view'
     >
     
@@ -297,32 +328,47 @@ decodeFunctionResult(functionFragment: 'transferOwnership(address)', data: Bytes
     
 
     
-    platformFeeBps: TypedContractMethod<
+    platformFeeTreasury: TypedContractMethod<
       [],
-      [bigint],
+      [string],
       'view'
     >
     
     
-    "platformFeeBps()": TypedContractMethod<
+    "platformFeeTreasury()": TypedContractMethod<
       [],
-      [bigint],
+      [string],
       'view'
     >
     
 
     
-    platformTreasury: TypedContractMethod<
+    platformTaxTreasury: TypedContractMethod<
       [],
       [string],
       'view'
     >
     
     
-    "platformTreasury()": TypedContractMethod<
+    "platformTaxTreasury()": TypedContractMethod<
       [],
       [string],
       'view'
+    >
+    
+
+    
+    registerEscrow: TypedContractMethod<
+      [orderPayload: EscrowV1.OrderPayloadStruct, signature: BytesLike, ],
+      [void],
+      'payable'
+    >
+    
+    
+    "registerEscrow((bytes16,address,address,address,uint256,uint256,uint256,uint256),bytes)": TypedContractMethod<
+      [orderPayload: EscrowV1.OrderPayloadStruct, signature: BytesLike, ],
+      [void],
+      'payable'
     >
     
 
@@ -387,6 +433,21 @@ decodeFunctionResult(functionFragment: 'transferOwnership(address)', data: Bytes
     
 
     
+    serverSigner: TypedContractMethod<
+      [],
+      [string],
+      'view'
+    >
+    
+    
+    "serverSigner()": TypedContractMethod<
+      [],
+      [string],
+      'view'
+    >
+    
+
+    
     setContractState: TypedContractMethod<
       [newState: BigNumberish, ],
       [void],
@@ -416,6 +477,21 @@ decodeFunctionResult(functionFragment: 'transferOwnership(address)', data: Bytes
     >
     
 
+    
+    usedOrderIds: TypedContractMethod<
+      [arg0: BytesLike, ],
+      [boolean],
+      'view'
+    >
+    
+    
+    "usedOrderIds(bytes16)": TypedContractMethod<
+      [arg0: BytesLike, ],
+      [boolean],
+      'view'
+    >
+    
+
 
     getFunction<T extends ContractMethod = ContractMethod>(key: string | FunctionFragment): T;
 
@@ -439,23 +515,23 @@ getFunction(nameOrSignature: 'contractState()'): TypedContractMethod<
       [bigint],
       'view'
     >;
-getFunction(nameOrSignature: 'createEscrow'): TypedContractMethod<
-      [orderId: BytesLike, seller: AddressLike, taxBps: BigNumberish, ],
-      [void],
-      'payable'
+getFunction(nameOrSignature: 'eip712Domain'): TypedContractMethod<
+      [],
+      [[string, string, string, bigint, string, string, bigint[]] & {fields: string, name: string, version: string, chainId: bigint, verifyingContract: string, salt: string, extensions: bigint[] }],
+      'view'
     >;
-getFunction(nameOrSignature: 'createEscrow(bytes16,address,uint16)'): TypedContractMethod<
-      [orderId: BytesLike, seller: AddressLike, taxBps: BigNumberish, ],
-      [void],
-      'payable'
+getFunction(nameOrSignature: 'eip712Domain()'): TypedContractMethod<
+      [],
+      [[string, string, string, bigint, string, string, bigint[]] & {fields: string, name: string, version: string, chainId: bigint, verifyingContract: string, salt: string, extensions: bigint[] }],
+      'view'
     >;
 getFunction(nameOrSignature: 'initialize'): TypedContractMethod<
-      [_platformTreasury: AddressLike, _feeBps: BigNumberish, _releaseDelay: BigNumberish, ],
+      [_serverSigner: AddressLike, _platformTaxTreasury: AddressLike, _platformFeeTreasury: AddressLike, _releaseDelay: BigNumberish, ],
       [void],
       'nonpayable'
     >;
-getFunction(nameOrSignature: 'initialize(address,uint16,uint24)'): TypedContractMethod<
-      [_platformTreasury: AddressLike, _feeBps: BigNumberish, _releaseDelay: BigNumberish, ],
+getFunction(nameOrSignature: 'initialize(address,address,address,uint24)'): TypedContractMethod<
+      [_serverSigner: AddressLike, _platformTaxTreasury: AddressLike, _platformFeeTreasury: AddressLike, _releaseDelay: BigNumberish, ],
       [void],
       'nonpayable'
     >;
@@ -471,12 +547,12 @@ getFunction(nameOrSignature: 'openDispute(bytes16)'): TypedContractMethod<
     >;
 getFunction(nameOrSignature: 'orders'): TypedContractMethod<
       [arg0: BytesLike, ],
-      [[string, string, bigint, bigint, bigint, bigint] & {buyer: string, seller: string, amount: bigint, taxBps: bigint, createdAt: bigint, state: bigint }],
+      [[string, string, string, bigint, bigint, bigint, bigint, bigint] & {buyer: string, seller: string, paymentToken: string, total: bigint, taxes: bigint, platformFee: bigint, createdAt: bigint, state: bigint }],
       'view'
     >;
 getFunction(nameOrSignature: 'orders(bytes16)'): TypedContractMethod<
       [arg0: BytesLike, ],
-      [[string, string, bigint, bigint, bigint, bigint] & {buyer: string, seller: string, amount: bigint, taxBps: bigint, createdAt: bigint, state: bigint }],
+      [[string, string, string, bigint, bigint, bigint, bigint, bigint] & {buyer: string, seller: string, paymentToken: string, total: bigint, taxes: bigint, platformFee: bigint, createdAt: bigint, state: bigint }],
       'view'
     >;
 getFunction(nameOrSignature: 'owner'): TypedContractMethod<
@@ -489,25 +565,35 @@ getFunction(nameOrSignature: 'owner()'): TypedContractMethod<
       [string],
       'view'
     >;
-getFunction(nameOrSignature: 'platformFeeBps'): TypedContractMethod<
-      [],
-      [bigint],
-      'view'
-    >;
-getFunction(nameOrSignature: 'platformFeeBps()'): TypedContractMethod<
-      [],
-      [bigint],
-      'view'
-    >;
-getFunction(nameOrSignature: 'platformTreasury'): TypedContractMethod<
+getFunction(nameOrSignature: 'platformFeeTreasury'): TypedContractMethod<
       [],
       [string],
       'view'
     >;
-getFunction(nameOrSignature: 'platformTreasury()'): TypedContractMethod<
+getFunction(nameOrSignature: 'platformFeeTreasury()'): TypedContractMethod<
       [],
       [string],
       'view'
+    >;
+getFunction(nameOrSignature: 'platformTaxTreasury'): TypedContractMethod<
+      [],
+      [string],
+      'view'
+    >;
+getFunction(nameOrSignature: 'platformTaxTreasury()'): TypedContractMethod<
+      [],
+      [string],
+      'view'
+    >;
+getFunction(nameOrSignature: 'registerEscrow'): TypedContractMethod<
+      [orderPayload: EscrowV1.OrderPayloadStruct, signature: BytesLike, ],
+      [void],
+      'payable'
+    >;
+getFunction(nameOrSignature: 'registerEscrow((bytes16,address,address,address,uint256,uint256,uint256,uint256),bytes)'): TypedContractMethod<
+      [orderPayload: EscrowV1.OrderPayloadStruct, signature: BytesLike, ],
+      [void],
+      'payable'
     >;
 getFunction(nameOrSignature: 'releaseAfterTimeout'): TypedContractMethod<
       [orderId: BytesLike, ],
@@ -549,6 +635,16 @@ getFunction(nameOrSignature: 'resolveDispute(bytes16,bool)'): TypedContractMetho
       [void],
       'nonpayable'
     >;
+getFunction(nameOrSignature: 'serverSigner'): TypedContractMethod<
+      [],
+      [string],
+      'view'
+    >;
+getFunction(nameOrSignature: 'serverSigner()'): TypedContractMethod<
+      [],
+      [string],
+      'view'
+    >;
 getFunction(nameOrSignature: 'setContractState'): TypedContractMethod<
       [newState: BigNumberish, ],
       [void],
@@ -569,11 +665,23 @@ getFunction(nameOrSignature: 'transferOwnership(address)'): TypedContractMethod<
       [void],
       'nonpayable'
     >;
+getFunction(nameOrSignature: 'usedOrderIds'): TypedContractMethod<
+      [arg0: BytesLike, ],
+      [boolean],
+      'view'
+    >;
+getFunction(nameOrSignature: 'usedOrderIds(bytes16)'): TypedContractMethod<
+      [arg0: BytesLike, ],
+      [boolean],
+      'view'
+    >;
 
     getEvent(key: 'ContractStateChanged'): TypedContractEvent<ContractStateChangedEvent.InputTuple, ContractStateChangedEvent.OutputTuple, ContractStateChangedEvent.OutputObject>;
 getEvent(key: 'ContractStateChanged(uint8)'): TypedContractEvent<ContractStateChanged_uint8_Event.InputTuple, ContractStateChanged_uint8_Event.OutputTuple, ContractStateChanged_uint8_Event.OutputObject>;
-getEvent(key: 'EscrowCreated'): TypedContractEvent<EscrowCreatedEvent.InputTuple, EscrowCreatedEvent.OutputTuple, EscrowCreatedEvent.OutputObject>;
-getEvent(key: 'EscrowCreated(bytes16,address,address,uint256,uint16)'): TypedContractEvent<EscrowCreated_bytes16_address_address_uint256_uint16_Event.InputTuple, EscrowCreated_bytes16_address_address_uint256_uint16_Event.OutputTuple, EscrowCreated_bytes16_address_address_uint256_uint16_Event.OutputObject>;
+getEvent(key: 'EIP712DomainChanged'): TypedContractEvent<EIP712DomainChangedEvent.InputTuple, EIP712DomainChangedEvent.OutputTuple, EIP712DomainChangedEvent.OutputObject>;
+getEvent(key: 'EIP712DomainChanged()'): TypedContractEvent<EIP712DomainChanged__Event.InputTuple, EIP712DomainChanged__Event.OutputTuple, EIP712DomainChanged__Event.OutputObject>;
+getEvent(key: 'EscrowRegistered'): TypedContractEvent<EscrowRegisteredEvent.InputTuple, EscrowRegisteredEvent.OutputTuple, EscrowRegisteredEvent.OutputObject>;
+getEvent(key: 'EscrowRegistered(bytes16,address,uint8,address)'): TypedContractEvent<EscrowRegistered_bytes16_address_uint8_address_Event.InputTuple, EscrowRegistered_bytes16_address_uint8_address_Event.OutputTuple, EscrowRegistered_bytes16_address_uint8_address_Event.OutputObject>;
 getEvent(key: 'Initialized'): TypedContractEvent<InitializedEvent.InputTuple, InitializedEvent.OutputTuple, InitializedEvent.OutputObject>;
 getEvent(key: 'Initialized(uint64)'): TypedContractEvent<Initialized_uint64_Event.InputTuple, Initialized_uint64_Event.OutputTuple, Initialized_uint64_Event.OutputObject>;
 getEvent(key: 'OrderDisputed'): TypedContractEvent<OrderDisputedEvent.InputTuple, OrderDisputedEvent.OutputTuple, OrderDisputedEvent.OutputObject>;
@@ -591,8 +699,12 @@ getEvent(key: 'OwnershipTransferred(address,address)'): TypedContractEvent<Owner
       ContractStateChanged: TypedContractEvent<ContractStateChangedEvent.InputTuple, ContractStateChangedEvent.OutputTuple, ContractStateChangedEvent.OutputObject>;
     
 
-      'EscrowCreated(bytes16,address,address,uint256,uint16)': TypedContractEvent<EscrowCreatedEvent.InputTuple, EscrowCreatedEvent.OutputTuple, EscrowCreatedEvent.OutputObject>;
-      EscrowCreated: TypedContractEvent<EscrowCreatedEvent.InputTuple, EscrowCreatedEvent.OutputTuple, EscrowCreatedEvent.OutputObject>;
+      'EIP712DomainChanged()': TypedContractEvent<EIP712DomainChangedEvent.InputTuple, EIP712DomainChangedEvent.OutputTuple, EIP712DomainChangedEvent.OutputObject>;
+      EIP712DomainChanged: TypedContractEvent<EIP712DomainChangedEvent.InputTuple, EIP712DomainChangedEvent.OutputTuple, EIP712DomainChangedEvent.OutputObject>;
+    
+
+      'EscrowRegistered(bytes16,address,uint8,address)': TypedContractEvent<EscrowRegisteredEvent.InputTuple, EscrowRegisteredEvent.OutputTuple, EscrowRegisteredEvent.OutputObject>;
+      EscrowRegistered: TypedContractEvent<EscrowRegisteredEvent.InputTuple, EscrowRegisteredEvent.OutputTuple, EscrowRegisteredEvent.OutputObject>;
     
 
       'Initialized(uint64)': TypedContractEvent<InitializedEvent.InputTuple, InitializedEvent.OutputTuple, InitializedEvent.OutputObject>;

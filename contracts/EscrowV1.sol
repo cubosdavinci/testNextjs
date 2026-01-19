@@ -4,16 +4,22 @@ pragma solidity ^0.8.28;
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
-import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
+//import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+//import "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 
-contract EscrowV1 is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradeable {
+import "@openzeppelin/contracts-upgradeable/utils/cryptography/signers/SignerECDSAUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol";
+
+contract EscrowV1 is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradeable, 
+EIP712Upgradeable {
 
     /*//////////////////////////////////////////////////////////////
                                Enums
     //////////////////////////////////////////////////////////////*/
     enum OrderState {
         None,
-        Created,
+        Registered,
         Released,
         Disputed,
         Refunded
@@ -46,8 +52,6 @@ contract EscrowV1 is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradeab
     uint256 total;          // total amount paid
     uint256 taxes;          // absolute tax amount
     uint256 platformFee;    // absolute platform fee
-    uint256 chainId;        // replay protection
-    address escrowContract; // must match this contract
     uint256 deadline;       // expiry
 }
 
@@ -55,21 +59,22 @@ contract EscrowV1 is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradeab
                                Storage
     //////////////////////////////////////////////////////////////*/
     mapping(bytes16 => Order) public orders;
+    mapping(bytes16 => bool) public usedOrderIds;
     address public serverSigner;
     address public platformTaxTreasury;
     address public platformFeeTreasury;
     uint24  public releaseDelay;
     ContractState public contractState;
+    
 
     /*//////////////////////////////////////////////////////////////
                                Events
     //////////////////////////////////////////////////////////////*/
-    event EscrowCreated(
+    event EscrowRegistered(
         bytes16 indexed orderId,
         address indexed buyer,
-        address indexed seller,
-        uint256 amount,
-        uint16 taxBps
+        OrderState indexed state,
+        address seller
     );
 
     event OrderReleased(bytes16 indexed orderId, address indexed seller, uint256 sellerAmount);
@@ -90,6 +95,7 @@ contract EscrowV1 is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradeab
     ) external initializer {
         __Ownable_init(msg.sender);
         __ReentrancyGuard_init();
+        __EIP712_init("MYAPP_AMOY_ESCROW_ORDERS", "1");
 
         require(_serverSigner != address(0), "Invalid server signer");
         require(_platformTaxTreasury != address(0), "Invalid taxes address");
@@ -102,30 +108,13 @@ contract EscrowV1 is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradeab
         contractState = ContractState.Active;
     }
 
-    // Internal helper to hash payload
-    function _hashOrderPayload(OrderPayload calldata orderPayload) internal view returns (bytes32) {
-        return keccak256(
-            abi.encode(
-                orderPayload.orderId,
-                orderPayload.buyer,
-                orderPayload.seller,
-                orderPayload.paymentToken,
-                orderPayload.total,
-                orderPayload.taxes,
-                orderPayload.platformFee,
-                orderPayload.chainId,
-                orderPayload.escrowContract,
-                orderPayload.deadline
-            )
-        );
-    }
+    
 
 
     // Internal helper to verify signature
     using ECDSA for bytes32;
-    function _verifyServerSignature(OrderPayload calldata orderPayload, bytes calldata signature) internal view returns (bool) {        
-        bytes32 digest = ECDSA.toEthSignedMessageHash(_hashOrderPayload(orderPayload));
-        return ECDSA.recover(digest, signature) == serverSigner;
+    function _verifyServerSignature(bytes32 _digest, bytes calldata _signature) internal view returns (bool) {                
+        return _digest.recover(_signature) == serverSigner;
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -147,37 +136,77 @@ contract EscrowV1 is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradeab
     /*//////////////////////////////////////////////////////////////
                                Core
     //////////////////////////////////////////////////////////////*/
+
+
+
+    bytes32 constant ORDER_PAYLOAD_TYPE_HASH = keccak256(
+        "OrderPayload(bytes128 orderId,address buyer,address seller,address paymentToken,uint256 total,uint256 taxes,uint256 platformFee,uint256 deadline)"
+    );
+
+    // Internal helper to hash payload
+    function _hashEscrowOrderPayload(OrderPayload calldata orderPayload) internal pure returns (bytes32) {
+        return keccak256(
+            abi.encode(
+                ORDER_PAYLOAD_TYPE_HASH,
+                orderPayload.orderId,
+                orderPayload.buyer,
+                orderPayload.seller,
+                orderPayload.paymentToken,
+                orderPayload.total,
+                orderPayload.taxes,
+                orderPayload.platformFee,
+                orderPayload.deadline
+            )
+        );
+    }
+
+
     function registerEscrow(
-        bytes16 orderId,
-        address seller,
-        uint16 taxBps
+      OrderPayload calldata orderPayload, 
+      bytes calldata signature
     ) external payable nonReentrant onlyActive {
         require(msg.value > 0, "Invalid amount");
-        require(orders[orderId].state == OrderState.None, "Order exists");
+        //require(orders[orderId].state == OrderState.None, "Order exists");
 
-        orders[orderId] = Order({
-            buyer: msg.sender,
-            seller: seller,
-            amount: msg.value,
-            taxBps: taxBps,
+        // 1️⃣ Check signature
+        bytes32 digest = _hashTypedDataV4(_hashEscrowOrderPayload(orderPayload));
+        address signer = digest.recover(signature);
+        require(signer == serverSigner, "Invalid signature");
+
+         // 2️⃣ Check deadline
+        require(block.timestamp <= orderPayload.deadline, "Order expired");
+        
+        // 3️⃣ Prevent replay
+        require(!usedOrderIds[orderPayload.orderId], "Order already registered");
+        usedOrderIds[orderPayload.orderId] = true; // ✅ stored in contract storage
+
+        // storage the order
+        orders[orderPayload.orderId] = Order({
+            buyer: orderPayload.buyer,
+            seller: orderPayload.seller,
+            paymentToken: orderPayload.paymentToken,
+            total: orderPayload.total,
+            taxes: orderPayload.taxes,
+            platformFee: orderPayload.platformFee,
             createdAt: block.timestamp,
-            state: OrderState.Created
+            state: OrderState.Registered
         });
 
-        emit EscrowCreated(orderId, msg.sender, seller, msg.value, taxBps);
+
+        emit EscrowRegistered(orderPayload.orderId, msg.sender, OrderState.Registered, orderPayload.seller);
     }
 
     function confirmDelivery(bytes16 orderId) external nonReentrant onlyActive {
         Order storage o = orders[orderId];
         require(msg.sender == o.buyer, "Not buyer");
-        require(o.state == OrderState.Created, "Cannot release");
+        require(o.state == OrderState.Registered, "Cannot release");
 
         _release(orderId);
     }
 
     function releaseAfterTimeout(bytes16 orderId) external nonReentrant {
         Order storage o = orders[orderId];
-        require(o.state == OrderState.Created, "Cannot release");
+        require(o.state == OrderState.Registered, "Cannot release");
         require(block.timestamp >= o.createdAt + releaseDelay, "Too early");
 
         _release(orderId);
@@ -186,7 +215,7 @@ contract EscrowV1 is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradeab
     function openDispute(bytes16 orderId) external onlyActive {
         Order storage o = orders[orderId];
         require(msg.sender == o.buyer, "Not buyer");
-        require(o.state == OrderState.Created, "Cannot dispute");
+        require(o.state == OrderState.Registered, "Cannot dispute");
 
         o.state = OrderState.Disputed;
         emit OrderDisputed(orderId);
@@ -202,8 +231,8 @@ contract EscrowV1 is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradeab
 
         if (refundBuyer) {
             o.state = OrderState.Refunded;
-            payable(o.buyer).transfer(o.amount);
-            emit OrderRefunded(orderId, o.buyer, o.amount);
+            payable(o.buyer).transfer(o.total);
+            emit OrderRefunded(orderId, o.buyer, o.total);
         } else {
             _release(orderId);
         }
@@ -215,16 +244,30 @@ contract EscrowV1 is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradeab
     function _release(bytes16 orderId) internal {
         Order storage o = orders[orderId];
         require(
-            o.state == OrderState.Created || o.state == OrderState.Disputed,
+            o.state == OrderState.Registered || o.state == OrderState.Disputed,
             "Cannot release"
         );
 
         o.state = OrderState.Released;
-        payable(platformTaxTreasury).transfer(o.taxes);
-        payable(platformFeeTreasury).transfer(o.platformFee);
-        payable(o.seller).transfer(o.total - o.taxtes - o.platformFee);
 
-        emit OrderReleased(orderId, o.seller, sellerAmount);
+        uint256 netAmount = o.total - o.taxes - o.platformFee;
+
+        if (o.paymentToken == address(0)) {
+            // Native coin
+            payable(platformTaxTreasury).transfer(o.taxes);
+            payable(platformFeeTreasury).transfer(o.platformFee);
+            payable(o.seller).transfer(netAmount);
+        } else {
+            // ERC20 token
+            IERC20(o.paymentToken).transfer(platformTaxTreasury, o.taxes);
+            IERC20(o.paymentToken).transfer(platformFeeTreasury, o.platformFee);
+            IERC20(o.paymentToken).transfer(o.seller, netAmount);
+        }
+
+
+        // Emit event
+        emit OrderReleased(orderId, o.seller, netAmount);
+
     }
 
 }
