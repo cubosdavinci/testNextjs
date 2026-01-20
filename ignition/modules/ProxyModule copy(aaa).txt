@@ -1,0 +1,40 @@
+import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
+
+export default buildModule("ProxyModule", (m) => {
+  const proxyAdminOwner = m.getAccount(0);
+
+  const escrowv1 = m.contract("EscrowV1");
+
+  const proxy = m.contract("TransparentUpgradeableProxy", [
+    escrowv1,
+    proxyAdminOwner,
+    "0x", // empty data → no init call via constructor
+  ]);
+
+  const proxyAdminAddress = m.readEventArgument(
+    proxy,
+    "AdminChanged",
+    "newAdmin"
+  );
+
+  const proxyAdmin = m.contractAt("ProxyAdmin", proxyAdminAddress);
+
+  // Attach ABI of the implementation to the proxy address
+  const escrowProxy = m.contractAt("EscrowV1", proxy);
+
+  // Call initialize on the proxy (as EscrowV1)
+  m.call(escrowProxy, "initialize", [
+    "0x68021B74eA6322C745c5CaF0aB062aACE4a5d000",
+    "0x6F57fFB102a44EA9E2Ce2A302Ecb3cD2C4b9fb4D",
+    "0x6197B80eE72A4FbcfBE80904d45082C7300d3206",
+    60
+  ]);
+
+  return {
+    implementation: escrowv1,
+    proxyAdmin,
+    proxy,
+    // optionally also return the typed proxy if you want to use it in tests / other modules
+    escrow: escrowProxy,
+  };
+});

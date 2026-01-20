@@ -13,7 +13,7 @@ export declare namespace EscrowV1 {
     }
 
   export interface EscrowV1Interface extends Interface {
-    getFunction(nameOrSignature: "confirmDelivery" | "confirmDelivery(bytes16)" | "contractState" | "contractState()" | "eip712Domain" | "eip712Domain()" | "initialize" | "initialize(address,address,address,uint24)" | "openDispute" | "openDispute(bytes16)" | "orders" | "orders(bytes16)" | "owner" | "owner()" | "platformFeeTreasury" | "platformFeeTreasury()" | "platformTaxTreasury" | "platformTaxTreasury()" | "registerEscrow" | "registerEscrow((bytes16,address,address,address,uint256,uint256,uint256,uint256),bytes)" | "releaseAfterTimeout" | "releaseAfterTimeout(bytes16)" | "releaseDelay" | "releaseDelay()" | "renounceOwnership" | "renounceOwnership()" | "resolveDispute" | "resolveDispute(bytes16,bool)" | "serverSigner" | "serverSigner()" | "setContractState" | "setContractState(uint8)" | "transferOwnership" | "transferOwnership(address)" | "usedOrderIds" | "usedOrderIds(bytes16)"): FunctionFragment;
+    getFunction(nameOrSignature: "confirmDelivery" | "confirmDelivery(bytes16)" | "contractState" | "contractState()" | "eip712Domain" | "eip712Domain()" | "initialize" | "initialize(address,address,address,uint24)" | "openDispute" | "openDispute(bytes16)" | "orders" | "orders(bytes16)" | "ordersCount" | "ordersCount()" | "owner" | "owner()" | "platformFeeTreasury" | "platformFeeTreasury()" | "platformTaxTreasury" | "platformTaxTreasury()" | "registerEscrow" | "registerEscrow((bytes16,address,address,address,uint256,uint256,uint256,uint256),bytes)" | "releaseAfterTimeout" | "releaseAfterTimeout(bytes16)" | "releaseDelay" | "releaseDelay()" | "renounceOwnership" | "renounceOwnership()" | "resolveDispute" | "resolveDispute(bytes16,bool)" | "serverSigner" | "serverSigner()" | "setContractState" | "setContractState(uint8)" | "transferOwnership" | "transferOwnership(address)" | "usedOrderIds" | "usedOrderIds(bytes16)"): FunctionFragment;
 
     getEvent(nameOrSignatureOrTopic: "ContractStateChanged" | "ContractStateChanged(uint8)" | "EIP712DomainChanged" | "EIP712DomainChanged()" | "EscrowRegistered" | "EscrowRegistered(bytes16,address,uint8,address)" | "Initialized" | "Initialized(uint64)" | "OrderDisputed" | "OrderDisputed(bytes16)" | "OrderRefunded" | "OrderRefunded(bytes16,address,uint256)" | "OrderReleased" | "OrderReleased(bytes16,address,uint256)" | "OwnershipTransferred" | "OwnershipTransferred(address,address)"): EventFragment;
 
@@ -29,6 +29,8 @@ encodeFunctionData(functionFragment: 'openDispute', values: [BytesLike]): string
 encodeFunctionData(functionFragment: 'openDispute(bytes16)', values: [BytesLike]): string;
 encodeFunctionData(functionFragment: 'orders', values: [BytesLike]): string;
 encodeFunctionData(functionFragment: 'orders(bytes16)', values: [BytesLike]): string;
+encodeFunctionData(functionFragment: 'ordersCount', values?: undefined): string;
+encodeFunctionData(functionFragment: 'ordersCount()', values?: undefined): string;
 encodeFunctionData(functionFragment: 'owner', values?: undefined): string;
 encodeFunctionData(functionFragment: 'owner()', values?: undefined): string;
 encodeFunctionData(functionFragment: 'platformFeeTreasury', values?: undefined): string;
@@ -66,6 +68,8 @@ decodeFunctionResult(functionFragment: 'openDispute', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'openDispute(bytes16)', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'orders', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'orders(bytes16)', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'ordersCount', data: BytesLike): Result;
+decodeFunctionResult(functionFragment: 'ordersCount()', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'owner', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'owner()', data: BytesLike): Result;
 decodeFunctionResult(functionFragment: 'platformFeeTreasury', data: BytesLike): Result;
@@ -313,6 +317,21 @@ decodeFunctionResult(functionFragment: 'usedOrderIds(bytes16)', data: BytesLike)
     
 
     
+    ordersCount: TypedContractMethod<
+      [],
+      [bigint],
+      'view'
+    >
+    
+    
+    "ordersCount()": TypedContractMethod<
+      [],
+      [bigint],
+      'view'
+    >
+    
+
+    
     owner: TypedContractMethod<
       [],
       [string],
@@ -553,6 +572,16 @@ getFunction(nameOrSignature: 'orders'): TypedContractMethod<
 getFunction(nameOrSignature: 'orders(bytes16)'): TypedContractMethod<
       [arg0: BytesLike, ],
       [[string, string, string, bigint, bigint, bigint, bigint, bigint] & {buyer: string, seller: string, paymentToken: string, total: bigint, taxes: bigint, platformFee: bigint, createdAt: bigint, state: bigint }],
+      'view'
+    >;
+getFunction(nameOrSignature: 'ordersCount'): TypedContractMethod<
+      [],
+      [bigint],
+      'view'
+    >;
+getFunction(nameOrSignature: 'ordersCount()'): TypedContractMethod<
+      [],
+      [bigint],
       'view'
     >;
 getFunction(nameOrSignature: 'owner'): TypedContractMethod<

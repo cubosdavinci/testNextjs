@@ -60,11 +60,14 @@ EIP712Upgradeable {
     //////////////////////////////////////////////////////////////*/
     mapping(bytes16 => Order) public orders;
     mapping(bytes16 => bool) public usedOrderIds;
+    uint256 public ordersCount;
     address public serverSigner;
     address public platformTaxTreasury;
     address public platformFeeTreasury;
     uint24  public releaseDelay;
     ContractState public contractState;
+    // Storage gap for future upgrades
+    uint256[50] private __gap;
     
 
     /*//////////////////////////////////////////////////////////////
@@ -173,14 +176,17 @@ EIP712Upgradeable {
         address signer = digest.recover(signature);
         require(signer == serverSigner, "Invalid signature");
 
-         // 2️⃣ Check deadline
+        // 2️⃣ Check deadline
         require(block.timestamp <= orderPayload.deadline, "Order expired");
         
-        // 3️⃣ Prevent replay
+        // 3️⃣ Prevent order replay
         require(!usedOrderIds[orderPayload.orderId], "Order already registered");
         usedOrderIds[orderPayload.orderId] = true; // ✅ stored in contract storage
 
-        // storage the order
+        // 4️⃣ Check value
+        require(msg.value == orderPayload.total, "Pay Value is wrong");
+
+        // 5️⃣ Store the order
         orders[orderPayload.orderId] = Order({
             buyer: orderPayload.buyer,
             seller: orderPayload.seller,
@@ -192,7 +198,10 @@ EIP712Upgradeable {
             state: OrderState.Registered
         });
 
+        // 6️⃣ Increment counter
+        ordersCount += 1;
 
+        // 7️⃣ Outputevent
         emit EscrowRegistered(orderPayload.orderId, msg.sender, OrderState.Registered, orderPayload.seller);
     }
 

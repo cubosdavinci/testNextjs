@@ -1,0 +1,6 @@
+{
+  "ProxyModule#EscrowV1": "0xB63E3d90935A047AA41dE1f872B127Dd1aE9EC1d",
+  "ProxyModule#TransparentUpgradeableProxy": "0x63409cdA1551cb49c1bfC5e7D3cb54D5e5536640",
+  "ProxyModule#EscrowProxy": "0x63409cdA1551cb49c1bfC5e7D3cb54D5e5536640",
+  "ProxyModule#ProxyAdmin": "0x56D597784F463e51a519e871Ff6d453c8CaE55D4"
+}
