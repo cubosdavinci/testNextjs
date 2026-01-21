@@ -73,5 +73,5 @@
   "deployedLinkReferences": {},
   "immutableReferences": {},
   "inputSourceName": "project/contracts/TransparentUpgradeableProxy.sol",
-  "buildInfoId": "solc-0_8_28-48c6ce49d5039d299e3402bd24d68f71b9d74b0c"
+  "buildInfoId": "solc-0_8_28-d0b4603bca1723c49b36d805ad77d8b1dad9ccf5"
 }
