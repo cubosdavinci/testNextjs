@@ -1,5 +1,5 @@
 import { WalletRepository } from "./db/repository"
-import { SUPPORTED_NETWORKS } from "../SupportedNetworks"
+import { SUPPORTED_BNETWORKS } from "."
 import { detectWallets } from "./providers"
 import { verifyWalletOwnership } from  "./connect"
 
@@ -32,6 +32,6 @@ export class WalletService {
   }
 
   getSupportedNetworks() {
-    return SUPPORTED_NETWORKS
+    return SUPPORTED_BNETWORKS
   }
 }

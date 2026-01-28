@@ -1,10 +1,10 @@
 export enum WalletErrorCode {
-  PROVIDER_NOT_FOUND = "PROVIDER_NOT_FOUND",
-  CONNECTION_REJECTED = "CONNECTION_REJECTED",
-  SIGNATURE_REJECTED = "SIGNATURE_REJECTED",
-  SIGNATURE_INVALID = "SIGNATURE_INVALID",
-  UNSUPPORTED_NETWORK = "UNSUPPORTED_NETWORK",
-  UNKNOWN_ERROR = "UNKNOWN_ERROR",
+  PROVIDER_NOT_FOUND = "Provider not found",
+  CONNECTION_REJECTED = "Connection rejected",
+  SIGNATURE_REJECTED = "Signature rejected",
+  SIGNATURE_INVALID = "Signature Invalid",
+  UNSUPPORTED_BNETWORK = "Unsupported Blockchain Network",
+  UNKNOWN_ERROR = "Unknow Error",
 }
 
 export class WalletError extends Error {

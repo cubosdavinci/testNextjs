@@ -1,7 +1,7 @@
+// app/dashboard/wallets/WalletProviderCard.tsx
 "use client"
-
 import { WalletProvider } from "@/lib/web3/SupportedWalletProviders"
-import type { BlockchainNetwork } from "@/lib/web3/types/BlockchainNetwork"
+import type { BlockchainNetwork } from "@/lib/web3/Blockchain"
 
 type WalletInfo = {
   id?: string
@@ -22,7 +22,11 @@ type WalletProviderCardProps = {
   isInstalled: boolean
   isConnected: boolean
   discoveryReady: boolean
-  connect?: () => Promise<void>
+  connect?: () => Promise<{
+  address: string | null
+  chainId: number | null
+  isConnected: boolean
+}>
 }
 
 export default function WalletProviderCard({

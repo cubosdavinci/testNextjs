@@ -1,3 +1,4 @@
+// lib/web3/wallets/db/repository.ts
 import { createAnonClient } from "@/lib/supabase/client"
 import type { UserWalletDbRow } from "./types/UserWalletDbRow"
 import { mapUserWalletRow, mapUserWalletRows } from "./mapping"

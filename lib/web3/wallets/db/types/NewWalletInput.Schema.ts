@@ -1,5 +1,5 @@
 import { z } from "zod/v4"
-import { SUPPORTED_WALLET_PROVIDER_KEYS } from "../../../SupportedWalletProviders"
+import { SUPPORTED_WALLET_PROVIDER_KEYS } from "../../types/SupportedWalletProviders"
 
 export const NewWalletInputSchema = z.object({
   wallet_provider: z.enum(SUPPORTED_WALLET_PROVIDER_KEYS).superRefine(

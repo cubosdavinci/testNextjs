@@ -1,8 +1,26 @@
-// lib/web3/SupportedNetworks.ts
+// lib/web3/wallets/types/SupportedBNetworks.ts
+export type ERC20Token = {
+  symbol: string;         // "USDC"
+  name: string;           // "USD Coin"
+  address: `0x${string}`; // On-chain contract
+  decimals: number;      // 6 or 18
+  icon: string;          // UI path
+  explorerUrl: string;  // Block explorer link
+};
 
-import type { BlockchainNetwork } from "./types/BlockchainNetwork";
+export type BNetwork = {
+  chainId: number;
+  key: string;
+  name: string;
+  shortName: string;
+  rpcUrl?: string;
+  explorerUrl: string;
+  icon: string;
+  bgIcon: string; 
+  tokens: ERC20Token[];
+};
 
-export const SUPPORTED_NETWORKS: BlockchainNetwork[] = [
+export const SUPPORTED_BNETWORKS: BNetwork[] = [
   {
     chainId: 42161,
     key: "arbitrum",
@@ -10,6 +28,7 @@ export const SUPPORTED_NETWORKS: BlockchainNetwork[] = [
     shortName: "Arbitrum",
     explorerUrl: "https://arbiscan.io",
     icon: "/images/web3/networks/arbitrum.png",
+    bgIcon: "/images/web3/networks/bg-arbitrum.png",
     tokens: [
       {
         symbol: "USDC",
@@ -49,7 +68,6 @@ export const SUPPORTED_NETWORKS: BlockchainNetwork[] = [
       },
     ],
   },
-
   {
     chainId: 8453,
     key: "base",
@@ -57,6 +75,7 @@ export const SUPPORTED_NETWORKS: BlockchainNetwork[] = [
     shortName: "Base",
     explorerUrl: "https://basescan.org",
     icon: "/images/web3/networks/base.png",
+    bgIcon: "/images/web3/networks/bg-base.png",
     tokens: [
       {
         symbol: "USDC",
@@ -87,7 +106,6 @@ export const SUPPORTED_NETWORKS: BlockchainNetwork[] = [
       },
     ],
   },
-
   {
     chainId: 10,
     key: "optimism",
@@ -95,6 +113,7 @@ export const SUPPORTED_NETWORKS: BlockchainNetwork[] = [
     shortName: "OP",
     explorerUrl: "https://optimistic.etherscan.io",
     icon: "/images/web3/networks/optimism.png",
+    bgIcon: "/images/web3/networks/bg-optimism.png",
     tokens: [
       {
         symbol: "USDC",
@@ -134,7 +153,6 @@ export const SUPPORTED_NETWORKS: BlockchainNetwork[] = [
       },
     ],
   },
-
   {
     chainId: 80002,
     key: "amoy",
@@ -142,6 +160,7 @@ export const SUPPORTED_NETWORKS: BlockchainNetwork[] = [
     shortName: "Amoy",
     explorerUrl: "https://www.oklink.com/amoy",
     icon: "/images/web3/networks/amoy.png",
+    bgIcon: "/images/web3/networks/amoy.png",
     tokens: [
       {
         symbol: "USDC",
@@ -164,3 +183,25 @@ export const SUPPORTED_NETWORKS: BlockchainNetwork[] = [
     ],
   },
 ];
+
+// lib/web3/wallets/types/SupportedBNetworks.ts
+
+export const getBNetworkKeys = (): string[] => {
+  return SUPPORTED_BNETWORKS.map((network) => network.key);
+};
+
+export const getBNetworkNames = (): string[] => {
+  return SUPPORTED_BNETWORKS.map((network) => network.name);
+};
+
+export const getBNetworkChainIds = (): number[] => {
+  return SUPPORTED_BNETWORKS.map((network) => network.chainId);
+};
+
+export const getBNetworkIcons = (): string[] => {
+  return SUPPORTED_BNETWORKS.map((network) => network.icon);
+};
+
+export const getBNetworkBWIcons = (): string[] => {
+  return SUPPORTED_BNETWORKS.map((network) => network.bgIcon);
+};

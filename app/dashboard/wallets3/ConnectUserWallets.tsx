@@ -1,5 +1,5 @@
+// app/dashboard/wallets/ConnectUserWallets.tsx
 "use client"
-
 import { useEffect, useState } from "react"
 import WalletProviderCard from "./WalletProviderCard"
 import { SUPPORTED_WALLET_PROVIDERS, WalletProvider } from "@/lib/web3/SupportedWalletProviders"
@@ -36,7 +36,7 @@ export default function ConnectUserWallets({ wallets }: ConnectUserWalletsProps)
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {SUPPORTED_WALLET_PROVIDERS.map((provider: WalletProvider) => {
-          const wallet = wallets.find((w) => w.wallet_provider === provider.key)
+          const wallet = wallets.find((w) => w?.wallet_provider === provider.key)
           const discovered = discoveredWallets.find(d => d.info.rdns.includes(provider.key))
           const session = useWalletSession(discovered?.provider)
 

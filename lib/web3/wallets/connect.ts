@@ -1,6 +1,7 @@
+// lib/web3/wallets/connect.ts
 import { ethers } from "ethers"
-import { WalletError, WalletErrorCode, normalizeProviderError } from "./errors"
-import { SUPPORTED_NETWORKS } from "../SupportedNetworks"
+import { WalletError, WalletErrorCode, normalizeProviderError } from "wallet/errors"
+import { SUPPORTED_BNETWORKS } from "."
 
 
 /**
@@ -83,13 +84,13 @@ export async function verifyWalletOwnership(
 }
 
 export function validateNetwork(chainId: number) {
-  const supported = SUPPORTED_NETWORKS.find(
+  const supported = SUPPORTED_BNETWORKS.find(
     (n) => n.chainId === chainId
   )
 
   if (!supported) {
     throw new WalletError(
-      WalletErrorCode.UNSUPPORTED_NETWORK,
+      WalletErrorCode.UNSUPPORTED_BNETWORK,
       `Chain ${chainId} is not supported`
     )
   }

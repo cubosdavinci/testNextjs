@@ -1,18 +1,22 @@
-import { createAnonClient } from "@/lib/supabase/browser"
-import ConnectUserWallets from "./ConnectUserWallets"
-import type { UserWalletDbRow } from "@/lib/wallet/types/UserWalletDbRow"
+"use client"
+import RegisterNewWallet from "./RegisterNewWallet"
+import YourWallets from "./YourWallets"
 
-export default async function WalletsDashboardPage() {
-  const supabase = createAnonClient()
+export default function WalletsPage() {
+return (
+<div className="space-y-12">
+{/* Add Wallet Section */}
+<section>
+<h2 className="text-xl font-semibold mb-4">Add Wallet</h2>
+<RegisterNewWallet />
+</section>
 
-  const { data: wallets, error } = await supabase
-    .from("web3_user_wallets_v")
-    .select("*")
-    .eq("is_active", true)
 
-  if (error) {
-    throw new Error(error.message)
-  }
-
-  return <ConnectUserWallets wallets={(wallets ?? []) as UserWalletDbRow[]} />
+{/* Registered Wallets Section */}
+<section>
+<h2 className="text-xl font-semibold mb-4">Your Wallets</h2>
+<YourWallets />
+</section>
+</div>
+)
 }
