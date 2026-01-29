@@ -1,94 +1,95 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import * as Slider from "@radix-ui/react-slider";
 
 import {
-  getBNetworkBWIcons,
-  getBNetworkChainIds,
-  getBNetworkIcons,
-  getBNetworkKeys,
-  getBNetworkNames,
-  getBNetworkUrls,
-} from "@/lib/web3/wallets";
+  getTokenKeys,
+  getTokenNames,
+  getTokenIcons,
+  getTokenBWIcons,
+  getTokenUrls,
+} from "@/lib/web3/wallets/types/SupportedBNetworks";
 
-import TokenSlider from "./TokenSlider";
-
-interface BNetworkSliderProps {
-  value: string;
+interface TokenSliderProps {
+  value: number; // chainId
   sliderName: string;
   iconSize?: number;
-  outChainId: (val: number) => void;
-  outToken: (val: string) => void;
+  outTokenKey: (val: string) => void;
 }
 
-export default function BNetworkSlider({
-  value,
+export default function TokenSlider({
+  value: chainId,
   sliderName,
   iconSize = 32,
-  outChainId,
-  outToken,
-}: BNetworkSliderProps) {
-  const keys = getBNetworkKeys();
-  const names = getBNetworkNames();
-  const chainIds = getBNetworkChainIds();
-  const icons = getBNetworkIcons();
-  const bwIcons = getBNetworkBWIcons();
-  const urls = getBNetworkUrls();
+  outTokenKey,
+}: TokenSliderProps) {
+  // Pull token data for this chain
+  const keys = useMemo(() => getTokenKeys(chainId), [chainId]);
+  const names = useMemo(() => getTokenNames(chainId), [chainId]);
+  const icons = useMemo(() => getTokenIcons(chainId), [chainId]);
+  const bwIcons = useMemo(() => getTokenBWIcons(chainId), [chainId]);
+  const urls = useMemo(() => getTokenUrls(chainId), [chainId]);
 
-  const initialIndex = keys.indexOf(value);
-  const safeInitial = initialIndex >= 0 ? initialIndex : 0;
-
-  const [selectedIndex, setSelectedIndex] = useState(safeInitial);
-  const [selectedChainId, setSelectedChainId] = useState(
-    chainIds[safeInitial]
-  );
+  const [selectedIndex, setSelectedIndex] = useState(0);
 
   /**
-   * Emit selected chainId
+   * Single effect:
+   * - Reset index when chainId changes
+   * - Emit selected token key whenever index or chain changes
    */
   useEffect(() => {
-    const chainId = chainIds[selectedIndex];
-    setSelectedChainId(chainId);
-    outChainId(chainId);
-  }, [selectedIndex, chainIds, outChainId]);
+    const index = selectedIndex >= keys.length ? 0 : selectedIndex;
 
-  /**
-   * Receive token key from TokenSlider and forward to parent
-   */
-  const handleTokenKey = (val: string) => {
-    outToken(val);
-  };
+    if (index !== selectedIndex) {
+      setSelectedIndex(0);
+      return;
+    }
+
+    if (keys[index]) {
+      outTokenKey(keys[index]);
+    }
+  }, [chainId, selectedIndex, keys, outTokenKey]);
 
   const handleIconClick = (index: number) => {
     setSelectedIndex(index);
   };
 
+  if (!keys.length) return null;
+
   return (
     <div className="flex flex-col items-center w-full">
       {/* Section title */}
-      <h4>{sliderName}</h4>
+      <h4>
+        {sliderName}
+      </h4>
 
-      {/* Selected value + link */}
-      <div className="flex items-center justify-center gap-2">
-        <h5>{names[selectedIndex]}</h5>
+  {/* Selected value */}
+  <div className="flex items-center justify-center gap-2">
+    <h5>
+      {names[selectedIndex]}
+    </h5>
 
-        {urls[selectedIndex] && (
-          <a
-            href={urls[selectedIndex]}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="info-link info-link:hover"
-            aria-label="Network Explorer"
-          >
-            ⓘ
-            <span className="tooltip">Blockchain Explorer</span>
-          </a>
-        )}
-      </div>
+    {urls[selectedIndex] && (
+      <a
+        href={urls[selectedIndex]}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="info-link info-link:hover"
+        aria-label="Token Market Value"
+      >
+        ⓘ
+
+        {/* Tooltip */}
+        <span className="tooltip">
+          Token Market Value
+        </span>
+      </a>
+    )}
+  </div>
 
       <div className="relative w-full max-w-md mx-auto px-2">
-        {/* Network Slider */}
+        {/* Slider */}
         <Slider.Root
           className="relative flex h-5 w-full touch-none select-none items-center"
           value={[selectedIndex]}
@@ -111,7 +112,7 @@ export default function BNetworkSlider({
           />
         </Slider.Root>
 
-        {/* Network Icons */}
+        {/* Icons – first/last pinned, middle evenly spaced */}
         <div className="mt-4 w-full flex items-center justify-between">
           {keys.map((_, index) => {
             const isSelected = index === selectedIndex;
@@ -140,17 +141,7 @@ export default function BNetworkSlider({
             );
           })}
         </div>
-      </div>
-
-      {/* Token Slider */}
-      <div className="mt-10 w-full">
-        <TokenSlider
-          value={selectedChainId}
-          sliderName="Select Token"
-          iconSize={iconSize}
-          outTokenKey={handleTokenKey}
-        />
-      </div>
+      </div>      
     </div>
   );
 }

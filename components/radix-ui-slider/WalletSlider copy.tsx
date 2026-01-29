@@ -39,10 +39,6 @@ export default function WalletSlider({
       <h3 className="mb-4 text-lg font-semibold text-gray-700">
         {sliderName}
       </h3>
-       {/* Selected value + link */}
-      <div className="flex items-center justify-center gap-2">
-        <h5>{names[selectedIndex]}</h5>    
-      </div>
 
       <div className="relative w-full max-w-md mx-auto px-2">
         {/* Slider */}
@@ -99,6 +95,11 @@ export default function WalletSlider({
             );
           })}
         </div>
+      </div>
+
+      {/* Selected label */}
+      <div className="mt-6 text-center text-lg font-medium text-gray-800 transition-colors">
+        {names[selectedIndex]}
       </div>
     </div>
   );

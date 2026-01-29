@@ -170,7 +170,7 @@ export const SUPPORTED_BNETWORKS: BNetwork[] = [
     key: "amoy",
     name: "Amoy Testnet",
     shortName: "Amoy",
-    explorerUrl: "https://www.oklink.com/amoy",
+    explorerUrl: "https://amoy.polygonscan.com",
     icon: "/images/web3/networks/amoy.png",
     bwIcon: "/images/web3/networks/bw-amoy.png",
     tokens: [
@@ -182,7 +182,7 @@ export const SUPPORTED_BNETWORKS: BNetwork[] = [
         icon: "/images/web3/tokens/usdc.png",
         bwIcon: "/images/web3/tokens/bw-usdc.png",
         explorerUrl:
-          "https://www.oklink.com/amoy/token/0x8B0180f2101c8260d49339abfEe87927412494B4",
+          "https://amoy.polygonscan.com/token/0x8B0180f2101c8260d49339abfEe87927412494B4",
       },
       {
         symbol: "WETH",
@@ -192,7 +192,7 @@ export const SUPPORTED_BNETWORKS: BNetwork[] = [
         icon: "/images/web3/tokens/weth.png",
         bwIcon: "/images/web3/tokens/bw-weth.png",
         explorerUrl:
-          "https://www.oklink.com/amoy/token/0x52eF3d68BaB452a294342DC3e5f464d7f610f72E",
+          "https://amoy.polygonscan.com/token/0x52eF3d68BaB452a294342DC3e5f464d7f610f72E",
       },
     ],
   },
@@ -218,6 +218,10 @@ export const getBNetworkIcons = (): string[] => {
 
 export const getBNetworkBWIcons = (): string[] => {
   return SUPPORTED_BNETWORKS.map((network) => network.bwIcon);
+};
+
+export const getBNetworkUrls = (): string[] => {
+  return SUPPORTED_BNETWORKS.map((network) => network.explorerUrl);
 };
 
 

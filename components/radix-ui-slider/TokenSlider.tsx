@@ -76,13 +76,13 @@ export default function TokenSlider({
         target="_blank"
         rel="noopener noreferrer"
         className="info-link info-link:hover"
-        aria-label="Token Market Value"
+        aria-label="Token Explorer"
       >
         ⓘ
 
         {/* Tooltip */}
         <span className="tooltip">
-          Token Market Value
+          Token Explorer
         </span>
       </a>
     )}

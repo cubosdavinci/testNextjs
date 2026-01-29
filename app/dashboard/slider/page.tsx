@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { preloadIcons } from "@/lib/web3/preloadIcons";
 import WalletSlider from "components/radix-ui-slider/WalletSlider"; // import the WalletSlider
 import BNetworkSlider from "components/radix-ui-slider/BNetworkSlider"; // import the BNetworkSlider
 import { getWalletKeys, getWalletNames, getBNetworkBWIcons, getBNetworkIcons, getBNetworkKeys, getBNetworkNames, getWalletBWIcons, getWalletIcons, SUPPORTED_BNETWORKS, getBNetworkChainIds } from "@/lib/web3/wallets";
@@ -10,17 +11,34 @@ import { getWalletKeys, getWalletNames, getBNetworkBWIcons, getBNetworkIcons, ge
 // lib/web3/wallets/types/SupportedBNetworks.ts
 
 export default function Page() {
-  const [selectedWallet, setSelectedWallet] = useState("arbitrum");
+  const [selectedWallet, setSelectedWallet] = useState("io.metamask");
   const [selectedBNetwork, setSelectedBNetwork] = useState("arbitrum");
-  const [selectedChainId, setSelectedChainId] = useState();
-  const [selectedToken, setSelectedToken] = useState();
+  const [selectedChainId, setSelectedChainId] = useState<number>();
+  const [selectedToken, setSelectedToken] = useState<string>();
   
 
   // Handle changes to the selected wallet and blockchain
-  useEffect(() => {
+ /* useEffect(() => {
     console.log("Selected wallet:", selectedWallet);
-    console.log("Selected blockchain network:", selectedBNetwork);
-  }, [selectedWallet, selectedBNetwork]);
+    console.log("Selected blockchain:", selectedChainId);
+    preloadIcons();
+  }, [selectedWallet, selectedChainId]);*/
+
+    useEffect(() => {
+      preloadIcons();
+    }, []);
+
+    useEffect(() => {
+      console.log("Selected wallet:", selectedWallet);
+    }, [selectedWallet]);
+
+    useEffect(() => {
+      console.log("Selected blockchain:", selectedChainId);
+    }, [selectedChainId]);
+
+    useEffect(() => {
+      console.log("Selected token:", selectedToken);
+    }, [selectedToken]);
 
   return (
     <div className="flex flex-col items-center p-8">
@@ -34,7 +52,7 @@ export default function Page() {
       <BNetworkSlider
         sliderName="Select Network"
         value={selectedBNetwork}
-        outChainId={(val: number) => setSelectedBNetwork(val)}
+        outChainId={(val: number) => setSelectedChainId(val)}
         outToken={(val: string) => setSelectedToken(val)}
       />
 
