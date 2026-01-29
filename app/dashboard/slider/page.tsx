@@ -12,7 +12,9 @@ import { getWalletKeys, getWalletNames, getBNetworkBWIcons, getBNetworkIcons, ge
 export default function Page() {
   const [selectedWallet, setSelectedWallet] = useState("arbitrum");
   const [selectedBNetwork, setSelectedBNetwork] = useState("arbitrum");
-  const [selectedChainId, setSelectedChainId] = useState(80002);
+  const [selectedChainId, setSelectedChainId] = useState();
+  const [selectedToken, setSelectedToken] = useState();
+  
 
   // Handle changes to the selected wallet and blockchain
   useEffect(() => {
@@ -24,24 +26,16 @@ export default function Page() {
     <div className="flex flex-col items-center p-8">
       {/* WalletSlider component */}
       <WalletSlider
-        sliderName="Wallet"
+        sliderName="Select Wallet"
         value={selectedWallet}
-        keys={getWalletKeys()}
-        names={getWalletNames()}
-        icons={getWalletIcons()}
-        bwIcons={getWalletBWIcons()}
         returns={(val: string) => setSelectedWallet(val)}
       />
       {/* BNetworkSlider component */}
       <BNetworkSlider
-        sliderName="Blockchain"
+        sliderName="Select Network"
         value={selectedBNetwork}
-        keys={getBNetworkKeys()}
-        names={getBNetworkNames()}
-        chainIds={getBNetworkChainIds()}
-        icons={getBNetworkIcons()}
-        bwIcons={getBNetworkBWIcons()}
-        returns={(val: number) => setSelectedBNetwork(val)}
+        outChainId={(val: number) => setSelectedBNetwork(val)}
+        outToken={(val: string) => setSelectedToken(val)}
       />
 
 
@@ -51,7 +45,11 @@ export default function Page() {
       </div>
       {/* Selected Blockchain Key */}
       <div className="mt-6 text-center text-lg font-medium text-gray-800">
-        Selected blockchain key: {selectedBNetwork}
+        Selected blockchain key: {selectedChainId}
+      </div>
+            {/* Selected Blockchain Key */}
+      <div className="mt-6 text-center text-lg font-medium text-gray-800">
+        Selected Network Token: {selectedToken}
       </div>
       
     </div>

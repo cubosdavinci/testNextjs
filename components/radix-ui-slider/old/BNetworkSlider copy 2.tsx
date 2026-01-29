@@ -2,35 +2,37 @@
 
 import { useEffect, useState } from "react";
 import * as Slider from "@radix-ui/react-slider";
+import { getBNetworkBWIcons, getBNetworkChainIds, getBNetworkIcons, getBNetworkKeys, getBNetworkNames, } from "@/lib/web3/wallets";
 
 interface BNetworkSliderProps {
   value: string;
-  sliderName: string;
-  keys: string[];
-  names: string[];
-  icons: string[];
-  bwIcons: string[];
+  sliderName: string;  
   iconSize?: number;
-  returns: (val: string) => void;
+  outChainId: (val: number) => void;
+  outToken: (val: string) => void;
 }
 
 export default function BNetworkSlider({
   value,
   sliderName,
-  keys,
-  names,
-  icons,
-  bwIcons,
   iconSize = 32,
-  returns,
+  outChainId,
+  outToken
 }: BNetworkSliderProps) {
+
+  const keys = getBNetworkKeys(); 
+  const names = getBNetworkNames(); 
+  const chainIds = getBNetworkChainIds(); 
+  const icons = getBNetworkIcons(); 
+  const bwIcons = getBNetworkBWIcons(); 
+
   const initialIndex = keys.indexOf(value);
   const safeInitial = initialIndex >= 0 ? initialIndex : 0;
   const [selectedIndex, setSelectedIndex] = useState(safeInitial);
 
   useEffect(() => {
-    returns(keys[selectedIndex]);
-  }, [selectedIndex, keys, returns]);
+    outChainId(chainIds[selectedIndex]);
+  }, [selectedIndex, keys, outChainId]);
 
   // Handle image click to move slider
   const handleIconClick = (index: number) => {
@@ -66,36 +68,32 @@ export default function BNetworkSlider({
         </Slider.Root>
 
         {/* Icons – first/last pinned, middle evenly spaced */}
-        <div className="mt-4 w-full flex items-center">
-          {keys.map((_, index) => {
-            const isSelected = index === selectedIndex;
-            const isFirst = index === 0;
-            const isLast = index === keys.length - 1;
+        <div className="mt-4 w-full flex items-center justify-between">
+  {keys.map((_, index) => {
+    const isSelected = index === selectedIndex
 
-            // Flex for middle icons to expand evenly
-            const flexClass = isFirst || isLast ? "" : "flex-1";
-
-            return (
-              <div
-                key={index}
-                className={`flex flex-col items-center ${flexClass}`}
-                onClick={() => handleIconClick(index)} // Add onClick handler here
-              >
-                <img
-                  src={isSelected ? icons[index] : bwIcons[index]}
-                  alt={names[index]}
-                  className={`transition-all duration-300 object-contain cursor-pointer ${
-                    isSelected ? "scale-110 opacity-100" : "scale-90 opacity-70"
-                  }`}
-                  style={{
-                    width: `${iconSize}px`,
-                    height: `${iconSize}px`,
-                  }}
-                />
-              </div>
-            );
-          })}
-        </div>
+    return (
+      <div
+        key={index}
+        className="flex items-center justify-center"
+        style={{ width: `${iconSize}px` }} // fixed slot width
+        onClick={() => handleIconClick(index)}
+      >
+        <img
+          src={isSelected ? icons[index] : bwIcons[index]}
+          alt={names[index]}
+          className={`transition-all duration-300 object-contain cursor-pointer ${
+            isSelected ? "scale-110 opacity-100" : "scale-90 opacity-70"
+          }`}
+          style={{
+            width: `${iconSize}px`,
+            height: `${iconSize}px`,
+          }}
+        />
+      </div>
+    )
+  })}
+</div>
       </div>
 
       {/* Selected label */}

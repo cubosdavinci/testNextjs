@@ -2,14 +2,11 @@
 
 import { useEffect, useState } from "react";
 import * as Slider from "@radix-ui/react-slider";
+import { getWalletKeys, getWalletNames, getWalletIcons, getWalletBWIcons } from "@/lib/web3/wallets";
 
 interface WalletSliderProps {
   value: string;
   sliderName: string;
-  keys: string[];
-  names: string[];
-  icons: string[];
-  bwIcons: string[];
   iconSize?: number;
   returns: (val: string) => void;
 }
@@ -17,13 +14,13 @@ interface WalletSliderProps {
 export default function WalletSlider({
   value,
   sliderName,
-  keys,
-  names,
-  icons,
-  bwIcons,
   iconSize = 32,
   returns,
 }: WalletSliderProps) {
+  const keys = getWalletKeys();
+  const names= getWalletNames();
+  const icons=getWalletIcons();
+  const bwIcons=getWalletBWIcons();
   const initialIndex = keys.indexOf(value);
   const safeInitial = initialIndex >= 0 ? initialIndex : 0;
   const [selectedIndex, setSelectedIndex] = useState(safeInitial);
@@ -39,7 +36,9 @@ export default function WalletSlider({
 
   return (
     <div className="flex flex-col items-center w-full">
-      <h3 className="mb-4 text-lg font-semibold text-gray-700">{sliderName}</h3>
+      <h3 className="mb-4 text-lg font-semibold text-gray-700">
+        {sliderName}
+      </h3>
 
       <div className="relative w-full max-w-md mx-auto px-2">
         {/* Slider */}

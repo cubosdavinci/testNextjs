@@ -1,11 +1,10 @@
 @import "tailwindcss";
-/*@tailwind base;
-@tailwind components;
-@tailwind utilities;*/
+
 
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --headers-color: #240952;
 }
 
 @theme inline {
@@ -26,4 +25,65 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* -------------------------
+   Base styles
+-------------------------- */
+@layer base {
+  body {
+    @apply bg-[rgb(var(--background))] text-[rgb(var(--foreground))] font-sans;
+  }
+
+  /* Headings hierarchy */
+  h1, h2, h3, h4, h5, h6 { color: var(--headers-color);}
+  
+  h1 {
+    @apply text-4xl font-bold tracking-tight;
+  }
+
+  h2 {
+    @apply text-3xl font-semibold tracking-tight;
+  }
+
+  h3 {
+    @apply text-2xl font-semibold;
+  }
+
+  h4 {
+    @apply text-xl font-semibold tracking-wide text-center;
+  }
+
+  h5 {
+    @apply text-blue-800 text-lg font-medium tracking-wide;
+  }
+
+  h6 {
+    @apply text-base font-medium uppercase tracking-wide;
+  }
+
+  p {
+    @apply text-base leading-relaxed;
+  }
+}
+
+@layer components {
+  .info-link {
+    @apply relative inline-flex items-center justify-center text-green-700 transition-colors;
+  }
+
+  .info-link:hover {
+    @apply hover:font-semibold;
+  }
+
+  .info-link .tooltip {
+    @apply pointer-events-none absolute bottom-full mb-2 w-max 
+           rounded-md bg-gray-900 px-2 py-1 text-xs text-white 
+           opacity-0 transition-opacity;
+    z-index: 10;
+  }
+
+  .info-link:hover .tooltip {
+    @apply opacity-100;
+  }
 }
