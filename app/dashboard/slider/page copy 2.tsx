@@ -5,12 +5,14 @@ import { useState, useEffect } from "react";
 import { preloadIcons } from "@/lib/web3/preloadIcons";
 import WalletSlider from "components/radix-ui-slider/WalletSlider"; // import the WalletSlider
 import BNetworkSlider from "components/radix-ui-slider/BNetworkSlider"; // import the BNetworkSlider
+import { getWalletKeys, getWalletNames, getBNetworkBWIcons, getBNetworkIcons, getBNetworkKeys, getBNetworkNames, getWalletBWIcons, getWalletIcons, SUPPORTED_BNETWORKS, getBNetworkChainIds } from "@/lib/web3/wallets";
 
 // Helper functions for generating dynamic keys, names, icons, and bwIcons
 // lib/web3/wallets/types/SupportedBNetworks.ts
 
 export default function Page() {
   const [selectedWallet, setSelectedWallet] = useState("io.metamask");
+  const [selectedBNetwork, setSelectedBNetwork] = useState("arbitrum");
   const [selectedChainId, setSelectedChainId] = useState<number>();
   const [selectedToken, setSelectedToken] = useState<string>();
   
@@ -49,7 +51,7 @@ export default function Page() {
       {/* BNetworkSlider component */}
       <BNetworkSlider
         sliderName="Select Network"
-        value={selectedChainId!}
+        value={selectedBNetwork}
         outChainId={(val: number) => setSelectedChainId(val)}
         outToken={(val: string) => setSelectedToken(val)}
       />

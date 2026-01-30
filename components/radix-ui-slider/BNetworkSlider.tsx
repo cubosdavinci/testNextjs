@@ -7,7 +7,6 @@ import {
   getBNetworkBWIcons,
   getBNetworkChainIds,
   getBNetworkIcons,
-  getBNetworkKeys,
   getBNetworkNames,
   getBNetworkUrls,
 } from "@/lib/web3/wallets";
@@ -15,8 +14,8 @@ import {
 import TokenSlider from "./TokenSlider";
 
 interface BNetworkSliderProps {
-  value: string;
   sliderName: string;
+  value: number; // chainId now
   iconSize?: number;
   outChainId: (val: number) => void;
   outToken: (val: string) => void;
@@ -29,14 +28,14 @@ export default function BNetworkSlider({
   outChainId,
   outToken,
 }: BNetworkSliderProps) {
-  const keys = getBNetworkKeys();
-  const names = getBNetworkNames();
   const chainIds = getBNetworkChainIds();
+  const names = getBNetworkNames();
   const icons = getBNetworkIcons();
   const bwIcons = getBNetworkBWIcons();
   const urls = getBNetworkUrls();
 
-  const initialIndex = keys.indexOf(value);
+  // Use chainId as the key
+  const initialIndex = chainIds.indexOf(value);
   const safeInitial = initialIndex >= 0 ? initialIndex : 0;
 
   const [selectedIndex, setSelectedIndex] = useState(safeInitial);
@@ -93,7 +92,7 @@ export default function BNetworkSlider({
           className="relative flex h-5 w-full touch-none select-none items-center"
           value={[selectedIndex]}
           onValueChange={(vals) => setSelectedIndex(vals[0])}
-          max={keys.length - 1}
+          max={chainIds.length - 1}
           step={1}
         >
           <Slider.Track
@@ -113,12 +112,12 @@ export default function BNetworkSlider({
 
         {/* Network Icons */}
         <div className="mt-4 w-full flex items-center justify-between">
-          {keys.map((_, index) => {
+          {chainIds.map((_, index) => {
             const isSelected = index === selectedIndex;
 
             return (
               <div
-                key={index}
+                key={chainIds[index]}
                 className="flex items-center justify-center"
                 style={{ width: `${iconSize}px` }}
                 onClick={() => handleIconClick(index)}

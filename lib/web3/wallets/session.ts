@@ -1,3 +1,4 @@
+// lib/web3/wallets/session.ts
 import { connectWallet } from "./connect"
 import { attachWalletEvents } from "./events"
 

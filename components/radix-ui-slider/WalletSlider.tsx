@@ -36,9 +36,9 @@ export default function WalletSlider({
 
   return (
     <div className="flex flex-col items-center w-full">
-      <h3 className="mb-4 text-lg font-semibold text-gray-700">
+      <h4>
         {sliderName}
-      </h3>
+      </h4>
        {/* Selected value + link */}
       <div className="flex items-center justify-center gap-2">
         <h5>{names[selectedIndex]}</h5>    
