@@ -1,8 +1,9 @@
+"use client"
 // lib/web3/wallets/db/repository.ts
 import { createAnonClient } from "@/lib/supabase/client"
 import type { UserWalletDbRow } from "./types/UserWalletDbRow"
 import { mapUserWalletRow, mapUserWalletRows } from "./mapping"
-import { NewWalletInput } from "./types/NewWalletInput"
+import { INewWalletInput } from "./types/INewWalletInput"
 
 export class WalletRepository {
   private supabase = createAnonClient()
@@ -19,14 +20,15 @@ export class WalletRepository {
     return mapUserWalletRows(data)
   }
 
-  async addWallet(input: NewWalletInput):Promise<UserWalletDbRow | undefined> {
+  async addWallet(input: INewWalletInput):Promise<UserWalletDbRow | undefined> {
 
+    console.log("New Wallet Input: ", input)
     const {data: inserted, error: insertError} = await this.supabase
         .from("web3_user_wallets")
         .insert(input)
         .select("id")
         .single()
-
+    console.log("Inserted Row", inserted)
     if (insertError) throw insertError
 
     

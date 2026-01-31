@@ -1,13 +1,15 @@
+"use client"
 import { WalletRepository } from "./db/repository"
 import { SUPPORTED_BNETWORKS } from "."
 import { detectWallets } from "./providers"
 import { verifyWalletOwnership } from  "./connect"
+import { NewWalletInput } from "./db/types/NewWalletInput"
 
 
 export class WalletService {
   private repo = new WalletRepository()
 
-  async getWallets() {
+  async getPersistedWallets() {
     return this.repo.getUserWallets()
   }
 
@@ -23,12 +25,14 @@ export class WalletService {
   }) {
     const address = await verifyWalletOwnership(params.provider)
 
-    return this.repo.addWallet({
-      wallet_provider: params.wallet_provider,
-      wallet_address: address.toLowerCase(),
-      chain_id: params.chain_id,
-      token_address: params.token_address.toLowerCase()
-    })
+    const newWallet = new NewWalletInput(
+      "",
+      params.wallet_provider,
+      address.toLocaleLowerCase(),
+      params.chain_id, 
+      params.token_address
+    )
+    return this.repo.addWallet(newWallet.toJSON())
   }
 
   getSupportedNetworks() {

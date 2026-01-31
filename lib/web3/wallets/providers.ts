@@ -1,5 +1,5 @@
 // lib/web3/wallets/providers.ts
-
+"use client";
 export type Eip1193Provider = {
   // A method that takes a request object and returns a Promise
   request: (args: {
@@ -41,6 +41,6 @@ export async function detectWallets(): Promise<DiscoveredWallet[]> {
     setTimeout(() => {
       window.removeEventListener("eip6963:announceProvider", handler);
       resolve(wallets);
-    }, 300);
+    }, 500);
   });
 }
