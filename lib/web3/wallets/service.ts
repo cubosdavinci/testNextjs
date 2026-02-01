@@ -22,6 +22,7 @@ export class WalletService {
     wallet_provider: string
     chain_id: number
     token_address: string
+    token_sym: string
   }) {
     const address = await verifyWalletOwnership(params.provider)
 
@@ -30,7 +31,8 @@ export class WalletService {
       params.wallet_provider,
       address.toLocaleLowerCase(),
       params.chain_id, 
-      params.token_address
+      params.token_address,
+      params.token_sym,
     )
     return this.repo.addWallet(newWallet.toJSON())
   }

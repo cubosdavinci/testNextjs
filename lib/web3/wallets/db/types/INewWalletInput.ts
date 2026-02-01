@@ -4,4 +4,5 @@ export interface INewWalletInput {
   wallet_address: string;
   chain_id: number;
   token_address: string;
+  token_sym: string;
 }

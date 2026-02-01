@@ -1,5 +1,6 @@
 import { z } from "zod/v4"
 import { SUPPORTED_WALLET_PROVIDER_KEYS } from "../../types/SupportedWalletProviders"
+import { getTokenSym } from "../../types/SupportedBNetworks";
 
 export const NewWalletInputSchema = z.object({
     user_id: z
@@ -51,7 +52,21 @@ export const NewWalletInputSchema = z.object({
       })
     }
   }),
-})/*.superRefine((obj, ctx) => {
+  token_sym: z.string()
+}).superRefine((data, ctx) => {
+    const { chain_id, token_address, token_sym } = data
+
+    const sym = getTokenSym(chain_id, token_address)
+
+    if (!sym || sym !== token_sym) {
+      ctx.addIssue({
+        path: ["token_sym"],
+        code: "custom",
+        message: `Invalid token symbol '${token_sym}'`,
+      })
+    }
+  })
+/*.superRefine((obj, ctx) => {
     const errors: string[] = [];
 
     // Check each field individually

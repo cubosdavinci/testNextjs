@@ -10,7 +10,7 @@ import BNetworkSlider from "components/radix-ui-slider/BNetworkSlider"; // impor
 import { WalletService } from "wallet/service";
 import { detectWallets } from "wallet/providers";
 import { validateNetwork } from "wallet/connect";
-import { SUPPORTED_BNETWORKS } from "@/lib/web3/wallets";
+import { getTokenAddress, SUPPORTED_BNETWORKS } from "@/lib/web3/wallets";
 import { ZodError } from "zod/v4";
 
 
@@ -40,6 +40,7 @@ const [step, setStep] = useState<Step>("idle")
 const [modalOpen, setModalOpen] = useState(false)
 const [status, setStatus] = useState<string>("")
 const [error, setError] = useState<string | null>(null)
+const [modalError, setModalError] = useState<string | null>(null)
 /*
 async function handleRegister() {
   try {
@@ -94,9 +95,15 @@ async function handleRegister() {
 async function startWizard() {
   try {
     setError(null)
+    setModalError(null)
+    // 1️⃣ Discover provider
+    if (!walletAddress) {
+      setError("You must enter a wallet address")
+      return
+    }
+
     setModalOpen(true)
 
-    // 1️⃣ Discover provider
     setStep("connecting")
     setStatus("Looking for wallet provider...")
 
@@ -111,6 +118,7 @@ async function startWizard() {
       throw new Error("Wallet provider not found")
     }
 
+
     const provider = discovered.provider
 
     // 2️⃣ Connect + verify
@@ -120,7 +128,8 @@ async function startWizard() {
       provider,
       wallet_provider: selectedWallet,
       chain_id: selectedChainId!,
-      token_address: selectedToken!,
+      token_sym: selectedToken!,
+      token_address: getTokenAddress(selectedChainId!, selectedToken!)!
     })
 
     // 3️⃣ Network
@@ -139,12 +148,12 @@ async function startWizard() {
     // 5️⃣ Save
     setStep("saving")
     setStatus("Saving wallet to database...")
-    await walletService.connectAndSaveWallet({
+   /* await walletService.connectAndSaveWallet({
       provider,
       wallet_provider: selectedWallet,
       chain_id: selectedChainId!,
       token_address: selectedToken!,
-    })
+    })*/
 
     setStep("done")
     setStatus("Wallet successfully registered 🎉")
@@ -158,11 +167,11 @@ async function startWizard() {
       errors.push(issue.message)
       console.error(issue.message);
     }
-    setError(errors.join('\n') || "Registration failed")
+    setModalError(errors.join('\n') || "Registration failed")
     setStep("idle")
   }else if (err instanceof Error){
     console.error(err)
-    setError(err.message || "Registration failed")
+    setModalError(err.message || "Registration failed")
     setStep("idle")
     }
   }
@@ -269,6 +278,12 @@ async function startWizard() {
 >
   {isRegistering ? "Registering Wallet..." : "Register New Wallet"}
 </button>
+{error && (
+  <div className="text-sm text-red-600">
+    {error}
+  </div>
+)}
+
 
 
       {modalOpen && (
@@ -306,15 +321,13 @@ async function startWizard() {
             {status}
           </div>
 
-          {error && (
+          {modalError && (
             <div className="text-sm text-red-600">
-              {error.split("\n").map((line, index) => (
+              {modalError.split("\n").map((line, index) => (
                 <div key={index}>{line}</div>
               ))}
             </div>
           )}
-
-
           <div className="flex justify-end gap-2">
             <button
               onClick={() => setModalOpen(false)}

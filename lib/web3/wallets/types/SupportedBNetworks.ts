@@ -392,3 +392,47 @@ export const getTokenUrls = (chainId: number): string[] => {
     : [];
 };
 
+export function getTokenSym(
+  chain_id?: number,
+  token_address?: string
+): string | null {
+  if (
+    typeof chain_id !== "number" ||
+    typeof token_address !== "string"
+  ) {
+    return null
+  }
+
+  const network = SUPPORTED_BNETWORKS.find(
+    (n) => n.chainId === chain_id
+  )
+
+  if (!network) return null
+
+  const token = network.tokens.find(
+    (t) =>
+      t.erc20Options.chainId === chain_id &&
+      t.erc20Options.address.toLowerCase() === token_address.toLowerCase()
+  )
+
+  return token?.symbol ?? null
+}
+
+export function getTokenAddress(
+  chainId: number,
+  tokenSym: string
+): string | null {
+  if (typeof chainId !== "number" || !tokenSym) return null;
+
+  const network = SUPPORTED_BNETWORKS.find(n => n.chainId === chainId);
+  if (!network) return null;
+
+  const token = network.tokens.find(
+    t => t.symbol.toLowerCase() === tokenSym.toLowerCase()
+  );
+
+  return token?.erc20Options.address ?? null;
+}
+
+
+
