@@ -1,7 +1,7 @@
-import { z, ZodError } from "zod/v4"
+import { z } from "zod/v4"
 import { SUPPORTED_WALLET_PROVIDER_KEYS } from "../../types/SupportedWalletProviders"
 import { getTokenSym } from "../../types/SupportedBNetworks";
-import { Web3AddressSchema } from "@/lib/zod/Web3AddressSchema";
+
 export const NewWalletInputSchema = z.object({
     user_id: z
     .string()
@@ -28,22 +28,14 @@ export const NewWalletInputSchema = z.object({
     }
   ),
 
-wallet_address: z.string().superRefine((val, ctx) => {
-  try {
-    const validated = Web3AddressSchema.parse(val);
-    if (!validated){
-          ctx.addIssue({
-      code: "custom",
-      message: `Wallet Address can''t be empty`,
-    });
+  wallet_address: z.string().superRefine((val, ctx) => {
+    if (!/^0x[a-fA-F0-9]{40}$/.test(val)) {
+      ctx.addIssue({
+        code: "custom",
+        message: `Invalid wallet address: ${val}`,
+      })
     }
-  } catch (err: any) { // TypeScript requires 'any' here
-    ctx.addIssue({
-      code: "custom",
-      message: err.issues[0].message,
-    });
-  }
-}),
+  }),
 
   chain_id: z.number().superRefine((val, ctx) => {
     if (!Number.isInteger(val) || val <= 0) {

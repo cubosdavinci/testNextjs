@@ -1,87 +1,13 @@
 // lib/web3/wallets/connect.ts
 import { ethers } from "ethers"
 import { WalletError, WalletErrorCode, normalizeProviderError } from "wallet/errors"
-import { SUPPORTED_BNETWORKS } from "."
+import { ensureNetwork } from "./helpers/ensureNetwork"
+import { ensureERC20Token } from "./helpers/ensureERC20Token"
+import { findNetwork } from "./helpers/findNetwork"
+import type { Eip1193Provider } from "./providers"
+import { SUPPORTED_BNETWORKS } from "./types/SupportedBNetworks"
 
 
-/**
- * Connects wallet and returns verified address
- */
-export async function connectWallet(
-  provider: any
-): Promise<{
-  address: string
-  chainId: number
-}> {
-  if (!provider) {
-    throw new WalletError(
-      WalletErrorCode.PROVIDER_NOT_FOUND,
-      "No wallet provider detected"
-    )
-  }
-
-  try {
-    // Request account access
-    const accounts: string[] = await provider.request({
-      method: "eth_requestAccounts"
-    })
-
-    if (!accounts?.length) {
-      throw new WalletError(
-        WalletErrorCode.CONNECTION_REJECTED,
-        "No wallet accounts returned"
-      )
-    }
-
-    const chainIdHex = await provider.request({
-      method: "eth_chainId"
-    })
-
-    const chainId = parseInt(chainIdHex, 16)
-
-    return {
-      address: normalizeAddress(accounts[0]),
-      chainId
-    }
-  } catch (err: any) {
-    throw normalizeProviderError(err)
-  }
-}
-
-export async function verifyWalletOwnership(
-  provider: any
-): Promise<string> {
-  const { address } = await connectWallet(provider)
-
-  const nonce = generateNonce()
-
-  const message = buildMessage(nonce)
-
-  let signature: string
-
-  try {
-    signature = await provider.request({
-      method: "personal_sign",
-      params: [message, address]
-    })
-  } catch {
-    throw new WalletError(
-      WalletErrorCode.SIGNATURE_REJECTED,
-      "User rejected signature request"
-    )
-  }
-
-  const recovered = ethers.verifyMessage(message, signature)
-
-  if (normalizeAddress(recovered) !== normalizeAddress(address)) {
-    throw new WalletError(
-      WalletErrorCode.SIGNATURE_INVALID,
-      "Signature verification failed"
-    )
-  }
-
-  return normalizeAddress(address)
-}
 
 export function validateNetwork(chainId: number) {
   const supported = SUPPORTED_BNETWORKS.find(
@@ -97,9 +23,77 @@ export function validateNetwork(chainId: number) {
 
   return supported
 }
+/**
+ * Full wallet onboarding flow using a discovered provider
+ */
+export async function onboardWallet(params: {
+  provider: Eip1193Provider
+  expectedChainId: number
+  token: {
+    address: string
+    symbol: string
+    decimals: number
+    icon?: string
+  }
+}) {
+  const { provider, expectedChainId, token } = params
 
-function generateNonce(): string {
-  return crypto.randomUUID()
+  if (!provider) {
+    throw new WalletError(
+      WalletErrorCode.PROVIDER_NOT_FOUND,
+      "No wallet provider detected"
+    )
+  }
+
+  try {
+    // 1️⃣ Connect wallet
+    const accounts: string[] = (await provider.request({
+      method: "eth_requestAccounts"
+    })) as string[]
+
+    if (!accounts?.length) {
+      throw new WalletError(
+        WalletErrorCode.CONNECTION_REJECTED,
+        "No wallet accounts returned"
+      )
+    }
+
+    const address = normalizeAddress(accounts[0])
+
+    // 2️⃣ Verify ownership via signature
+    const nonce = crypto.randomUUID()
+    const message = buildMessage(nonce)
+
+    const signature = (await provider.request({
+      method: "personal_sign",
+      params: [message, address]
+    })) as string
+
+    const recovered = ethers.verifyMessage(message, signature)
+    if (normalizeAddress(recovered) !== address) {
+      throw new WalletError(
+        WalletErrorCode.SIGNATURE_INVALID,
+        "Signature verification failed"
+      )
+    }
+
+    // 3️⃣ Network validation
+    const network = findNetwork(expectedChainId)
+
+    // 4️⃣ Switch or add network if needed
+    await ensureNetwork(provider, network.options)
+
+    // 5️⃣ Add ERC20 token if needed
+    await ensureERC20Token(provider, token)
+
+    return {
+      address,
+      chainId: expectedChainId,
+      network
+    }
+  } catch (err) {
+    throw normalizeProviderError(err)
+  }
 }
 
 function buildMessage(nonce: string) {
@@ -107,7 +101,7 @@ function buildMessage(nonce: string) {
 Welcome to MyApp
 
 Sign this message to verify wallet ownership.
-This will not trigger a blockchain transaction.
+No blockchain transaction will occur.
 
 Nonce:
 ${nonce}
@@ -117,4 +111,3 @@ ${nonce}
 export function normalizeAddress(address: string): string {
   return ethers.getAddress(address).toLowerCase()
 }
-

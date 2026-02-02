@@ -1,35 +1,20 @@
-import { validateNetwork } from "../connect"
+import { EIP3085CustNetwork } from "wallet/types/SupportedBNetworks"
 
 export async function ensureNetwork(
   provider: any,
-  chainId: number
+  network: EIP3085CustNetwork
 ) {
-  const network = validateNetwork(chainId)
-
-  const hexChainId = `0x${chainId.toString(16)}`
-
   try {
+    // Try switching first
     await provider.request({
       method: "wallet_switchEthereumChain",
-      params: [{ chainId: hexChainId }]
+      params: [{ chainId: network.chainId }]
     })
-  } catch (err: any) {
-    // If network doesn't exist, add it
-    if (err.code === 4902) {
-      await provider.request({
-        method: "wallet_addEthereumChain",
-        params: [
-          {
-            chainId: hexChainId,
-            chainName: network.name,
-            nativeCurrency: network.nativeCurrency,
-            rpcUrls: network.rpcUrls,
-            blockExplorerUrls: network.blockExplorerUrls
-          }
-        ]
-      })
-    } else {
-      throw err
-    }
+  } catch {
+    // If it doesn't exist, add it
+    await provider.request({
+      method: "wallet_addEthereumChain",
+      params: [network]
+    })
   }
 }

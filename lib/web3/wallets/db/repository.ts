@@ -8,6 +8,25 @@ import { INewWalletInput } from "./types/INewWalletInput"
 export class WalletRepository {
   private supabase = createAnonClient()
 
+     // Method inside the class
+  async getSignedInUser(): Promise<string> {
+    // Get the current user
+    const { data: { user }, error } = await this.supabase.auth.getUser();
+
+    if (error) {
+      // rethrow any error
+      throw error;
+    }
+
+    // If no user is signed in, return '(empty)'
+    if (!user || !user.id) {
+      return '(empty)';
+    }
+
+    return user.id; // return the logged-in user's UUID
+  }
+
+
   async getUserWallets(): Promise<UserWalletDbRow[] | undefined> {
     const { data, error } = await this.supabase
       .from("web3_user_wallets_v")
@@ -26,20 +45,27 @@ export class WalletRepository {
     const {data: inserted, error: insertError} = await this.supabase
         .from("web3_user_wallets")
         .insert(input)
-        .select("id")
+        .select()
         .single()
+
     console.log("Inserted Row", inserted)
-    if (insertError) throw insertError
+    if (insertError) {
+      console.log("DB Error: ", insertError.message)
+      insertError.message = "The wallet couldn't be added"
+      throw insertError
+    }
 
     
   // 2️⃣ fetch full row from the view USING THE ID
     const { data, error } = await this.supabase
         .from("web3_user_wallets_v")
-        .select("*")
-        .eq("id", inserted.id)   // 🔥 critical
-        .single()
+        .select()
+        .eq("id", inserted.id)
+        .eq("user_id", inserted.user_id)   // 🔥 critical
 
     if (error) throw error
+
+    console.log("Returned View", data)
 
     return mapUserWalletRow(data)
   }

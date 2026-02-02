@@ -1,43 +1,47 @@
-"use client"
 import { WalletRepository } from "./db/repository"
-import { SUPPORTED_BNETWORKS } from "."
-import { detectWallets } from "./providers"
-import { verifyWalletOwnership } from  "./connect"
+import { detectWallets, DiscoveredWallet, Eip1193Provider } from "./providers"
+import { onboardWallet } from "./connect"
 import { NewWalletInput } from "./db/types/NewWalletInput"
-
 
 export class WalletService {
   private repo = new WalletRepository()
-
-  async getPersistedWallets() {
-    return this.repo.getUserWallets()
-  }
 
   async discoverProviders() {
     return detectWallets()
   }
 
-  async connectAndSaveWallet(params: {
-    provider: any
-    wallet_provider: string
-    chain_id: number
-    token_address: string
-    token_sym: string
-  }) {
-    const address = await verifyWalletOwnership(params.provider)
-
-    const newWallet = new NewWalletInput(
-      "",
-      params.wallet_provider,
-      address.toLocaleLowerCase(),
-      params.chain_id, 
-      params.token_address,
-      params.token_sym,
-    )
-    return this.repo.addWallet(newWallet.toJSON())
+  async getSignedInUser(): Promise<string> {
+    return this.repo.getSignedInUser()
   }
+  
+  async connectAndSaveWallet(params: {
+    user_id: string
+    provider: Eip1193Provider
+    wallet_provider: string
+    wallet_address: string | undefined
+    chain_id: number
+    token: {
+      address: string
+      symbol: string
+      decimals: number
+      icon?: string
+    }
+  }) {
+    const session = await onboardWallet({
+      provider: params.provider,
+      expectedChainId: params.chain_id,
+      token: params.token
+    })
 
-  getSupportedNetworks() {
-    return SUPPORTED_BNETWORKS
+    const input = new NewWalletInput(
+      params.user_id,
+      params.wallet_provider,
+      session.address,
+      session.chainId,
+      params.token.address,
+      params.token.symbol
+    )
+
+    return this.repo.addWallet(input.toJSON())
   }
 }

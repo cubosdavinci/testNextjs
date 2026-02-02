@@ -24,7 +24,7 @@ export enum NetworkKey {
   Amoy = "Polygon Amoy Testnet"
 }
 
-interface AddEthereumChainParameter {
+export interface AddEthereumChainParameter{
   chainId: string;
   blockExplorerUrls?: string[];
   chainName?: string;
@@ -434,5 +434,6 @@ export function getTokenAddress(
   return token?.erc20Options.address ?? null;
 }
 
+export type EIP3085CustNetwork = AddEthereumChainParameter;
 
 
