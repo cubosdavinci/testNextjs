@@ -55,12 +55,21 @@ return (
     <p className="mt-4 text-muted-foreground">
       Welcome back, {user?.email}
     </p>
-     <button
-      onClick={handleLogout}
-      className="rounded bg-red-500 px-4 py-2 text-white hover:bg-red-600"
-    >
-      Logout
-    </button>
+     <div className="mt-6 flex justify-center gap-4">
+  <button
+    onClick={() => router.push("/dashboard/slider")}
+    className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
+  >
+    Go to Slider
+  </button>
+
+  <button
+    onClick={handleLogout}
+    className="rounded bg-red-500 px-4 py-2 text-white hover:bg-red-600"
+  >
+    Logout
+  </button>
+</div>
 
     <details className="mt-6 rounded border border-border bg-muted">
   <summary className="cursor-pointer select-none px-4 py-2 font-medium">

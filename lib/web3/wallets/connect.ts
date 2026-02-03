@@ -8,6 +8,51 @@ import type { Eip1193Provider } from "./providers"
 import { SUPPORTED_BNETWORKS } from "./types/SupportedBNetworks"
 
 
+/**
+ * Connects wallet and returns verified address
+ */
+export async function connectWallet(
+  provider: any
+): Promise<{
+  address: string
+  chainId: number
+}> {
+  
+  if (!provider) {
+    throw new WalletError(
+      WalletErrorCode.PROVIDER_NOT_FOUND,
+      "No wallet provider detected"
+    )
+  }
+
+  try {
+    // Request account access
+    const accounts: string[] = await provider.request({
+      method: "eth_requestAccounts"
+    })
+
+    if (!accounts?.length) {
+      throw new WalletError(
+        WalletErrorCode.CONNECTION_REJECTED,
+        "No wallet accounts returned"
+      )
+    }
+
+    const chainIdHex = await provider.request({
+      method: "eth_chainId"
+    })
+
+    const chainId = parseInt(chainIdHex, 16)
+
+    return {
+      address: normalizeAddress(accounts[0]),
+      chainId
+    }
+  } catch (err: any) {
+    throw normalizeProviderError(err)
+  }
+}
+
 
 export function validateNetwork(chainId: number) {
   const supported = SUPPORTED_BNETWORKS.find(
