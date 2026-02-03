@@ -1,5 +1,5 @@
 import { login, signup, signInWithGoogle } from './actions'
-import EthereumLoginButton from './EthereumLoginButton' // <-- import it
+import EthereumLoginButton from './Web3SignIn' // <-- import it
 
 export default function LoginPage() {
   console.log('Page: app/login')

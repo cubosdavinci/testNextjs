@@ -4,6 +4,7 @@ import { createAnonClient } from "@/lib/supabase/client"
 import type { UserWalletDbRow } from "./types/UserWalletDbRow"
 import { mapUserWalletRow, mapUserWalletRows } from "./mapping"
 import { INewWalletInput } from "./types/INewWalletInput"
+import { getWalletErrorMessage } from "../errors"
 
 export class WalletRepository {
   private supabase = createAnonClient()
@@ -50,9 +51,9 @@ export class WalletRepository {
 
     console.log("Inserted Row", inserted)
     if (insertError) {
-      console.log("DB Error: ", insertError.message)
-      insertError.message = "The wallet couldn't be added"
-      throw insertError
+      const message = getWalletErrorMessage("ADD_WALLET", insertError.code) ?? `The wallet couldn''t be added.`; 
+      console.log(message)
+      throw new Error(message)
     }
 
     

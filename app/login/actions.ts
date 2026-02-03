@@ -5,6 +5,35 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { consoleLog } from '@/lib/utils'
 
+
+export async function web3LoginWithTurnstile(walletProvider: any, turnstileToken: string) {
+  // 1️⃣ Verify Turnstile server-side
+  const verifyRes = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      secret: process.env.CF_TURNSTILE_SECRET!,
+      response: turnstileToken,
+    }),
+  });
+
+  const verification = await verifyRes.json();
+
+  if (!verification.success) {
+    throw new Error("Captcha verification failed");
+  }
+
+  // 2️⃣ Call Supabase Web3 login
+  const supabase = await createClient(); // server client
+  const { data, error } = await supabase.auth.signInWithWeb3({
+    chain: "ethereum",
+    statement: "Sign in to MyApp (web3 secure access)",
+  });
+
+  if (error) throw new Error(error.message);
+  return data;
+}
+
 export async function login(formData: FormData) {
   console.log("Server Action: login (app/login/actions.ts)")
 

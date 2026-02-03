@@ -39,15 +39,6 @@ export default function DashboardPage() {
     );
   }
 
-  const handleLogout = async () => {
-  const { error } = await supabase.auth.signOut();
-  if (error) {
-    console.error("Logout failed:", error.message);
-    return;
-  }
-  router.replace("/"); // Redirect to home
-};
-
 return (
   <main className="p-8">
     <h1 className="text-2xl font-bold">Dashboard</h1>
@@ -55,12 +46,6 @@ return (
     <p className="mt-4 text-muted-foreground">
       Welcome back, {user?.email}
     </p>
-     <button
-      onClick={handleLogout}
-      className="rounded bg-red-500 px-4 py-2 text-white hover:bg-red-600"
-    >
-      Logout
-    </button>
 
     <details className="mt-6 rounded border border-border bg-muted">
   <summary className="cursor-pointer select-none px-4 py-2 font-medium">
@@ -109,6 +94,5 @@ return (
   </tbody>
 </table>
   </main>
-  
 );
 }

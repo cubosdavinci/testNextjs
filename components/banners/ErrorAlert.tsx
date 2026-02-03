@@ -1,3 +1,4 @@
+// components/banners/ErrorAlert.tsx
 'use client';
 
 import { ReactNode } from "react";

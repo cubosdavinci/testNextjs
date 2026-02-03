@@ -37,52 +37,6 @@ export default function LoginPage() {
         <span className="bg-gray-100 px-2 text-sm text-gray-500">or</span>
       </div>
 
-      {/* Email / Password Form */}
-      <form className="space-y-4" action={login}>
-        <h1 className="text-center text-2xl font-semibold">Sign in</h1>
-
-        <div>
-          <label htmlFor="email" className="block font-semibold">
-            Email
-          </label>
-          <input
-            id="email"
-            name="email"
-            type="email"
-            required
-            className="mt-1 w-full rounded border px-3 py-2"
-          />
-        </div>
-
-        <div>
-          <label htmlFor="password" className="block font-semibold">
-            Password
-          </label>
-          <input
-            id="password"
-            name="password"
-            type="password"
-            required
-            className="mt-1 w-full rounded border px-3 py-2"
-          />
-        </div>
-
-        <div className="flex gap-2">
-          <button
-            type="submit"
-            className="flex-1 rounded bg-blue-600 py-2 font-semibold text-white"
-          >
-            Log in
-          </button>
-          <button
-            type="button"
-            formAction={signup} // Optional: separate server action
-            className="flex-1 rounded bg-gray-300 py-2 font-semibold"
-          >
-            Sign up
-          </button>
-        </div>
-      </form>
     </div>
   );
 }

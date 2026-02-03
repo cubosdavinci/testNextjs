@@ -1,82 +1,113 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { preloadIcons } from "@/lib/web3/preloadIcons"
-import WalletSlider from "components/radix-ui-slider/WalletSlider"
-import BNetworkSlider from "components/radix-ui-slider/BNetworkSlider"
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { getClientSession } from "@/lib/supabase/auth";
 
-import { WalletService } from "wallet/service"
-import { detectWallets } from "wallet/providers"
-import { validateNetwork } from "wallet/connect"
-import { getTokenAddress } from "@/lib/web3/wallets"
-import { Web3AddressSchema } from "@/lib/zod/Web3AddressSchema"
-import { ZodError } from "zod/v4"
-import { AuthApiError } from "@supabase/supabase-js"
+import { preloadIcons } from "@/lib/web3/preloadIcons";
+import WalletSlider from "components/radix-ui-slider/WalletSlider";
+import BNetworkSlider from "components/radix-ui-slider/BNetworkSlider";
 
-const walletService = new WalletService()
+import { WalletService } from "wallet/service";
+import { detectWallets } from "wallet/providers";
+import { validateNetwork } from "wallet/connect";
+import { getTokenAddress } from "@/lib/web3/wallets";
+import { Web3AddressSchema } from "@/lib/zod/Web3AddressSchema";
+import { ZodError } from "zod/v4";
+import { AuthApiError } from "@supabase/supabase-js";
 
-type Step = "idle" | "connecting" | "network" | "token" | "saving" | "done"
+const walletService = new WalletService();
+
+type Step = "idle" | "connecting" | "network" | "token" | "saving" | "done";
 
 export default function Page() {
-  const [selectedWallet, setSelectedWallet] = useState("io.metamask")
-  const [selectedChainId, setSelectedChainId] = useState<number>()
-  const [selectedToken, setSelectedToken] = useState<string>()
-  const [walletAddress, setWalletAddress] = useState<string>("")
+  const [session, setSession] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
-  const [isRegistering, setIsRegistering] = useState(false)
-  const [step, setStep] = useState<Step>("idle")
-  const [modalOpen, setModalOpen] = useState(false)
-  const [status, setStatus] = useState("")
-  const [error, setError] = useState<string | null>(null)
-  const [modalError, setModalError] = useState<string | null>(null)
+  const [selectedWallet, setSelectedWallet] = useState("io.metamask");
+  const [selectedChainId, setSelectedChainId] = useState<number>();
+  const [selectedToken, setSelectedToken] = useState<string>();
+  const [walletAddress, setWalletAddress] = useState<string>("");
 
-  // Preload wallet icons once
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [step, setStep] = useState<Step>("idle");
+  const [modalOpen, setModalOpen] = useState(false);
+  const [status, setStatus] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [modalError, setModalError] = useState<string | null>(null);
+
+  // Preload wallet icons
   useEffect(() => {
-    preloadIcons()
-  }, [])
+    preloadIcons();
+  }, []);
 
+  // Check session
+  useEffect(() => {
+    async function checkAuth() {
+      const sess = await getClientSession();
+      if (!sess) {
+        router.replace("/login");
+        return;
+      }
+      setSession(sess);
+      setLoading(false);
+    }
+    checkAuth();
+  }, [router]);
+
+  if (loading) {
+    // ✅ Centered loading screen with animated dots
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <p className="text-lg font-medium mb-2">Loading dashboard…</p>
+          <div className="flex justify-center gap-1">
+            <span className="w-2 h-2 bg-blue-500 rounded-full animate-bounce delay-75"></span>
+            <span className="w-2 h-2 bg-blue-500 rounded-full animate-bounce delay-150"></span>
+            <span className="w-2 h-2 bg-blue-500 rounded-full animate-bounce delay-300"></span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // --- Start of main page ---
   async function startWizard() {
     try {
-      setError(null)
-      setModalError(null)
-      setIsRegistering(true)
+      setError(null);
+      setModalError(null);
+      setIsRegistering(true);
 
-      // Validate wallet address (optional)
       if (walletAddress) {
         try {
-          Web3AddressSchema.parse(walletAddress)
+          Web3AddressSchema.parse(walletAddress);
         } catch (err) {
           if (err instanceof ZodError) {
-            setError(err.issues.map(i => i.message).join(", "))
+            setError(err.issues.map((i) => i.message).join(", "));
           } else {
-            setError("Invalid wallet address")
+            setError("Invalid wallet address");
           }
-          return
+          return;
         }
       }
 
       if (!selectedWallet || !selectedChainId || !selectedToken) {
-        setError("Missing wallet, network, or token selection")
-        return
+        setError("Missing wallet, network, or token selection");
+        return;
       }
 
-      const userId = await walletService.getSignedInUser()
-      if (!userId) {
-        setError("You must be signed in")
-        return
-      }
+      setModalOpen(true);
+      setStep("connecting");
+      setStatus("Looking for wallet provider...");
 
-      setModalOpen(true)
-      setStep("connecting")
-      setStatus("Looking for wallet provider...")
+      const wallets = await detectWallets();
+      const discovered = wallets.find((w) => w.info.rdns === selectedWallet);
+      if (!discovered) throw new Error("Wallet provider not found");
 
-      const wallets = await detectWallets()
-      const discovered = wallets.find(w => w.info.rdns === selectedWallet)
-      if (!discovered) throw new Error("Wallet provider not found")
-
-      setStatus("Requesting wallet connection & signature...")
+      setStatus("Requesting wallet connection & signature...");
       const address = await walletService.connectAndSaveWallet({
-        user_id: userId,
+        user_id: session.user.id,
         provider: discovered.provider,
         wallet_provider: selectedWallet,
         wallet_address: walletAddress || undefined,
@@ -84,37 +115,34 @@ export default function Page() {
         token: {
           address: getTokenAddress(selectedChainId!, selectedToken!)!,
           symbol: selectedToken!,
-          decimals: 6
-        }
-      })
+          decimals: 6,
+        },
+      });
 
-      // Optional: network validation
-      setStep("network")
-      setStatus("Validating network...")
-      validateNetwork(selectedChainId!)
+      setStep("network");
+      setStatus("Validating network...");
+      validateNetwork(selectedChainId!);
 
-      // Optional: token handling
-      setStep("token")
-      setStatus("Adding token to wallet...")
+      setStep("token");
+      setStatus("Adding token to wallet...");
 
-      // Saving wallet to DB
-      setStep("saving")
-      setStatus("Saving wallet to database...")
+      setStep("saving");
+      setStatus("Saving wallet to database...");
 
-      setStep("done")
-      setStatus("Wallet successfully registered 🎉")
+      setStep("done");
+      setStatus("Wallet successfully registered 🎉");
     } catch (err: any) {
-      console.error(err)
+      console.error(err);
       if (err instanceof ZodError) {
-        setModalError(err.issues.map(i => i.message).join("\n"))
+        setModalError(err.issues.map((i) => i.message).join("\n"));
       } else if (err instanceof AuthApiError) {
-        setModalError(err.message || "Authentication error")
+        setModalError(err.message || "Authentication error");
       } else {
-        setModalError(err.message || "Wallet registration failed")
+        setModalError(err.message || "Wallet registration failed");
       }
-      setStep("idle")
+      setStep("idle");
     } finally {
-      setIsRegistering(false)
+      setIsRegistering(false);
     }
   }
 
@@ -124,7 +152,7 @@ export default function Page() {
         <span className={active ? "text-blue-600 font-medium" : ""}>{label}</span>
         <span>{done ? "✅" : active ? "🔵" : "⚪"}</span>
       </div>
-    )
+    );
   }
 
   return (
@@ -141,7 +169,7 @@ export default function Page() {
         <label className="block mb-2 text-sm font-medium text-gray-700">Wallet Address (optional)</label>
         <input
           value={walletAddress}
-          onChange={e => setWalletAddress(e.target.value)}
+          onChange={(e) => setWalletAddress(e.target.value)}
           placeholder="0x..."
           className="w-full px-4 py-2 border rounded-lg focus:ring focus:ring-blue-300"
         />
@@ -175,8 +203,16 @@ export default function Page() {
               <button onClick={() => setModalOpen(false)} className="px-4 py-2 rounded-lg border">
                 Cancel
               </button>
-
-              <button disabled={step !== "idle" && step !== "done"} onClick={startWizard} className="px-4 py-2 rounded-lg bg-blue-600 text-white disabled:opacity-50">
+             <button
+                onClick={() => {
+                  if (step === "done") {
+                    setModalOpen(false); // Close the modal
+                  } else if (step === "idle") {
+                    startWizard(); // Start the wizard
+                  }
+                }}
+                className="px-4 py-2 rounded-lg bg-blue-600 text-white disabled:opacity-50"
+              >
                 {step === "done" ? "Close" : "Start"}
               </button>
             </div>
@@ -184,5 +220,5 @@ export default function Page() {
         </div>
       )}
     </div>
-  )
+  );
 }
