@@ -1,5 +1,5 @@
 "use client"
-import {AMOY_DOMAIN} from "@/app/testing-create-order/types/AmoyDomain"
+import {AMOY_DOMAIN} from "@/lib/web3/contract/types/domains"
 import { useState } from "react"
 import { ethers } from "ethers"
 import { signERC2612Permit } from "eth-permit"

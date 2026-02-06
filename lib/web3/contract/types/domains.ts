@@ -1,4 +1,4 @@
-// EIP-712 Domain
+// lib/web3/contract/types/domains.ts
 export const AMOY_DOMAIN = {
   name: process.env.AMOY_ESCROW_CONTRACT_NAME!,
   version: process.env.AMOY_ESCROW_CONTRACT_VERSION!,

@@ -1,5 +1,5 @@
 "use client"
-import {AMOY_DOMAIN} from "@/app/testing-create-order/types/AmoyDomain"
+import {AMOY_DOMAIN} from "@/lib/web3/contract/types/domains"
 import { useState } from "react"
 import { ethers } from "ethers"
 import { signERC2612Permit } from "eth-permit"
@@ -8,22 +8,22 @@ import {
   EscrowOrderPayloadTypesEIP712
 } from "@/app/testing-create-order/types/EscrowOrderPayloadEIP712Types"
 import { BrowserProvider } from "ethers"
+import { EIP1193Provider } from "hardhat/types/providers"
 
 interface EscrowSignButtonProps {
   orderPayload: EscrowOrderPayload
+  discoveredProvider: any
 }
 
 
-export function EscrowSignButton({ orderPayload }: EscrowSignButtonProps) {
+export function EscrowSignButton({ orderPayload, discoveredProvider}: EscrowSignButtonProps) {
   const [loading, setLoading] = useState(false)
 
   async function handleSign() {
     try {
       setLoading(true)
 
-      if (!window.ethereum) throw new Error("No wallet found")
-
-      const provider = new BrowserProvider(window.ethereum as any)
+      const provider = new BrowserProvider(discoveredProvider)
       const signer = await provider.getSigner()
       const buyer = await signer.getAddress()
 
@@ -76,8 +76,30 @@ export function EscrowSignButton({ orderPayload }: EscrowSignButtonProps) {
   }
 
   return (
-    <button onClick={handleSign} disabled={loading}>
-      {loading ? "Signing..." : "Create Escrow"}
-    </button>
+<button
+  onClick={handleSign}
+  disabled={loading}
+  className="
+    w-full
+    rounded-xl
+    bg-gradient-to-r from-indigo-500 to-purple-600
+    px-5 py-3
+    text-base font-semibold text-white
+    shadow-lg shadow-indigo-500/30
+    transition-all duration-200
+
+    hover:-translate-y-0.5 hover:shadow-xl hover:shadow-indigo-500/40
+    active:translate-y-0 active:shadow-md
+
+    focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2
+
+    disabled:cursor-not-allowed
+    disabled:opacity-60
+    disabled:shadow-none
+    disabled:hover:translate-y-0
+  "
+>
+  {loading ? "Signing..." : "Create Escrow"}
+</button>
   )
 }

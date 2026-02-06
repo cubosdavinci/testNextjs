@@ -1,7 +1,7 @@
 // actions/createOrder.ts
 'use server';
 
-import { AMOY_DOMAIN as domain} from '../../../lib/web3/contract/types/domains';
+import { AMOY_DOMAIN as domain} from '../types/AmoyDomain';
 import { ethers } from 'ethers';
 import fs from 'fs';
 import path from 'path';

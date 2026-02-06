@@ -24,6 +24,10 @@ export type EscrowOrderPayloadEIP712 = {
   deadline: bigint;
 };
 
+export type OrderInfoPayload = {
+  orderId: string;
+}
+
 export type EscrowOrderPayload = {
   orderId: string;
   buyer: string;
