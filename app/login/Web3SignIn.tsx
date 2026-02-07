@@ -14,18 +14,34 @@ export default function Web3SignIn() {
   const router = useRouter();
   const supabase = createAnonClient();
 
-  // Discover wallets
-  useEffect(() => {
-    let mounted = true;
-    detectWallets()
-      .then((found) => mounted && setWallets(found))
-      .catch((err) => mounted && setError("Error detecting wallets: " + err))
-      .finally(() => mounted && setLoading(false));
+  const isAndroid =
+  typeof navigator !== "undefined" &&
+  /Android/i.test(navigator.userAgent);
 
-    return () => {
-      mounted = false;
-    };
-  }, []);
+const hasInjectedEthereum =
+  typeof window !== "undefined" && !!(window as any).ethereum;
+
+
+useEffect(() => {
+  let mounted = true;
+
+  // 👉 Android browser with no injected provider → skip detection
+  if (isAndroid && !hasInjectedEthereum) {
+    setWallets([]);
+    setLoading(false);
+    return;
+  }
+
+  detectWallets()
+    .then((found) => mounted && setWallets(found))
+    .catch((err) => mounted && setError("Error detecting wallets: " + err))
+    .finally(() => mounted && setLoading(false));
+
+  return () => {
+    mounted = false;
+  };
+}, []);
+
 
   const signInWithWallet = async (wallet: DiscoveredWallet) => {
     setError(null);
@@ -74,22 +90,36 @@ export default function Web3SignIn() {
       <ErrorAlert message={error} />
 
       {/* Wallet Buttons */}
-      {wallets.length === 0 ? (
-        <div>No wallets detected. Install MetaMask or another EIP-6963 wallet.</div>
-      ) : (
-        <div className="flex flex-col items-center gap-2">
-          {wallets.map((w) => (
-            <button
-              key={w.info.uuid}
-              onClick={() => signInWithWallet(w)}
-              className="flex w-full items-center justify-center gap-2 rounded border bg-white py-2 px-4 font-semibold hover:bg-gray-50"
-            >
-              <img src={w.info.icon} alt={w.info.name} className="w-5 h-5" />
-              <span>Sign in with {w.info.name}</span>
-            </button>
-          ))}
-        </div>
-      )}
+{wallets.length === 0 ? (
+  isAndroid && !hasInjectedEthereum ? (
+    <button
+      onClick={() => {
+        window.location.href =
+          "https://metamask.app.link/dapp/YOUR_DOMAIN_HERE";
+      }}
+      className="flex w-full items-center justify-center gap-2 rounded border bg-white py-2 px-4 font-semibold hover:bg-gray-50"
+    >
+      <img src="/metamask.svg" className="w-5 h-5" />
+      Open MetaMask
+    </button>
+  ) : (
+    <div>No wallets detected. Install MetaMask or another EIP-6963 wallet.</div>
+  )
+) : (
+  <div className="flex flex-col items-center gap-2">
+    {wallets.map((w) => (
+      <button
+        key={w.info.uuid}
+        onClick={() => signInWithWallet(w)}
+        className="flex w-full items-center justify-center gap-2 rounded border bg-white py-2 px-4 font-semibold hover:bg-gray-50"
+      >
+        <img src={w.info.icon} alt={w.info.name} className="w-5 h-5" />
+        <span>Sign in with {w.info.name}</span>
+      </button>
+    ))}
+  </div>
+)}
+
     </section>
   );
 }

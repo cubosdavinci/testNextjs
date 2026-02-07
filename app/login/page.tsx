@@ -1,54 +1,56 @@
-import { redirect } from "next/navigation";
+"use client";
+
+import { useConnection } from 'wagmi';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import { createAnonClient } from "@/lib/supabase/client";
-import Web3SignIn from "./Web3SignIn";
-import { signInWithGoogle } from "./actions";
 
-export default async function LoginPage() {
-  // ----------------------------
-  // Server-side: check session
-  // ----------------------------
-  const supabase = await createAnonClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+export default function LoginButton() {
+  const supabase = createAnonClient();
+  const { isConnected, address } = useConnection();
+  const router = useRouter();
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  if (session?.user) {
-    redirect("/dashboard");
-  }
+  const handleWeb3Login = async () => {
+    if (!isConnected) {
+      setError('Please connect your MetaMask wallet first');
+      return;
+    }
 
-  // ----------------------------
-  // Render login page
-  // ----------------------------
+    setLoading(true);
+    setError(null);
+
+    try {
+      const { data, error } = await supabase.auth.signInWithWeb3({
+        chain: 'ethereum',
+        statement: 'Sign in to MyApp (web3 secure access)', // shown in wallet prompt
+        // Optional extras (if needed):
+        // address: address, // usually auto-detected, but can specify
+        // nonce: 'custom-nonce-if-you-manage-it', // rare
+      });
+
+      if (error) throw error;
+
+      console.log('Signed in successfully:', data.session, data.user);
+      router.push('/dashboard'); // or wherever after login
+    } catch (err: any) {
+      console.error('Web3 login failed:', err);
+      setError(err.message || 'Failed to sign in with wallet');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className="mx-auto mt-16 max-w-sm">
-      {/* Google Sign-In */}
-      <form className="mb-6" action={signInWithGoogle}>
-        <button className="flex w-full items-center justify-center gap-2 rounded border bg-white py-2 font-semibold hover:bg-gray-50">
-          {/* Google Icon */}
-          <svg className="h-5 w-5" viewBox="0 0 48 48">
-            <path
-              fill="#FFC107"
-              d="M43.6 20.4H42V20H24v8h11.3C33.7 32.4 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.1 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.2-.4-3.6z"
-            />
-            <path
-              fill="#FF3D00"
-              d="M6.3 14.7l6.6 4.8C14.7 16.2 19 12 24 12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.1 6.1 29.3 4 24 4c-7.7 0-14.4 4.3-17.7 10.7z"
-            />
-            <path
-              fill="#4CAF50"
-              d="M24 44c5.2 0 10-2 13.5-5.2l-6.2-5.2C29.2 35.2 26.7 36 24 36c-5.3 0-9.7-3.6-11.3-8.5l-6.5 5C9.4 39.5 16.2 44 24 44z"
-            />
-            <path
-              fill="#1976D2"
-              d="M43.6 20.4H42V20H24v8h11.3c-.8 2.3-2.4 4.2-4.4 5.6l6.2 5.2C39.9 36 44 30.7 44 24c0-1.3-.1-2.2-.4-3.6z"
-            />
-          </svg>
-          Continue with Google
-        </button>
-      </form>
-
-      {/* Web3 / Ethereum Sign-In */}
-      <Web3SignIn />
+    <div>
+      {error && <p style={{ color: 'red' }}>{error}</p>}
+      <button
+        onClick={handleWeb3Login}
+        disabled={loading || !isConnected}
+      >
+        {loading ? 'Signing...' : 'Login with MetaMask'}
+      </button>
     </div>
   );
 }
