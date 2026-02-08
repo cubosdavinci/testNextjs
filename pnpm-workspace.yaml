@@ -1,14 +1,7 @@
-packages:
-  - .
-
-ignoredBuiltDependencies:
-  - sharp
-  - unrs-resolver
-
 onlyBuiltDependencies:
   - '@reown/appkit'
   - bufferutil
   - esbuild
-  - keccak
-  - secp256k1
+  - sharp
+  - unrs-resolver
   - utf-8-validate

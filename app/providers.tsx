@@ -1,22 +1,36 @@
-// app/providers.tsx   ("use client" required)
+'use client'
 
-"use client";
+import { useEffect, useState } from 'react'
+import { createAnonClient } from '@/lib/supabase/client'
 
-import { WagmiProvider } from 'wagmi';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { config, initializeAppKit } from '@/lib/config/reown';
+// ✅ Create the client ONCE (module scope)
+export const supabase = createAnonClient()
 
-// Run initialization once on client mount
-initializeAppKit(); // safe — checks typeof window
+export default function Providers({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  const [ready, setReady] = useState(false)
 
-const queryClient = new QueryClient();
+  useEffect(() => {
+    // 1️⃣ Initial session check (runs once)
+    supabase.auth.getSession().finally(() => {
+      setReady(true)
+    })
 
-export function Providers({ children }: { children: React.ReactNode }) {
-  return (
-    <WagmiProvider config={config}>
-      <QueryClientProvider client={queryClient}>
-        {children}
-      </QueryClientProvider>
-    </WagmiProvider>
-  );
+    // 2️⃣ Subscribe to auth changes
+    const { data } = supabase.auth.onAuthStateChange(() => {
+      // no-op here; pages/hooks can react if needed
+    })
+
+    return () => {
+      data.subscription.unsubscribe()
+    }
+  }, [])
+
+  // Prevent hydration mismatch
+  if (!ready) return null
+
+  return <>{children}</>
 }

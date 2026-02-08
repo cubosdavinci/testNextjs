@@ -28,15 +28,12 @@ export const config = wagmiAdapter.wagmiConfig;
 
 // Client-side AppKit initialization (safe to export as a side-effect function)
 export function initializeAppKit() {
-
-
   // This runs only on client due to import placement
   if (typeof window === 'undefined') return;
 
-  window.location.href = "https://3000-cs-996772579179-default.cs-europe-west1-xedi.cloudshell.dev/login"
   const { createAppKit } = require('@reown/appkit/react'); // dynamic import to avoid SSR issues
 
-  const appKit = createAppKit({
+  createAppKit({
     adapters: [wagmiAdapter],
     networks,
     projectId,
@@ -47,14 +44,5 @@ export function initializeAppKit() {
       icons: ['/favicon.ico'], // relative or absolute real URL
     },
     // features: { email: false, socials: false }, // optional
-    walletConnect: {
-    redirect: {
-      native: window.location.href,     // ✅ exact page return
-      universal: window.location.origin // ✅ fallback / iOS
-    },
-  },
   });
-
-  // 🔥 expose globally so buttons can open it (Android needs this)
-  (window as any).appKit = appKit;
 }

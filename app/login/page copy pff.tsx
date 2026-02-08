@@ -7,7 +7,6 @@ import { createAnonClient } from "@/lib/supabase/client";
 import { connectWallet } from "@/lib/wallet";
 
 export default function LoginButton() {
-
   const supabase = createAnonClient();
   const router = useRouter();
 

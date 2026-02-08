@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
-import {Providers} from "./providers"
+import Providers from "./providers"
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { WagmiProvider } from "wagmi";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -26,7 +27,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <Providers>{children}</Providers>
+        <WagmiProvider>
+        <Providers>{children}</Providers></WagmiProvider>
       </body>
     </html>
   );
