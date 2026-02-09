@@ -1,36 +1,44 @@
-'use client'
+"use client";
 
-import { useEffect, useState } from 'react'
-import { createAnonClient } from '@/lib/supabase/client'
+import { createAppKit } from "@reown/appkit/react";
+import { WagmiAdapter } from "@reown/appkit-adapter-wagmi";
+import { WagmiProvider } from "wagmi";
+import { http } from "wagmi";
+import { arbitrumSepolia } from "wagmi/chains";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
-// ✅ Create the client ONCE (module scope)
-export const supabase = createAnonClient()
+const projectId = process.env.NEXT_PUBLIC_PROJECT_ID!;
 
-export default function Providers({
-  children,
-}: {
-  children: React.ReactNode
-}) {
-  const [ready, setReady] = useState(false)
+export const wagmiAdapter = new WagmiAdapter({
+  projectId,
+  networks: [arbitrumSepolia],
+  transports: {
+    [arbitrumSepolia.id]: http(),
+  },
+});
 
-  useEffect(() => {
-    // 1️⃣ Initial session check (runs once)
-    supabase.auth.getSession().finally(() => {
-      setReady(true)
-    })
+export const appKit = createAppKit({
+  projectId,
+  adapters: [wagmiAdapter],
+  networks: [arbitrumSepolia],
+  metadata: {
+    name: "MyCoolApp",
+    description: "A DeFi dashboard for your crypto",
+    url: "https://3000-cs-996772579179-default.cs-europe-west1-xedi.cloudshell.dev",
+    icons: [
+      "https://3000-cs-996772579179-default.cs-europe-west1-xedi.cloudshell.dev/favicon.ico",
+    ],
+  },
+});
 
-    // 2️⃣ Subscribe to auth changes
-    const { data } = supabase.auth.onAuthStateChange(() => {
-      // no-op here; pages/hooks can react if needed
-    })
+const queryClient = new QueryClient();
 
-    return () => {
-      data.subscription.unsubscribe()
-    }
-  }, [])
-
-  // Prevent hydration mismatch
-  if (!ready) return null
-
-  return <>{children}</>
+export function Web3Provider({ children }: { children: React.ReactNode }) {
+  return (
+    <WagmiProvider config={wagmiAdapter.wagmiConfig}>
+      <QueryClientProvider client={queryClient}>
+        {children}
+      </QueryClientProvider>
+    </WagmiProvider>
+  );
 }

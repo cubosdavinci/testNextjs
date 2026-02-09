@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import Providers from "./providers"
+import { Web3Provider } from "./providers"
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { WagmiProvider } from "wagmi";
+import WalletStatus from "@/components/wallet/WalletStatus";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -27,8 +27,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <WagmiProvider>
-        <Providers>{children}</Providers></WagmiProvider>
+       
+        <Web3Provider>
+           <WalletStatus>
+            </WalletStatus>{children}</Web3Provider>
       </body>
     </html>
   );

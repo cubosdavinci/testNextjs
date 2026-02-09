@@ -38,20 +38,17 @@ export default function Login() {
         setLoading(true)
         setError(null)
 
-        const domain = window.location.host
-const uri = window.location.origin
-const nonce = crypto.randomUUID()
+        const nonce = crypto.randomUUID()
 
-const message = `${domain} wants you to sign in with your Ethereum account:
-${address}
-
-Sign in to MyCoolApp
-
-URI: ${uri}
-Version: 1
-Chain ID: ${arbitrumSepolia.id}
-Nonce: ${nonce}
-Issued At: ${new Date().toISOString()}`
+        const message = `
+domain: ${window.location.host}
+address: ${address.toLowerCase()}
+uri: ${window.location.origin}
+version: 1
+chainId: ${arbitrumSepolia.id}
+nonce: ${nonce}
+issuedAt: ${new Date().toISOString()}
+        `.trim()
 
         const signature = (await provider.request({
           method: 'personal_sign',

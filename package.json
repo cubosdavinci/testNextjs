@@ -10,6 +10,7 @@
     "@radix-ui/react-slider": "^1.3.6",
     "@reown/appkit": "^1.8.17",
     "@reown/appkit-adapter-wagmi": "^1.8.17",
+    "@reown/appkit-wallet-button": "^1.8.17",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.91.0",
     "@tanstack/react-query": "^5.90.20",
