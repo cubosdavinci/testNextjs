@@ -15,3 +15,24 @@ export function Providers({ children }: { children: React.ReactNode }) {
     </WagmiProvider>
   );
 }*/
+
+
+
+/*
+import SignClient from "@walletconnect/sign-client";
+
+let wcClient: SignClient;
+
+async function initWalletConnect() {
+  wcClient = await SignClient.init({
+    projectId: process.env.NEXT_PUBLIC_PROJECT_ID!,
+    metadata: {
+      name: "Sign in with your wallet",
+      description: "WalletConnect v2 Demo",
+      url: "https://3000-cs-996772579179-default.cs-europe-west1-xedi.cloudshell.dev/",
+      icons: ["https://3000-cs-996772579179-default.cs-europe-west1-xedi.cloudshell.dev/favicon.ico"],
+    },
+  });
+
+  console.log("WalletConnect Client ready:", wcClient);
+}*/

@@ -4,7 +4,7 @@ import EthereumLoginButton from './Web3SignIn' // <-- import it
 export default function LoginPage() {
   console.log('Page: app/login')
 
-  return (
+  return (  
     <div className="mx-auto mt-16 max-w-sm">
       {/* Google Sign-In Form */}
       <form className="mb-6" action={signInWithGoogle}>

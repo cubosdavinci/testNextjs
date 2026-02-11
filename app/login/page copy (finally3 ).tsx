@@ -6,6 +6,7 @@ import { useWalletClient } from 'wagmi'
 import { arbitrumSepolia } from 'wagmi/chains'
 import { createAnonClient } from '@/lib/supabase/client'
 import { appKit } from '@/app/providers'
+import {UseAppKitAccountReturn} from '@reown/appkit/react' /****************************/
 
 export default function Login() {
   const { isConnected, address } = useAppKitAccount()
@@ -38,17 +39,17 @@ export default function Login() {
         setLoading(true)
         setError(null)
 
-        const nonce = crypto.randomUUID()
+const domain = window.location.host
+const uri = window.location.origin
+const nonce = crypto.randomUUID()
 
-        const message = `
-domain: ${window.location.host}
-address: ${address.toLowerCase()}
-uri: ${window.location.origin}
-version: 1
-chainId: ${arbitrumSepolia.id}
-nonce: ${nonce}
-issuedAt: ${new Date().toISOString()}
-        `.trim()
+const message = `${domain} wants you to sign in with your Ethereum account:
+${address}
+URI: ${uri}
+Version: 1
+Chain ID: ${arbitrumSepolia.id}
+Nonce: ${nonce}
+Issued At: ${new Date().toISOString()}`
 
         const signature = (await provider.request({
           method: 'personal_sign',
@@ -63,7 +64,6 @@ issuedAt: ${new Date().toISOString()}
           })
 
         if (signInError) throw signInError
-
         setHasSignedIn(true)
         console.log('Signed in!', data.session)
         // TODO: redirect

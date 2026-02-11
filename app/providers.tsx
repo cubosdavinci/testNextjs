@@ -1,5 +1,4 @@
 "use client";
-
 import { createAppKit } from "@reown/appkit/react";
 import { WagmiAdapter } from "@reown/appkit-adapter-wagmi";
 import { WagmiProvider } from "wagmi";
@@ -17,10 +16,17 @@ export const wagmiAdapter = new WagmiAdapter({
   },
 });
 
+
 export const appKit = createAppKit({
+  
   projectId,
-  adapters: [wagmiAdapter],
+  adapters: [wagmiAdapter],  
   networks: [arbitrumSepolia],
+  enableWalletConnect: true,
+  features: {
+    email: false,
+    socials: false,
+  },
   metadata: {
     name: "MyCoolApp",
     description: "A DeFi dashboard for your crypto",

@@ -10,6 +10,9 @@ import { UserInfoTable } from './UserInfoTable'
 import { AppMetadataTable } from './AppMetadataTable'
 import { Web3ClaimsTable } from './Web3ClaimsTable'
 import { SystemTable } from './SystemTable'
+import { JwtSessionTable } from './tables/JwtSessionTable'
+import { AppKitAccountTable } from './tables/AppKitAccountTable'
+import { TronWalletTable } from './tables/TronWalletTable'
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -89,7 +92,11 @@ export default function DashboardPage() {
         </button>
       </div>
 
-      {/* Raw user JSON */}
+      {/* Tables */}
+      <JwtSessionTable supabase={supabase} />
+    
+      <AppKitAccountTable />
+            {/* Raw user JSON */}
       <details className="mt-6 rounded border border-border bg-muted">
         <summary className="cursor-pointer select-none px-4 py-2 font-medium">
           Raw User JSON
@@ -98,8 +105,6 @@ export default function DashboardPage() {
           {JSON.stringify(user, null, 2)}
         </pre>
       </details>
-
-      {/* Tables */}
       <UserInfoTable user={user} />
       <AppMetadataTable user={user} />
       <Web3ClaimsTable user={user} />
