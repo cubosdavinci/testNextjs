@@ -1,11 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import type { Session, SupabaseClient } from '@supabase/supabase-js'
-
-interface JwtSessionTableProps {
-  supabase: SupabaseClient
-}
+import { createAnonClient } from '@/lib/supabase/client'
+import type { Session } from '@supabase/supabase-js'
 
 function decodeJwt(token?: string) {
   if (!token) return null
@@ -20,7 +17,8 @@ function decodeJwt(token?: string) {
   }
 }
 
-export function JwtSessionTable({ supabase }: JwtSessionTableProps) {
+export function JwtSessionTable() {
+  const supabase = createAnonClient()
   const [session, setSession] = useState<Session | null>(null)
 
   useEffect(() => {
@@ -39,15 +37,15 @@ export function JwtSessionTable({ supabase }: JwtSessionTableProps) {
     return () => subscription.unsubscribe()
   }, [supabase])
 
-  const decodedJwt = decodeJwt(session?.access_token)
-
   if (!session) {
     return (
       <p className="mt-4 text-sm text-muted-foreground">
-        No active session
+        There is no current session
       </p>
     )
   }
+
+  const decodedJwt = decodeJwt(session.access_token)
 
   return (
     <details className="mt-6 rounded border border-border bg-muted">

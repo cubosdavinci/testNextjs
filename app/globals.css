@@ -1,6 +1,10 @@
 @import "tailwindcss";
 
-
+@layer utilities {
+  wui-ux-by-reown {
+    @apply hidden;
+  }
+}
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -65,9 +69,14 @@ body {
   p {
     @apply text-base leading-relaxed;
   }
+
+ 
 }
 
+
+
 @layer components {
+
   .info-link {
     @apply relative inline-flex items-center justify-center text-green-700 transition-colors;
   }

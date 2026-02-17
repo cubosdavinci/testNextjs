@@ -1,4 +1,5 @@
-import { createBrowserClient } from "@supabase/ssr";
+import { createBrowserClient, } from "@supabase/ssr";
+import { Web3Credentials } from "@supabase/supabase-js";
 
 export function createAnonClient() {
   return createBrowserClient(

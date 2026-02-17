@@ -1,8 +1,8 @@
-import type { Metadata } from "next";
+import type { Metadata, cookies } from "next";
 import { Web3Provider } from "./providers"
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import WalletStatus from "@/components/wallet/WalletStatus";
+import WalletStatus from "@/components/wallet/NetworkInfo";
 import { TronProvider } from "./TronProvider";
 
 const geistSans = Geist({
@@ -28,6 +28,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
+                  <AppKitStatus />
+           <NetworkInfo 
+            network={arbitrumSepoliaWithTokens}
+            token="USDC"
+          />
                <Web3Provider>
            <WalletStatus />
             {children}</Web3Provider>

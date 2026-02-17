@@ -3,7 +3,7 @@
 import type { User } from '@supabase/supabase-js'
 
 interface Props {
-  user: User
+  user: User | null
 }
 
 export function AppMetadataTable({ user }: Props) {
