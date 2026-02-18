@@ -32,7 +32,7 @@ const modal = createAppKit({
   features: {
     email: false,
     socials: false,
-    //analytics: true
+    analytics: false
   },
   /*themeMode: themeMode, // dark or 'light'
   themeVariables: {

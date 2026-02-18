@@ -1,5 +1,5 @@
 import { createBrowserClient, } from "@supabase/ssr";
-import { Web3Credentials } from "@supabase/supabase-js";
+import { type Web3Credentials } from "@supabase/supabase-js";
 
 export function createAnonClient() {
   return createBrowserClient(
@@ -7,3 +7,5 @@ export function createAnonClient() {
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
   );
 }
+
+export type { Web3Credentials };

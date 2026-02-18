@@ -1,109 +1,200 @@
 "use client";
-import {JSX} from "react";
+
+import { useEffect, useRef, useState } from "react";
+import { useAppKit, useAppKitAccount } from "@reown/appkit/react";
+import { useSession } from "@/components/auth/useSession";
+import { Spinner } from "@/components/auth/spinner";
 import ErrorAlert from "@/components/banners/ErrorAlert";
-import { AppKitButton, modal, useAppKitState } from "@reown/appkit/react";
-import { useAppKit } from "@reown/appkit/react";
-import { useEffect, useState } from "react";
-import { usePublicClient, useConnection, useDisconnect } from "wagmi";
-import { appkitTheme } from "@/theme/theme"
-//import { useBrowserTheme } from "@/theme/useBrowserTheme"
-
-import { useAppKitTheme } from '@reown/appkit/react'
-
+import { useConnection } from "wagmi";
 
 export default function MyComponent() {
-  
-  const { 
-  initialized, 
-  loading, 
-  open, 
-  selectedNetworkId, 
-  activeChain 
-} = useAppKitState();
+  const { session, user, sessionLoading, signInWithWeb3Account } = useSession();
+  const { address, isConnected, chain, connector, status} = useConnection()
+  //const { address, isConnected, caipAddress, status, embeddedWalletInfo } = useAppKitAccount();
+  //const { open } = useAppKit();
 
-   
-
-
-
-  const { disconnect } = useDisconnect();
-  const publicClient = usePublicClient();
-  const { address } = useConnection(); // returns the currently connected wallet address
-  const [blockNumber, setBlockNumber] = useState<bigint | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-    // const browserTheme = useBrowserTheme()
+  const hasPromptedRef = useRef(false); // guard for modal open / verification
 
-  // Choose the correct classes
- // const themeClassName = appkitTheme[browserTheme]
-
-  // Effect 1: Reset blockNumber when wallet disconnects
   useEffect(() => {
-    if (!publicClient || !address) {
-      setBlockNumber(null);
-      return;
-    }
-  }, [publicClient, address]);
+    console.log("useEffect triggered with values:", {
+    sessionLoading,
+    user,
+    isConnected,
+    address,
+  });
+    // 1️⃣ Wait until Supabase session is ready or already executed
+    if (sessionLoading || hasPromptedRef.current || user === undefined ) return;
+    if (user) return;
 
-  
-  // Effect 2: Fetch block number when wallet connects
-  useEffect(() => {
-    if (!publicClient || !address) return;
+    hasPromptedRef.current = true;
 
-    let cancelled = false;
-
-    async function loadBlockNumber() {
+    const handleWalletFlow = async () => {
       try {
-        const block = await publicClient!.getBlockNumber();
-        if (!cancelled) setBlockNumber(block);
-      } catch {
-        if (!cancelled) {
-          setBlockNumber(null);
-          setError("Failed to load block number");
+        if (!isConnected || !address) {
+          // Wallet not connected → open Connect modal
+          //open({ view: "Connect" });
+          return;
         }
+
+        // Wallet connected → open Account modal to trigger signing
+       // open({ view: "Account" });
+
+        // Build message for signing
+        const domain = window.location.host;
+        const uri = window.location.origin;
+        const nonce = crypto.randomUUID();
+        const message = `${domain} wants you to sign in with your Ethereum account:
+${address}
+
+URI: ${uri}
+Version: 1
+Nonce: ${nonce}
+Issued At: ${new Date().toISOString()}`;
+
+        // Sign message via injected wallet
+        // @ts-ignore
+        const signature = await window?.ethereum?.request({
+          method: "personal_sign",
+          params: [message, address],
+        });
+
+        // Verify wallet with Supabase (updates session automatically)
+        const { error: verifyError } = await signInWithWeb3Account({
+          chain: "ethereum",
+          message,
+          signature: signature as `0x${string}`,
+        });
+
+        if (verifyError) setError(`Wallet verification failed: ${verifyError.message}`);
+        else setError(null);
+      } catch (err: any) {
+        setError(err?.message || "Wallet verification failed");
       }
-    }
-
-    loadBlockNumber();
-
-
-    return () => {
-      cancelled = true; // cleanup if component unmounts or address changes
     };
-  }, [publicClient, address]);
 
+    handleWalletFlow();
+  }, [user, /*isConnected, address, open, signInWithWeb3Account*/]);
 
-      // Function to remove Reown branding
-  const removeReownBranding = () => {
-    const interval = setInterval(() => {
-      const el = document.querySelector('[data-testid="ux-branding-reown"]')
-      if (el) {
-        el.remove()
-        clearInterval(interval) // stop checking after removal
-      }
-    }, 50) // check every 50ms until element exists
+  // -------------------------
+  // Render loading, error, or success
+  // -------------------------
+  if (sessionLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <Spinner size="lg" />
+      </div>
+    );
   }
 
-  // Handle click
-  const handleClick = () => {
-    modal!.open()           // opens the AppKit modal
-    removeReownBranding()  // remove branding after it appears
+  if (error) {
+    return <ErrorAlert message={error} />;
   }
-  
-  // Single JSX return
-  let content: JSX.Element;
 
-  if (!publicClient) {
-    content = <ErrorAlert message="Public Client Not Available" />;
-  } else if (!address) {
-    content = <AppKitButton onClick={handleClick}/>;
-  } else if (error) {
-    content = <ErrorAlert message={error} />;
-  } else if (blockNumber === null) {
-    content = <div>Loading block number...</div>;
-  } else {
+type JsonViewerProps = {
+  data: any;
+  label?: string;
+  seen?: WeakSet<any>;
+};
+
+const JsonViewer: React.FC<JsonViewerProps> = ({ data, label, seen }) => {
+  const seenObjects = seen || new WeakSet();
+
+  // 1️⃣ Handle primitives (string, number, boolean, null)
+  if (typeof data !== "object" || data === null) {
+    return (
+      <div className="overflow-x-auto">
+        <pre className="ml-2 text-gray-700 whitespace-pre break-words">
+          {label ? `${label}: ${String(data)}` : String(data)}
+        </pre>
+      </div>
+    );
+  }
+
+  // 2️⃣ Prevent infinite recursion for circular references
+  if (seenObjects.has(data)) {
+    return (
+     <div className="overflow-x-auto">
+      <pre className="ml-2 text-gray-700 whitespace-pre break-words">
+        {label ? `${label}: [Circular]` : "[Circular]"}
+      </pre>
+    </div>
+    );
+  }
+  seenObjects.add(data);
+
+  // 3️⃣ Handle arrays
+  if (Array.isArray(data)) {
+    return (
+      <details className="ml-4 mb-1">
+        <summary className="cursor-pointer font-medium text-gray-800">
+          {label ? `${label} [Array]` : "Array"}
+        </summary>
+        <div className="ml-4">
+          {data.map((item, index) => (
+            <JsonViewer key={index} data={item} label={`${index}`} seen={seenObjects} />
+          ))}
+        </div>
+      </details>
+    );
+  }
+
+  // 4️⃣ Handle objects
+  return (
+
+      <div className="ml-4">
+        {Object.entries(data).map(([key, value]) => (
+          <JsonViewer key={key} data={value} label={key} seen={seenObjects} />
+        ))}
+      </div>
+  );
+};
+
+
+
+
+
+  // -------------------------
+  // Return wallet / chain info
+  // -------------------------
+ return (
+  <div className="p-6 space-y-2">
+    <p><span className="text-red-500">Wallet address: </span>{address ?? "not connected"}</p>
+    <p><span className="text-red-500">Wallet isConnected: </span>{isConnected ? "Yes" : "No"}</p>
     
-    content = <div><AppKitButton onClick={handleClick}/>;Current block: {blockNumber.toString()}</div>;
-  }
+    {/*<p>CAIP Address: {caipAddress ?? "N/A"}</p>*/}
+    <p><span className="text-red-500">Status: </span>{status}</p>
+    {/*<p>Embedded wallet info: {embeddedWalletInfo ? JSON.stringify(embeddedWalletInfo) : "N/A"}</p>*/}
+    {user && (
+    <details className="mb-2 border rounded p-2 bg-gray-50">
+        <summary className="cursor-pointer font-semibold text-red-500">
+          User Info
+        </summary>
+        <pre className="overflow-x-auto mt-2">
+          {JSON.stringify(user, null, 2)}
+        </pre>
+      </details>
+    )}
+   {connector && (
+  <details className="mb-2 border rounded p-2 bg-gray-50">
+    <summary className="cursor-pointer font-semibold text-red-500 flex items-center gap-2">
+      {connector.icon && (
+        <img
+          src={connector.icon}
+          alt={connector.name || "Connector Icon"}
+          className="w-10 h-10 rounded"
+        />
+      )}
+      <span>Connector Info</span>
+    </summary>
+    <div className="mt-2">
+      <JsonViewer data={connector} />
+    </div>
+  </details>
+)}
 
-  return <>{content}</>;
+    {/*address && <p>Wallet verified successfully.</p>*/}
+  </div>
+);
 }
