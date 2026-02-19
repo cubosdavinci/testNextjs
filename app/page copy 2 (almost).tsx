@@ -5,8 +5,8 @@ import { useAppKit, useAppKitAccount, AppKitButton, } from "@reown/appkit/react"
 import { useSession } from "@/components/auth/useSession";
 import { Spinner } from "@/components/auth/spinner";
 import ErrorAlert from "@/components/banners/ErrorAlert";
-import { useConnection, useSignMessage } from "wagmi";
-import { SiweMessage } from "siwe";
+import { useConnection } from "wagmi";
+import { useSignMessage } from "wagmi";
 
 export default function MyComponent() {
   const { session, user, sessionLoading, signInWithWeb3Account } = useSession();
@@ -36,8 +36,6 @@ URI: ${uri}
 Version: 1
 Nonce: ${nonce}
 Issued At: ${new Date().toISOString()}`;
-
-
 
       // Sign the message using wagmi
       const signature = await signMessage.mutateAsync({
@@ -154,18 +152,10 @@ const JsonViewer: React.FC<JsonViewerProps> = ({ data, label, seen }) => {
       {/* Connect Wallet Button */}
       {/* ------------------------- */}
       {true && (
-        <AppKitButton
-          label="Connect Wallet2"
-          loadingLabel="Opening wallet selector..."  // ← customize text only
-          size="md"
-        />
-                
-        
-        /*
         <AppKitButton className="px-4 py-2 bg-blue-600 text-white rounded">
           Sign In With Wallet
         </AppKitButton>
-      */)}
+      )}
 
       {/* ------------------------- */}
       {/* Sign-in Button */}

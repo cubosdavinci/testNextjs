@@ -1,15 +1,14 @@
 'use client'
 import { wagmiAdapter, projectId } from './config'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { createAppKit, useAppKitState, useAppKitTheme, useAppKitAccount  } from '@reown/appkit/react'
+import { createAppKit, useAppKitState, useAppKitTheme } from '@reown/appkit/react'
 import { arbitrumSepolia } from '@reown/appkit/networks'
 import React, { useEffect, type ReactNode } from 'react'
 import { cookieToInitialState, WagmiProvider, type Config } from 'wagmi'
-import { createAnonClient } from '@/lib/supabase/client'
+
 
 // Set up queryClient
 const queryClient = new QueryClient()
-const supabase = createAnonClient()
 
 if (!projectId) {
   throw new Error('Project ID is not defined')
@@ -55,12 +54,7 @@ function ContextProvider({ children, cookies }: { children: ReactNode; cookies: 
     selectedNetworkId, 
     activeChain, */
   } = useAppKitState();
-
-  const { isConnected} = useAppKitAccount()
-    useEffect(() => {
-      if (!isConnected) supabase.auth.signOut()             
-    }, [isConnected])
-
+  
     useEffect(() => {
     if (typeof window === 'undefined') return // SSR-safe
 
