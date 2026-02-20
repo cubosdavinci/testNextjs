@@ -1,0 +1,19 @@
+{
+  "orderId": "8f6c9e2a-3a7d-4a8b-9a21-9a5fbb5a0c11",
+  "userId": "1f6c9e2a-3a7d-4a8b-9a21-9a5fbb5a0c11",
+  "buyerAddress": "0x1d4A0e211D1CA95897ddC854e4ce1F9E3B119191",
+  "sellerAddress": "0xd332279fc2f2f88aaf323466f9d37f567cb6f31d",
+  "usdTotal": "1.00", 
+  "total": "1000000",
+  "taxes": "200000",
+  "platformFee": "200000",
+  "erc20Token": "0x8B0180f2101c8260d49339abfEe87927412494B4",
+  "erc20TokenDecimals": "6",
+  "erc20TokenSymbol": "USDC",
+  "chainId": "80002",
+  "escrowContract": "0x34B1E5aDF927b47832D1a55dC09E1B6270115d53",
+  "assetType": "CRYPTO",
+  "assetSubtype": "PAYMENT_TOKEN",
+
+  "productTitle": "Pro License – 1 Year"
+}

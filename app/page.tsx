@@ -1,35 +1,55 @@
 "use client";
 
 import { useState } from "react";
-import { useAppKit, useAppKitAccount, AppKitButton, } from "@reown/appkit/react";
+import {
+  PublicKey,
+  Keypair,
+  Transaction,
+  TransactionInstruction,
+  SystemProgram,
+  LAMPORTS_PER_SOL,
+} from "@solana/web3.js";
+
+import {
+  useAppKitAccount,
+  useAppKitProvider,
+  AppKitButton,
+  useAppKit,
+} from "@reown/appkit/react";
+import { useAppKitConnection, type Provider } from "@reown/appkit-adapter-solana/react";
 import { useSession } from "@/components/auth/useSession";
 import { Spinner } from "@/components/auth/spinner";
 import ErrorAlert from "@/components/banners/ErrorAlert";
-import { useConnection, useSignMessage } from "wagmi";
-import { SiweMessage } from "siwe";
 
-export default function MyComponent() {
+export default function SolanaPage() {
   const { session, user, sessionLoading, signInWithWeb3Account } = useSession();
-  const { address, isConnected, connector } = useConnection();
-  const signMessage = useSignMessage();
-  const { open } = useAppKit();
+
+  // -----------------------------
+  // AppKit hooks
+  // -----------------------------
+  const { address, isConnected } = useAppKitAccount();
+  const { connection, } = useAppKitConnection(); 
+  const { walletProvider, } = useAppKitProvider<Provider>("solana");
+  /*const { open } = useAppKit();*/
 
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  // -------------------------
+  // -----------------------------
   // Sign-in flow
-  // -------------------------
+  // -----------------------------
   const handleSignMessage = async () => {
-    if (!isConnected || !address || !connector) {
+    if (!isConnected || !address) {
       setError("Wallet not connected yet");
       return;
     }
-
+console.log("Signing the message")
     try {
+      setLoading(true);
       const domain = window.location.host;
       const uri = window.location.origin;
       const nonce = crypto.randomUUID();
-      const message = `${domain} wants you to sign in with your Ethereum account:
+      const message = `${domain} wants you to sign in with your Solana account:
 ${address}
 
 URI: ${uri}
@@ -37,33 +57,96 @@ Version: 1
 Nonce: ${nonce}
 Issued At: ${new Date().toISOString()}`;
 
+const messageBytes = new TextEncoder().encode(message)
 
+      // AppKit signing
+      console.log("Wallet Provider Name: ", walletProvider.name)
+      console.log("Wallet Provider Chain: ", walletProvider.chain.toString)
+      console.log("Wallet Provider Chains: ", walletProvider.chains.toString)
+      const signature = await walletProvider.signMessage(messageBytes);
+      console.log("Signature: ", signature)
 
-      // Sign the message using wagmi
-      const signature = await signMessage.mutateAsync({
-        account: address,
-        message,
-        connector,
-      });
-
-      // Verify wallet with Supabase
+      // Optional: verify wallet with backend / Supabase
       const { error: verifyError } = await signInWithWeb3Account({
-        chain: "ethereum",
+        chain: "solana",
         message,
-        signature: signature as `0x${string}`,
+        signature,
       });
 
-      if (verifyError) setError(`Wallet verification failed: ${verifyError.message}`);
+      /*if (verifyError) setError(`Wallet verification failed: ${verifyError.message}`);*/
+
+      if (verifyError) {
+        console.error("Supabase error:", verifyError)
+        setError(`Wallet verification failed: ${JSON.stringify(verifyError, null, 2)}`)
+      }
       else setError(null);
     } catch (err: any) {
       setError(err?.message || "Wallet verification failed");
+    } finally {
+      setLoading(false);
     }
   };
 
-  // -------------------------
-  // Render loading / error / main UI
-  // -------------------------
-  if (sessionLoading) {
+  // -----------------------------
+  // Example: increment counter on Solana
+  // -----------------------------
+  /*
+  async function onIncrementCounter() {
+    if (!walletProvider || !connection) {
+      setError("Wallet not connected or provider missing");
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const PROGRAM_ID = new PublicKey("Cb5aXEgXptKqHHWLifvXu5BeAuVLjojQ5ypq6CfQj1hy");
+      const counterKeypair = Keypair.generate();
+      const counter = counterKeypair.publicKey;
+
+      // Check wallet balance
+      const balance = await connection.getBalance(walletProvider.publicKey!);
+      if (balance < LAMPORTS_PER_SOL / 100) throw new Error("Not enough SOL in wallet");
+
+      const COUNTER_ACCOUNT_SIZE = 8;
+      const allocIx: TransactionInstruction = SystemProgram.createAccount({
+        fromPubkey: walletProvider.publicKey!,
+        newAccountPubkey: counter,
+        lamports: await connection.getMinimumBalanceForRentExemption(COUNTER_ACCOUNT_SIZE),
+        space: COUNTER_ACCOUNT_SIZE,
+        programId: PROGRAM_ID,
+      });
+
+      const incrementIx: TransactionInstruction = new TransactionInstruction({
+        programId: PROGRAM_ID,
+        keys: [{ pubkey: counter, isSigner: false, isWritable: true }],
+        data: Buffer.from([0x0]),
+      });
+
+      const tx = new Transaction().add(allocIx).add(incrementIx);
+      tx.feePayer = walletProvider.publicKey;
+      tx.recentBlockhash = (await connection.getLatestBlockhash("confirmed")).blockhash;
+
+      // Sign & send
+      await walletProvider.signAndSendTransaction(tx, [counterKeypair]);
+
+      // Fetch counter account
+      const counterAccountInfo = await connection.getAccountInfo(counter, { commitment: "confirmed" });
+      if (!counterAccountInfo) throw new Error("Expected counter account to exist");
+
+      const counterAccount = { count: counterAccountInfo.data[0] }; // simple deserialize
+      console.log("Counter value:", counterAccount.count);
+    } catch (err: any) {
+      setError(err?.message || "Transaction failed");
+    } finally {
+      setLoading(false);
+    }
+  }*/
+
+  // -----------------------------
+  // Render
+  // -----------------------------
+  if (sessionLoading || loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <Spinner size="lg" />
@@ -75,66 +158,6 @@ Issued At: ${new Date().toISOString()}`;
     return <ErrorAlert message={error} />;
   }
 
-
-  type JsonViewerProps = {
-  data: any;
-  label?: string;
-  seen?: WeakSet<any>;
-};
-
-const JsonViewer: React.FC<JsonViewerProps> = ({ data, label, seen }) => {
-  const seenObjects = seen || new WeakSet();
-
-  // 1️⃣ Handle primitives (string, number, boolean, null)
-  if (typeof data !== "object" || data === null) {
-    return (
-      <div className="overflow-x-auto">
-        <pre className="ml-2 text-gray-700 whitespace-pre break-words">
-          {label ? `${label}: ${String(data)}` : String(data)}
-        </pre>
-      </div>
-    );
-  }
-
-  // 2️⃣ Prevent infinite recursion for circular references
-  if (seenObjects.has(data)) {
-    return (
-     <div className="overflow-x-auto">
-      <pre className="ml-2 text-gray-700 whitespace-pre break-words">
-        {label ? `${label}: [Circular]` : "[Circular]"}
-      </pre>
-    </div>
-    );
-  }
-  seenObjects.add(data);
-
-  // 3️⃣ Handle arrays
-  if (Array.isArray(data)) {
-    return (
-      <details className="ml-4 mb-1">
-        <summary className="cursor-pointer font-medium text-gray-800">
-          {label ? `${label} [Array]` : "Array"}
-        </summary>
-        <div className="ml-4">
-          {data.map((item, index) => (
-            <JsonViewer key={index} data={item} label={`${index}`} seen={seenObjects} />
-          ))}
-        </div>
-      </details>
-    );
-  }
-
-  // 4️⃣ Handle objects
-  return (
-
-      <div className="ml-4">
-        {Object.entries(data).map(([key, value]) => (
-          <JsonViewer key={key} data={value} label={key} seen={seenObjects} />
-        ))}
-      </div>
-  );
-};
-
   return (
     <div className="p-6 space-y-4">
       <p>
@@ -142,71 +165,36 @@ const JsonViewer: React.FC<JsonViewerProps> = ({ data, label, seen }) => {
         {address ?? "not connected"}
       </p>
       <p>
-        <span className="text-red-500">Wallet isConnected: </span>
+        <span className="text-red-500">Wallet connected: </span>
         {isConnected ? "Yes" : "No"}
       </p>
-      <p>
-        <span className="text-red-500">Connector: </span>
-        {connector?.name ?? "N/A"}
-      </p>
 
-      {/* ------------------------- */}
       {/* Connect Wallet Button */}
-      {/* ------------------------- */}
-      {true && (
-        <AppKitButton
-          label="Connect Wallet2"
-          loadingLabel="Opening wallet selector..."  // ← customize text only
-          size="md"
-        />
-                
-        
-        /*
-        <AppKitButton className="px-4 py-2 bg-blue-600 text-white rounded">
-          Sign In With Wallet
-        </AppKitButton>
-      */)}
+      <AppKitButton label="Connect Wallet" loadingLabel="Opening wallet..." size="md" />
 
-      {/* ------------------------- */}
-      {/* Sign-in Button */}
-      {/* ------------------------- */}
+      {/* Sign-in */}
       {!user && (
-        <button
-          onClick={handleSignMessage}
-          className="px-4 py-2 bg-green-600 text-white rounded"
-        >
+        <button onClick={handleSignMessage} className="px-4 py-2 bg-green-600 text-white rounded">
           Sign In With Wallet
         </button>
       )}
 
-      {/* ------------------------- */}
-      {/* Optional: User info */}
-      {/* ------------------------- */}
+      {/* Increment counter
+      <button
+        onClick={onIncrementCounter}
+        className="px-4 py-2 bg-blue-600 text-white rounded"
+        disabled={!isConnected}
+      >
+        Increment Counter
+      </button> */}
+
+      {/* Optional user info */}
       {user && (
         <details className="border rounded p-2 bg-gray-50">
-          <summary className="cursor-pointer font-semibold text-red-500">
-            User Info
-          </summary>
+          <summary className="cursor-pointer font-semibold text-red-500">User Info</summary>
           <pre className="overflow-x-auto mt-2">{JSON.stringify(user, null, 2)}</pre>
         </details>
       )}
-      {connector && (
-  <details className="mb-2 border rounded p-2 bg-gray-50">
-    <summary className="cursor-pointer font-semibold text-red-500 flex items-center gap-2">
-      {connector.icon && (
-        <img
-          src={connector.icon}
-          alt={connector.name || "Connector Icon"}
-          className="w-10 h-10 rounded"
-        />
-      )}
-      <span>Connector Info</span>
-    </summary>
-    <div className="mt-2">
-      <JsonViewer data={connector} />
-    </div>
-  </details>
-)}
     </div>
   );
 }

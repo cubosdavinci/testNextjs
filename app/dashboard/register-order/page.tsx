@@ -45,7 +45,6 @@ const [selectedWalletProvider, setSelectedWalletProvider] = useState<any>(null)
 
 useEffect(() => {
   if (!discoveredWallets.length) return
-
   const match = discoveredWallets.find(
     (w) => w.info.rdns === selectedWallet
   )

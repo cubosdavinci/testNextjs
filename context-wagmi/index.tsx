@@ -1,7 +1,7 @@
 'use client'
 import { wagmiAdapter, projectId } from './config'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { createAppKit, useAppKitState, useAppKitTheme, useAppKitAccount  } from '@reown/appkit/react'
+//import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { createAppKit, useAppKitState, useAppKitTheme, useAppKitAccount  } from "@reown/appkit/react"
 import { arbitrumSepolia } from '@reown/appkit/networks'
 import React, { useEffect, type ReactNode } from 'react'
 import { cookieToInitialState, WagmiProvider, type Config } from 'wagmi'
