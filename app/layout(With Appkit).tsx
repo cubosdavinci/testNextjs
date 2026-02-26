@@ -3,7 +3,7 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 
 const inter = Inter({ subsets: ['latin'] })
-import {Wallet} from '@/app/solana-provider'
+import AppKitProvider from  '@/context-solana/solana-appkit'
 
 export const metadata: Metadata = {
   title: 'AppKit Example App',
@@ -19,9 +19,9 @@ export default async function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <Wallet>
+        <AppKitProvider>
         {children}
-        </Wallet>
+        </AppKitProvider>
       </body>
     </html>
   )

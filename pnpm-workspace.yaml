@@ -1,5 +1,6 @@
 onlyBuiltDependencies:
   - '@reown/appkit'
+  - bigint-buffer
   - bufferutil
   - esbuild
   - sharp

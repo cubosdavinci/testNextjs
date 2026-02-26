@@ -1,199 +1,327 @@
 "use client";
 
-import { useState } from "react";
+import bs58 from 'bs58';
+
+import { useState, useEffect, useCallback } from "react";
+import { v4 as uuidv4 } from "uuid";
+import {
+  useWallet,
+  useConnection,
+} from "@solana/wallet-adapter-react";
 import {
   PublicKey,
-  Keypair,
-  Transaction,
-  TransactionInstruction,
+  VersionedTransaction,
+  TransactionMessage,
   SystemProgram,
-  LAMPORTS_PER_SOL,
+  Commitment,
 } from "@solana/web3.js";
+import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
+import "@solana/wallet-adapter-react-ui/styles.css";
 
 import {
-  useAppKitAccount,
-  useAppKitProvider,
-  AppKitButton,
-  useAppKit,
-} from "@reown/appkit/react";
-import { useAppKitConnection, type Provider } from "@reown/appkit-adapter-solana/react";
-import { useSession } from "@/components/auth/useSession";
-import { Spinner } from "@/components/auth/spinner";
+  createTransferInstruction,
+  getAssociatedTokenAddress,
+  TOKEN_PROGRAM_ID,
+} from "@solana/spl-token";
+
 import ErrorAlert from "@/components/banners/ErrorAlert";
 
+// ────────────────────────────────────────────────
+// Constants & Types
+// ────────────────────────────────────────────────
+
+const USDC_MINT_DEVNET = new PublicKey("4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU");
+const DEFAULT_COMMITMENT: Commitment = "confirmed";
+
+type TxResult = {
+  type: "SOL" | "USDC";
+  signature: string;
+  amount: number;
+  recipient: string;
+  network: string;
+  nonce: string;
+};
+
+// ────────────────────────────────────────────────
+
 export default function SolanaPage() {
-  const { session, user, sessionLoading, signInWithWeb3Account } = useSession();
+  const { publicKey, connected, sendTransaction, wallet } = useWallet();
+  const { connection } = useConnection();
 
-  // -----------------------------
-  // AppKit hooks
-  // -----------------------------
-  const { address, isConnected } = useAppKitAccount();
-  const { connection, } = useAppKitConnection(); 
-  const { walletProvider, } = useAppKitProvider<Provider>("solana");
-  /*const { open } = useAppKit();*/
-
+  const [recipient, setRecipient] = useState("");
+  const [amountSOL, setAmountSOL] = useState<number | "">(1);
+  const [amountUSDC, setAmountUSDC] = useState<number | "">(1);
+  const [txResult, setTxResult] = useState<TxResult | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [networkName, setNetworkName] = useState("");
+  const [isSending, setIsSending] = useState(false);
 
-  // -----------------------------
-  // Sign-in flow
-  // -----------------------------
-  const handleSignMessage = async () => {
-    if (!isConnected || !address) {
-      setError("Wallet not connected yet");
+  // Detect cluster from RPC endpoint
+  useEffect(() => {
+    if (!connection?.rpcEndpoint) return;
+    const url = connection.rpcEndpoint.toLowerCase();
+    if (url.includes("devnet")) setNetworkName("devnet");
+    else if (url.includes("testnet")) setNetworkName("testnet");
+    else if (url.includes("mainnet")) setNetworkName("mainnet-beta");
+    else setNetworkName("custom");
+  }, [connection?.rpcEndpoint]);
+
+  const createNonce = useCallback(() => uuidv4(), []);
+
+  // ─── Shared send logic ──────────────────────────────────────
+
+  type PartialTxResult = {
+  type: "SOL" | "USDC";
+  signature: string;
+  amount: number;
+  recipient: string;
+};
+
+  const sendTransactionBase = useCallback(
+  async (
+    buildTx: () => Promise<VersionedTransaction>,
+    successData: (sig: string) => PartialTxResult,   // ← changed
+    label: "SOL" | "USDC"
+  ): Promise<void> => {
+    if (isSending) return;
+    setIsSending(true);
+    setError(null);
+    setTxResult(null);
+
+    const nonce = createNonce();
+
+    try {
+      if (!connected || !publicKey) throw new Error("Wallet not connected");
+      if (!recipient) throw new Error("Recipient address is required");
+
+      const transaction = await buildTx();
+
+      const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash(DEFAULT_COMMITMENT);
+
+      const rawSignature = await sendTransaction(transaction, connection, {
+        preflightCommitment: DEFAULT_COMMITMENT,
+        maxRetries: 3,
+      });
+
+      // Fix: Convert base64 signature → base58
+      const signature = bs58.encode(Buffer.from(rawSignature, 'base64'));
+
+      await connection.confirmTransaction(
+        { signature, blockhash, lastValidBlockHeight },
+        DEFAULT_COMMITMENT
+      );
+
+      setTxResult({
+        ...successData(signature),
+        network: networkName,
+        nonce,
+      });
+    } catch (err: unknown) {
+      const msg =
+        err instanceof Error
+          ? err.message
+          : "Transaction failed – check wallet network, balance & console";
+      console.error(`${label} send failed:`, err);
+      setError(msg);
+    } finally {
+      setIsSending(false);
+    }
+  },
+  [connected, publicKey, recipient, connection, networkName, isSending, createNonce, sendTransaction,]
+);
+
+  // ─── Send SOL ───────────────────────────────────────────────
+
+  const sendSOL = useCallback(async () => {
+    if (typeof amountSOL !== "number" || amountSOL <= 0) {
+      setError("Enter a valid SOL amount > 0");
       return;
     }
-console.log("Signing the message")
-    try {
-      setLoading(true);
-      const domain = window.location.host;
-      const uri = window.location.origin;
-      const nonce = crypto.randomUUID();
-      const message = `${domain} wants you to sign in with your Solana account:
-${address}
 
-URI: ${uri}
-Version: 1
-Nonce: ${nonce}
-Issued At: ${new Date().toISOString()}`;
+    await sendTransactionBase(
+      async () => {
+        const instructions = [
+          SystemProgram.transfer({
+            fromPubkey: publicKey!,
+            toPubkey: new PublicKey(recipient),
+            lamports: Math.floor(amountSOL * 1_000_000_000),
+          }),
+        ];
 
-const messageBytes = new TextEncoder().encode(message)
+        const { blockhash } = await connection.getLatestBlockhash(DEFAULT_COMMITMENT);
 
-      // AppKit signing
-      console.log("Wallet Provider Name: ", walletProvider.name)
-      console.log("Wallet Provider Chain: ", walletProvider.chain.toString)
-      console.log("Wallet Provider Chains: ", walletProvider.chains.toString)
-      const signature = await walletProvider.signMessage(messageBytes);
-      console.log("Signature: ", signature)
+        const message = new TransactionMessage({
+          payerKey: publicKey!,
+          recentBlockhash: blockhash,
+          instructions,
+        }).compileToV0Message();
 
-      // Optional: verify wallet with backend / Supabase
-      const { error: verifyError } = await signInWithWeb3Account({
-        chain: "solana",
-        message,
+        return new VersionedTransaction(message);
+      },
+      (signature) => ({
+        type: "SOL" as const,
         signature,
-      });
+        amount: amountSOL,
+        recipient,
+      }),
+      "SOL"
+    );
+  }, [sendTransactionBase, amountSOL, publicKey, recipient, connection]);
 
-      /*if (verifyError) setError(`Wallet verification failed: ${verifyError.message}`);*/
+  // ─── Send USDC ──────────────────────────────────────────────
 
-      if (verifyError) {
-        console.error("Supabase error:", verifyError)
-        setError(`Wallet verification failed: ${JSON.stringify(verifyError, null, 2)}`)
-      }
-      else setError(null);
-    } catch (err: any) {
-      setError(err?.message || "Wallet verification failed");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // -----------------------------
-  // Example: increment counter on Solana
-  // -----------------------------
-  /*
-  async function onIncrementCounter() {
-    if (!walletProvider || !connection) {
-      setError("Wallet not connected or provider missing");
+  const sendUSDC = useCallback(async () => {
+    if (typeof amountUSDC !== "number" || amountUSDC <= 0) {
+      setError("Enter a valid USDC amount > 0");
       return;
     }
 
-    try {
-      setLoading(true);
+    await sendTransactionBase(
+      async () => {
+        const decimals = 6;
+        const uiAmount = amountUSDC;
+        const rawAmount = Math.floor(uiAmount * 10 ** decimals);
 
-      const PROGRAM_ID = new PublicKey("Cb5aXEgXptKqHHWLifvXu5BeAuVLjojQ5ypq6CfQj1hy");
-      const counterKeypair = Keypair.generate();
-      const counter = counterKeypair.publicKey;
+        const fromATA = await getAssociatedTokenAddress(USDC_MINT_DEVNET, publicKey!);
+        const toATA = await getAssociatedTokenAddress(USDC_MINT_DEVNET, new PublicKey(recipient));
 
-      // Check wallet balance
-      const balance = await connection.getBalance(walletProvider.publicKey!);
-      if (balance < LAMPORTS_PER_SOL / 100) throw new Error("Not enough SOL in wallet");
+        const instructions = [
+          createTransferInstruction(
+            fromATA,
+            toATA,
+            publicKey!,
+            rawAmount,
+            [],
+            TOKEN_PROGRAM_ID
+          ),
+        ];
 
-      const COUNTER_ACCOUNT_SIZE = 8;
-      const allocIx: TransactionInstruction = SystemProgram.createAccount({
-        fromPubkey: walletProvider.publicKey!,
-        newAccountPubkey: counter,
-        lamports: await connection.getMinimumBalanceForRentExemption(COUNTER_ACCOUNT_SIZE),
-        space: COUNTER_ACCOUNT_SIZE,
-        programId: PROGRAM_ID,
-      });
+        const { blockhash } = await connection.getLatestBlockhash(DEFAULT_COMMITMENT);
 
-      const incrementIx: TransactionInstruction = new TransactionInstruction({
-        programId: PROGRAM_ID,
-        keys: [{ pubkey: counter, isSigner: false, isWritable: true }],
-        data: Buffer.from([0x0]),
-      });
+        const message = new TransactionMessage({
+          payerKey: publicKey!,
+          recentBlockhash: blockhash,
+          instructions,
+        }).compileToV0Message();
 
-      const tx = new Transaction().add(allocIx).add(incrementIx);
-      tx.feePayer = walletProvider.publicKey;
-      tx.recentBlockhash = (await connection.getLatestBlockhash("confirmed")).blockhash;
-
-      // Sign & send
-      await walletProvider.signAndSendTransaction(tx, [counterKeypair]);
-
-      // Fetch counter account
-      const counterAccountInfo = await connection.getAccountInfo(counter, { commitment: "confirmed" });
-      if (!counterAccountInfo) throw new Error("Expected counter account to exist");
-
-      const counterAccount = { count: counterAccountInfo.data[0] }; // simple deserialize
-      console.log("Counter value:", counterAccount.count);
-    } catch (err: any) {
-      setError(err?.message || "Transaction failed");
-    } finally {
-      setLoading(false);
-    }
-  }*/
-
-  // -----------------------------
-  // Render
-  // -----------------------------
-  if (sessionLoading || loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <Spinner size="lg" />
-      </div>
+        return new VersionedTransaction(message);
+      },
+      (signature) => ({
+        type: "USDC" as const,
+        signature,
+        amount: amountUSDC,
+        recipient,
+      }),
+      "USDC"
     );
-  }
+  }, [sendTransactionBase, amountUSDC, publicKey, recipient, connection]);
 
-  if (error) {
-    return <ErrorAlert message={error} />;
-  }
+  // ─── Render ─────────────────────────────────────────────────
+
+  const buttonTextSOL = isSending ? "Sending SOL..." : "Send SOL";
+  const buttonTextUSDC = isSending ? "Sending USDC..." : "Send USDC";
 
   return (
-    <div className="p-6 space-y-4">
-      <p>
-        <span className="text-red-500">Wallet address: </span>
-        {address ?? "not connected"}
-      </p>
-      <p>
-        <span className="text-red-500">Wallet connected: </span>
-        {isConnected ? "Yes" : "No"}
-      </p>
+    <div className="p-6 space-y-6 max-w-lg mx-auto">
+      <div className="flex justify-center">
+        <WalletMultiButton />
+      </div>
 
-      {/* Connect Wallet Button */}
-      <AppKitButton label="Connect Wallet" loadingLabel="Opening wallet..." size="md" />
+      {error && <ErrorAlert message={error} />}
 
-      {/* Sign-in */}
-      {!user && (
-        <button onClick={handleSignMessage} className="px-4 py-2 bg-green-600 text-white rounded">
-          Sign In With Wallet
+      {/* Recipient */}
+      <div className="space-y-2">
+        <label className="block font-medium text-gray-700">Recipient Address</label>
+        <input
+          type="text"
+          value={recipient}
+          onChange={(e) => setRecipient(e.target.value.trim())}
+          placeholder="Enter Solana address (Base58)"
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        />
+      </div>
+
+      {/* SOL Transfer */}
+      <div className="space-y-2">
+        <label className="block font-medium text-gray-700">Amount (SOL)</label>
+        <input
+          type="number"
+          step="0.000000001"
+          min="0"
+          value={amountSOL}
+          onChange={(e) => setAmountSOL(e.target.value === "" ? "" : Number(e.target.value))}
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        />
+        <button
+          onClick={sendSOL}
+          disabled={!connected || isSending || !recipient || typeof amountSOL !== "number" || amountSOL <= 0}
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          {buttonTextSOL}
         </button>
-      )}
+      </div>
 
-      {/* Increment counter
-      <button
-        onClick={onIncrementCounter}
-        className="px-4 py-2 bg-blue-600 text-white rounded"
-        disabled={!isConnected}
-      >
-        Increment Counter
-      </button> */}
+      {/* USDC Transfer */}
+      <div className="space-y-2">
+        <label className="block font-medium text-gray-700">Amount (USDC)</label>
+        <input
+          type="number"
+          step="0.000001"
+          min="0"
+          value={amountUSDC}
+          onChange={(e) => setAmountUSDC(e.target.value === "" ? "" : Number(e.target.value))}
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+        />
+        <button
+          onClick={sendUSDC}
+          disabled={!connected || isSending || !recipient || typeof amountUSDC !== "number" || amountUSDC <= 0}
+          className="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2.5 px-4 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          {buttonTextUSDC}
+        </button>
+      </div>
 
-      {/* Optional user info */}
-      {user && (
-        <details className="border rounded p-2 bg-gray-50">
-          <summary className="cursor-pointer font-semibold text-red-500">User Info</summary>
-          <pre className="overflow-x-auto mt-2">{JSON.stringify(user, null, 2)}</pre>
-        </details>
+      {/* Status */}
+      <div className="text-sm text-gray-600 space-y-1 pt-2 border-t">
+        <p>
+          Wallet: <span className="font-medium">{wallet?.adapter.name ?? "None"}</span>
+        </p>
+        <p>
+          Address: <span className="font-mono break-all">{publicKey?.toBase58() ?? "Not connected"}</span>
+        </p>
+        {connected && networkName && (
+          <p>
+            Network: <strong>{networkName}</strong>
+          </p>
+        )}
+      </div>
+
+      {/* Transaction Result */}
+      {txResult && (
+        <div className="mt-6 p-5 border border-gray-200 rounded-xl bg-gray-50 shadow-sm space-y-3">
+          <h3 className="text-lg font-semibold text-gray-800">
+            {txResult.type} Transaction Confirmed!
+          </h3>
+          <div className="text-sm space-y-1">
+            <p>
+              Network: <strong>{txResult.network}</strong>
+            </p>
+            <p>
+              Nonce: <span className="font-mono text-xs">{txResult.nonce}</span>
+            </p>
+            <p className="break-all">
+              Signature:{" "}
+              <a
+                href={`https://explorer.solana.com/tx/${txResult.signature}?cluster=${txResult.network}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:underline font-mono text-xs"
+              >
+                {txResult.signature}
+              </a>
+            </p>
+          </div>
+        </div>
       )}
     </div>
   );
