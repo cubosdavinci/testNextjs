@@ -10,7 +10,6 @@ import { AppMetadataTable } from './AppMetadataTable'
 import { Web3ClaimsTable } from './Web3ClaimsTable'
 import { SystemTable } from './SystemTable'
 import { JwtSessionTable } from './tables/JwtSessionTable'
-import { AppKitAccountTable } from './tables/AppKitAccountTable'
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -77,7 +76,6 @@ export default function DashboardPage() {
 
       {/* Tables */}
       <JwtSessionTable />
-      <AppKitAccountTable />
 
       {/* Raw user JSON */}
       <details className="rounded border border-border bg-muted">

@@ -1,14 +1,14 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { createAnonClient } from "@/lib/supabase/client";
-import { useWalletClient, useAccount } from "wagmi";
 import { useRouter } from "next/navigation";
+import { useWallet } from "@solana/wallet-adapter-react";
 import type { Session, User } from "@supabase/supabase-js";
+import { createAnonClient } from "@/lib/supabase/client";
 
 interface UseAuthModalOptions {
   redirect?: string;
-  statement?: string; // optional statement if needed for wallets
+  statement?: string; // optional custom statement (not heavily used for Solana)
 }
 
 interface UseAuthModalReturn {
@@ -22,12 +22,12 @@ interface UseAuthModalReturn {
   logout: () => Promise<void>;
 }
 
-export function useAuthModal({ redirect, statement }: UseAuthModalOptions = {}): UseAuthModalReturn {
+export function useAuthModal({ redirect }: UseAuthModalOptions = {}): UseAuthModalReturn {
   const router = useRouter();
   const supabase = createAnonClient();
 
-  const { data: walletClient, isSuccess: walletReady } = useWalletClient();
-  const { address } = useAccount();
+  // Solana wallet adapter
+  const { publicKey, connected, signMessage, wallet } = useWallet();
 
   const [isSignedIn, setIsSignedIn] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -36,49 +36,43 @@ export function useAuthModal({ redirect, statement }: UseAuthModalOptions = {}):
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
 
-  /** Update user/session state */
-  const updateState = useCallback((session: Session | null) => {
-    setSession(session);
-    setUser(session?.user ?? null);
-    setIsSignedIn(!!session);
+  /** Update local user/session state */
+  const updateState = useCallback((newSession: Session | null) => {
+    setSession(newSession);
+    setUser(newSession?.user ?? null);
+    setIsSignedIn(!!newSession);
   }, []);
 
-  /** Log errors to browser whenever they occur */
+  /** Log errors */
   useEffect(() => {
     if (isError && error) {
       console.error("[useAuthModal] Error:", error);
     }
   }, [isError, error]);
 
-  /** Listen for Supabase session changes */
+  /** Listen for Supabase auth state changes */
   useEffect(() => {
     let isMounted = true;
 
+    // Initial session fetch
     supabase.auth.getSession()
       .then(({ data }) => {
         if (!isMounted) return;
         updateState(data.session);
         setLoading(false);
-        setIsError(false);
-        setError(null);
       })
       .catch((err) => {
         if (!isMounted) return;
-        console.error("[useAuthModal] Supabase session fetch failed:", err);
+        console.error("[useAuthModal] Failed to fetch session:", err);
         setIsError(true);
         setError(err as Error);
         setLoading(false);
       });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    // Subscribe to auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, newSession) => {
       if (!isMounted) return;
-      try {
-        updateState(session);
-      } catch (err) {
-        console.error("[useAuthModal] Supabase auth state update failed:", err);
-        setIsError(true);
-        setError(err as Error);
-      }
+      updateState(newSession);
     });
 
     return () => {
@@ -87,23 +81,14 @@ export function useAuthModal({ redirect, statement }: UseAuthModalOptions = {}):
     };
   }, [supabase, updateState]);
 
-  /** Isolate walletReady in its own effect */
-  useEffect(() => {
-    if (walletReady) {
-      console.log("[useAuthModal] Wallet Ready");
-    } else {
-      console.log("[useAuthModal] Wallet Not Ready");
-    }
-  }, [walletReady]);
-
-  /** Web3 signature login */
+  /** Web3 signature login (Solana) */
   const signIn = useCallback(async () => {
     setLoading(true);
     setIsError(false);
     setError(null);
 
-    if (!walletReady || !walletClient || !address) {
-      const msg = "Wallet not ready now";
+    if (!connected || !publicKey || !signMessage) {
+      const msg = "Wallet not connected or does not support signing";
       console.warn("[useAuthModal]", msg);
       setIsError(true);
       setError(new Error(msg));
@@ -112,35 +97,54 @@ export function useAuthModal({ redirect, statement }: UseAuthModalOptions = {}):
     }
 
     try {
-      const { data, error: funcError } = await supabase.functions.invoke("get_web3_message", { body: { address } });
-      if (funcError) {
-        console.error("[useAuthModal] Supabase function error:", funcError);
-        throw funcError;
+      // Optional: You can still call a Supabase Edge Function if you want a dynamic message
+      // For simplicity and consistency with your earlier page, we'll build the message client-side
+      const domain = window.location.host;
+      const uri = window.location.origin;
+      const nonce = crypto.randomUUID();
+
+      const message = `${domain} wants you to sign in with your Solana account:
+${publicKey.toBase58()}
+
+URI: ${uri}
+Version: 1
+Nonce: ${nonce}
+Issued At: ${new Date().toISOString()}`;
+
+      const messageBytes = new TextEncoder().encode(message);
+
+      // Sign with Solana wallet
+      const signature = await signMessage(messageBytes);
+
+      // Verify via your existing Supabase function / helper
+      const { data, error: verifyError } = await supabase.auth.signInWithWeb3?.({
+        chain: "solana",
+        message,
+        signature,                 // Uint8Array - important!
+      } as any); // Type assertion because Supabase types are Ethereum-heavy
+
+      // Alternative: if you use signInWithWeb3Account from your session hook:
+      // const { error: verifyError } = await signInWithWeb3Account({ chain: "solana", message, signature });
+
+      if (verifyError) {
+        throw verifyError;
       }
 
-      const message: string = data.message;
-      const signature = await walletClient.signMessage({ message });
+      console.log("[useAuthModal] Solana login successful for address:", publicKey.toBase58());
 
-      await supabase.auth.signInWithWeb3({
-        chain: "ethereum",
-        message,
-        signature,
-        options: {},
-      });
-
-      console.log("[useAuthModal] Web3 login successful for address:", address);
-
-      if (redirect) router.push(redirect);
-    } catch (err: any) {
-      console.error("[useAuthModal] Web3 signature login failed:", err);
+      if (redirect) {
+        router.push(redirect);
+      }
+    } catch (err: unknown) {
+      console.error("[useAuthModal] Solana sign-in failed:", err);
       setIsError(true);
       setError(err instanceof Error ? err : new Error(String(err)));
     } finally {
       setLoading(false);
     }
-  }, [walletReady, walletClient, address, supabase, router, redirect]);
+  }, [connected, publicKey, signMessage, supabase, router, redirect]);
 
-  /** Logout helper */
+  /** Logout */
   const logout = useCallback(async () => {
     setLoading(true);
     setIsError(false);
@@ -149,9 +153,9 @@ export function useAuthModal({ redirect, statement }: UseAuthModalOptions = {}):
     try {
       await supabase.auth.signOut();
       console.log("[useAuthModal] Logout successful");
-      router.replace("/"); // redirect home
-    } catch (err: any) {
-      console.error("[useAuthModal] Supabase logout failed:", err);
+      router.replace("/");
+    } catch (err: unknown) {
+      console.error("[useAuthModal] Logout failed:", err);
       setIsError(true);
       setError(err instanceof Error ? err : new Error(String(err)));
     } finally {
@@ -159,5 +163,14 @@ export function useAuthModal({ redirect, statement }: UseAuthModalOptions = {}):
     }
   }, [supabase, router]);
 
-  return { isSignedIn, loading, isError, error, user, session, signIn, logout };
+  return {
+    isSignedIn,
+    loading,
+    isError,
+    error,
+    user,
+    session,
+    signIn,
+    logout,
+  };
 }

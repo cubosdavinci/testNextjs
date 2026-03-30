@@ -19,14 +19,14 @@ import { useState } from "react";
  * - PublicKey / transactions
  * - (Commented example) on-chain interaction
  */
-import {
+/*import {
   PublicKey,
   Keypair,
   Transaction,
   TransactionInstruction,
   SystemProgram,
   LAMPORTS_PER_SOL,
-} from "@solana/web3.js";
+} from "@solana/web3.js";*/
 
 /**
  * -----------------------------
