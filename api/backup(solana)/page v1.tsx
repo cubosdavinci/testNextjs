@@ -52,7 +52,7 @@ export default function SolanaPage() {
   const [txResult, setTxResult] = useState<TxResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [networkName, setNetworkName] = useState("");
-  const [isSending, setIsSending] = useState(false);
+  const [isSending, setIsSending] = useState(false); // kept for button disable
 
   // Network detection
   useEffect(() => {
@@ -76,12 +76,7 @@ export default function SolanaPage() {
 
   const createNonce = useCallback(() => uuidv4(), []);
 
-  // Clear error when user wants (used by the X button)
-  const clearError = useCallback(() => {
-    setError(null);
-  }, []);
-
-  // ─── Shared send logic ─────────────────────────
+  // ─── Shared send logic with better status handling ─────────────────────────
   const sendTransactionBase = useCallback(
     async (
       buildTx: () => Promise<VersionedTransaction>,
@@ -93,7 +88,7 @@ export default function SolanaPage() {
       setIsSending(true);
       setError(null);
       setTxResult(null);
-      setTxStatus("pending");
+      setTxStatus("pending");        // ← Start: Pending
 
       try {
         if (!connected || !publicKey) {
@@ -105,15 +100,19 @@ export default function SolanaPage() {
 
         const transaction = await buildTx();
 
+        // Send to wallet
         const signature = await sendTransaction(transaction, connection, {
           preflightCommitment: DEFAULT_COMMITMENT,
           maxRetries: 3,
         });
 
+        // After wallet returns signature → move to confirming
         setTxStatus("confirming");
 
+        // Confirm on chain
         await connection.confirmTransaction(signature, DEFAULT_COMMITMENT);
 
+        // Success
         const result: TxResult = {
           ...successData(signature),
           network: networkName,
@@ -135,7 +134,7 @@ export default function SolanaPage() {
     [connected, publicKey, recipient, connection, networkName, isSending, sendTransaction, createNonce]
   );
 
-  // Send SOL & USDC (unchanged)
+  // Send SOL
   const sendSOL = useCallback(async () => {
     if (typeof amountSOL !== "number" || amountSOL <= 0) {
       setError("Enter valid SOL amount");
@@ -167,6 +166,7 @@ export default function SolanaPage() {
     );
   }, [amountSOL, publicKey, recipient, connection, sendTransactionBase]);
 
+  // Send USDC
   const sendUSDC = useCallback(async () => {
     if (typeof amountUSDC !== "number" || amountUSDC <= 0) {
       setError("Enter valid USDC amount");
@@ -213,13 +213,7 @@ export default function SolanaPage() {
         <WalletMultiButton />
       </div>
 
-      {/* Closeable Error Alert */}
-      {error && (
-        <ErrorAlert 
-          message={error} 
-          onClose={clearError}   // ← Added X button support
-        />
-      )}
+      {error && <ErrorAlert message={error} />}
 
       {/* Transaction Status Feedback */}
       {txStatus === "pending" && (
@@ -257,10 +251,9 @@ export default function SolanaPage() {
         className="w-full p-2 border rounded"
       />
 
-      {/* Buttons now enabled when transaction is "available" (idle or success) */}
       <button
         onClick={sendSOL}
-        disabled={!connected || isSending || (txStatus !== "idle" && txStatus !== "success")}
+        disabled={!connected || isSending || txStatus !== "idle"}
         className="w-full bg-blue-600 text-white p-2 rounded disabled:opacity-50"
       >
         {isSending ? "Processing..." : "Send SOL"}
@@ -268,7 +261,7 @@ export default function SolanaPage() {
 
       <button
         onClick={sendUSDC}
-        disabled={!connected || isSending || (txStatus !== "idle" && txStatus !== "success")}
+        disabled={!connected || isSending || txStatus !== "idle"}
         className="w-full bg-green-600 text-white p-2 rounded disabled:opacity-50"
       >
         Send USDC

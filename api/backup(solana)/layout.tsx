@@ -5,11 +5,10 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin'] })
 import {Wallet} from '@/app/my-solana-provider'
 
-/*
 export const metadata: Metadata = {
   title: 'AppKit Example App',
   description: 'Powered by Reown'
-}*/
+}
 
 export default async function RootLayout({
   children
@@ -21,9 +20,8 @@ export default async function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         <Wallet>
-          {children}
+        {children}
         </Wallet>
-
       </body>
     </html>
   )

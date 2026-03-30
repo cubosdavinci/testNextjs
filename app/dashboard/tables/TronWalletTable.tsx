@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import type { AppKitTronAdapter, AppKitTronAccount } from '../../WalletConnectTronAdapter'
+import type { AppKitTronAdapter, AppKitTronAccount } from '../../app(old)/WalletConnectTronAdapter'
 
 interface Props {
   adapter: AppKitTronAdapter
