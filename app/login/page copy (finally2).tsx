@@ -7,7 +7,7 @@ import { arbitrumSepolia } from 'wagmi/chains'
 import { createAnonClient } from '@/lib/supabase/client'
 import { appKit } from '@/app/providers'
 
-export default function Login() {
+export default asyncfunction Login() {
   const { isConnected, address } = useAppKitAccount()
   const { data: walletClient } = useWalletClient()
 

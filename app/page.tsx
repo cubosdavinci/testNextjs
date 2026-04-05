@@ -1,3 +1,6 @@
+// /home/cubosdavinci/yogi3/node_modules/.pnpm/@solana+wallet-adapter-react@0.15.39_@solana+web3.js@1.98.4_bufferutil@4.1.0_typescript_df4d35c81a37281ff0192df226b590ba/node_modules/@solana/wallet-adapter-react/src/useWallet.ts
+// /home/cubosdavinci/yogi3/node_modules/.pnpm/@supabase+auth-js@2.98.0/node_modules/@supabase/auth-js/src/lib/types.ts for SolanaWallet
+
 "use client";
 
 import { useState, useEffect, useCallback } from "react";

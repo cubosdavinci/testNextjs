@@ -10,6 +10,7 @@ import { AppMetadataTable } from './AppMetadataTable'
 import { Web3ClaimsTable } from './Web3ClaimsTable'
 import { SystemTable } from './SystemTable'
 import { JwtSessionTable } from './tables/JwtSessionTable'
+import { WalletSyncWarning } from '@/components/auth/WalletSyncWarning'
 
 export default function DashboardPage() {
   const router = useRouter()

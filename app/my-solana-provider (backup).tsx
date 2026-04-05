@@ -15,7 +15,7 @@ import {
 
 import {
   WalletModalProvider,
-  //WalletMultiButton
+  WalletMultiButton
 } from '@solana/wallet-adapter-react-ui';
 import { clusterApiUrl } from '@solana/web3.js';
 
@@ -35,26 +35,31 @@ export const Wallet: FC<WalletProviderProps> = ({ children }) => {
   const network = WalletAdapterNetwork.Devnet;
   const endpoint = useMemo(() => clusterApiUrl(network), [network]);
 
-const wallets = useMemo(
-  () => [
-    new PhantomWalletAdapter({ network }),
-    new SolflareWalletAdapter({ network }),
-    new SolanaMobileWalletAdapter({
-      chain: network, // ✅ changed
-      appIdentity: {
-        name: 'Your App Name',
-        uri: typeof window !== 'undefined' ? window.location.origin : '',
-        icon: '/icon.png',
-      },
-      addressSelector: createDefaultAddressSelector(),
-      authorizationResultCache: createDefaultAuthorizationResultCache(),
-      onWalletNotFound: async (/*mobileWalletAdapter*/) => {
-        console.warn('No mobile wallet found');
-      },
-    }),
-  ],
-  [network]
-);
+  const wallets = useMemo(
+    () => [
+      new PhantomWalletAdapter({ network }),
+      new SolflareWalletAdapter({ network }),
+
+      // ─── Add this ────────────────────────────────────────
+new SolanaMobileWalletAdapter({
+  cluster: network,
+  appIdentity: {
+    name: 'Your App Name',
+    uri: typeof window !== 'undefined' ? window.location.origin : '',
+    icon: '/icon.png',
+  },
+
+  addressSelector: createDefaultAddressSelector(),
+  authorizationResultCache: createDefaultAuthorizationResultCache(),
+
+  onWalletNotFound: async (mobileWalletAdapter) => {
+    // fallback behavior (VERY important)
+    console.warn('No mobile wallet found');
+  },
+}),
+    ],
+    [network]
+  );
 
   return (
     <ConnectionProvider endpoint={endpoint}>

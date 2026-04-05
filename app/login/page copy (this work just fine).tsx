@@ -9,7 +9,7 @@
  * - Authenticates via signInWithWeb3Account
  */
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 
@@ -37,17 +37,6 @@ export default function SolanaLoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Auto-clear error after 8 seconds (better UX)
-  useEffect(() => {
-    if (error) {
-      const timer = setTimeout(() => {
-        setError(null);
-      }, 8000);
-
-      return () => clearTimeout(timer);
-    }
-  }, [error]);
-
   /**
    * Handle Sign-In with Solana (SIWS-style)
    */
@@ -59,7 +48,7 @@ export default function SolanaLoginPage() {
 
     try {
       setLoading(true);
-      setError(null); // Clear previous error
+      setError(null);
 
       const domain = window.location.host;
       const uri = window.location.origin;
@@ -73,13 +62,17 @@ Version: 1
 Nonce: ${nonce}
 Issued At: ${new Date().toISOString()}`;
 
+      // Convert message to bytes for signing
       const messageBytes = new TextEncoder().encode(message);
+
+      // Request signature from wallet
       const signature = await signMessage(messageBytes);
 
+      // Call backend verification (Solana expects Uint8Array)
       const result = await signInWithWeb3Account({
         chain: "solana",
         message,
-        signature
+        signature, // Uint8Array - matches your function type
       });
 
       if (result?.error) {
@@ -88,15 +81,14 @@ Issued At: ${new Date().toISOString()}`;
       }
     } catch (err: unknown) {
       console.error("Sign-in error:", err);
-      const errorMessage = err instanceof Error ? err.message : "Failed to sign message or verify wallet";
-      setError(errorMessage);
+      setError(err?.message || "Failed to sign message or verify wallet");
     } finally {
       setLoading(false);
     }
   };
 
   /**
-   * Loading state (full screen spinner)
+   * Loading state
    */
   if (sessionLoading || loading) {
     return (
@@ -104,6 +96,13 @@ Issued At: ${new Date().toISOString()}`;
         <Spinner size="lg" />
       </div>
     );
+  }
+
+  /**
+   * Error state
+   */
+  if (error) {
+    return <ErrorAlert message={error} />;
   }
 
   /**
@@ -138,13 +137,11 @@ Issued At: ${new Date().toISOString()}`;
           </p>
         </div>
 
+        {/* Wallet Connect Button */}
         <WalletMultiButton className="w-full" />
       </div>
 
-      {/* Error Alert - Shown inline */}
-      {error && <ErrorAlert message={error} />}
-
-      {/* Sign In Button */}
+      {/* Sign In Button - only show when connected and not logged in */}
       {!user && connected && (
         <button
           onClick={handleSignIn}
@@ -155,7 +152,7 @@ Issued At: ${new Date().toISOString()}`;
         </button>
       )}
 
-      {/* Success state */}
+      {/* Show user info after successful login */}
       {user && (
         <div className="mt-8 border rounded-lg p-4 bg-gray-50">
           <p className="font-semibold text-green-600 mb-2">✅ Successfully signed in</p>
