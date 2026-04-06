@@ -1,6 +1,6 @@
 'use client'
 
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from '@/lib/supabase/clients/client'
 
 export default function EthereumLoginButton() {
   const supabase = createClient()

@@ -3,7 +3,7 @@
 import { useAccount } from "wagmi";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { createAnonClient } from "@/lib/supabase/client";
+import { createAnonClient } from "@/lib/supabase/clients/client";
 import { connectWallet } from "@/lib/wallet";
 
 export default function LoginButton() {

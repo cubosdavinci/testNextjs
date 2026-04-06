@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createAnonClient } from "@/lib/supabase/client";
+import { createAnonClient } from "@/lib/supabase/clients/client";
 
 type Profile = {
   id: string;

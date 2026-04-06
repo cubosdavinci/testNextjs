@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useWallet } from "@solana/wallet-adapter-react";
 import type { Session, User } from "@supabase/supabase-js";
-import { createAnonClient } from "@/lib/supabase/client";
+import { supabaseBrowser } from "@/lib/supabase/clients/supabaseBrowser";
 
 interface UseAuthModalOptions {
   redirect?: string;
@@ -24,7 +24,7 @@ interface UseAuthModalReturn {
 
 export function useAuthModal({ redirect }: UseAuthModalOptions = {}): UseAuthModalReturn {
   const router = useRouter();
-  const supabase = createAnonClient();
+  const supabase = supabaseBrowser();
 
   // Solana wallet adapter
   const { publicKey, connected, signMessage, wallet } = useWallet();

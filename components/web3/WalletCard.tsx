@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { SUPPORTED_NETWORKS } from "@/lib/web3/SupportedNetworks";
 import { UserPaymentMethod } from "@/lib/supabase/web3/getUserWallets";
-import { createClient } from "@/lib/supabase/client";
+import { createClient } from "@/lib/supabase/clients/client";
 
 type Props = {
   providerKey: string;

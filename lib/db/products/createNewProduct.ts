@@ -1,4 +1,4 @@
-import { supabaseAdmin } from "@/lib/clients/supabaseAdmin";
+import { supabaseAdmin } from "@/lib/supabase/clients/supabaseAdmin";
 import { consoleLog } from "@/lib/utils";
 import { CreateProductVars } from "@/lib/db/products/types/CreateProductVars";
 

@@ -1,4 +1,4 @@
-import { supabaseClient as supabase } from "@/lib/clients/supabaseAdmin";
+import { supabaseClient as supabase } from "@/lib/supabase/clients/supabaseAdmin";
 import { Product } from "@/types/db/products";
 
 type SortField = "name" | "created_at" | "updated_at";

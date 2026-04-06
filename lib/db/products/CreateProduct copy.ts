@@ -1,6 +1,6 @@
 import fs from "fs";
 import {ProductData} from "@/types/db/products"
-import { supabaseClient } from "@/lib/clients/supabaseAdmin"; // supabase client with service key
+import { supabaseClient } from "@/lib/supabase/clients/supabaseAdmin"; // supabase client with service key
 
 
 export async function CreateProduct(data: ProductData) {

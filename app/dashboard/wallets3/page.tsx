@@ -1,4 +1,4 @@
-import { createAnonClient } from "@/lib/supabase/client"
+import { createAnonClient } from "@/lib/supabase/clients/client"
 import ConnectUserWallets from "./ConnectUserWallets"
 import type { UserWalletDbRow } from "@/lib/wallet/types/UserWalletDbRow"
 

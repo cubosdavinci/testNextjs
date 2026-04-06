@@ -1,4 +1,4 @@
-import { supabaseAdmin } from "@/lib/clients/supabaseAdmin";
+import { supabaseAdmin } from "@/lib/supabase/clients/supabaseAdmin";
 import { Product, ProductLicense } from "@/types/db/products";
 
 export async function CreateProduct(vars: any) {

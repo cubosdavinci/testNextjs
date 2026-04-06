@@ -1,5 +1,5 @@
 // lib/supabase/products/getProduct.ts
-import { supabaseAdmin } from "@/lib/clients/supabaseAdmin";
+import { supabaseAdmin } from "@/lib/supabase/clients/supabaseAdmin";
 import { consoleLog } from "@/lib/utils";
 import { Product, ProductLicense, Prod3DDetails, Previews } from "@/types/db/products";
 

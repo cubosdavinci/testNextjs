@@ -4,5 +4,6 @@ onlyBuiltDependencies:
   - bufferutil
   - esbuild
   - sharp
+  - supabase
   - unrs-resolver
   - utf-8-validate

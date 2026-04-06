@@ -1,4 +1,4 @@
-import { supabaseAdmin } from "@/lib/clients/supabaseAdmin";
+import { supabaseAdmin } from "@/lib/supabase/clients/supabaseAdmin";
 
 /**
  * Delete a file from Supabase Storage given its public URL

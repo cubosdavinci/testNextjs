@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { createAnonClient } from "@/lib/supabase/client";
+import { createAnonClient } from "@/lib/supabase/clients/client";
 import { detectWallets, DiscoveredWallet } from "@/lib/web3/wallets/providers";
 import Script from "next/script";
 import ErrorAlert from "@/components/banners/ErrorAlert";

@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/client";
+import { createClient } from "@/lib/supabase/clients/client";
 
 export type UserPaymentMethod = {
   id: string;

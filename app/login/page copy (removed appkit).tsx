@@ -4,7 +4,7 @@ import { useState, useCallback } from 'react'
 import { useAppKit } from '@reown/appkit/react'
 import { arbitrumSepolia } from '@reown/appkit/networks'
 import { useWalletClient } from 'wagmi'
-import { createAnonClient } from '@/lib/supabase/client'
+import { createAnonClient } from '@/lib/supabase/clients/client'
 import { useRouter } from 'next/navigation'
 
 export default function Login() {

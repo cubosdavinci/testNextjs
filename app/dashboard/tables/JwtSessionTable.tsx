@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { createAnonClient } from '@/lib/supabase/client'
+import { supabaseBrowser } from '@/lib/supabase/clients/supabaseBrowser'
 import type { Session } from '@supabase/supabase-js'
 
 function decodeJwt(token?: string) {
@@ -18,7 +18,7 @@ function decodeJwt(token?: string) {
 }
 
 export function JwtSessionTable() {
-  const supabase = createAnonClient()
+  const supabase = supabaseBrowser()
   const [session, setSession] = useState<Session | null>(null)
 
   useEffect(() => {

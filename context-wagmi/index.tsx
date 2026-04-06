@@ -5,7 +5,7 @@ import { createAppKit, useAppKitState, useAppKitTheme, useAppKitAccount  } from 
 import { arbitrumSepolia } from '@reown/appkit/networks'
 import React, { useEffect, type ReactNode } from 'react'
 import { cookieToInitialState, WagmiProvider, type Config } from 'wagmi'
-import { createAnonClient } from '@/lib/supabase/client'
+import { createAnonClient } from '@/lib/supabase/clients/client'
 
 // Set up queryClient
 const queryClient = new QueryClient()

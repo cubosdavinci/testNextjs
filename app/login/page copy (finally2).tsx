@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useAppKitAccount } from '@reown/appkit/react'
 import { useWalletClient } from 'wagmi'
 import { arbitrumSepolia } from 'wagmi/chains'
-import { createAnonClient } from '@/lib/supabase/client'
+import { createAnonClient } from '@/lib/supabase/clients/client'
 import { appKit } from '@/app/providers'
 
 export default asyncfunction Login() {

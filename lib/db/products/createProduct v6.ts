@@ -1,4 +1,4 @@
-import { supabaseClient } from "@/lib/clients/supabaseAdmin";
+import { supabaseClient } from "@/lib/supabase/clients/supabaseAdmin";
 import { consoleLog } from "@/lib/utils";
 import { CreateProductVars } from  "@/lib/db/products/types/CreateProductVars";
 //import { GoogleDriveMetadata } from "./types/GoogleDriveMetadata";

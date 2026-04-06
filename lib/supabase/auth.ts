@@ -1,4 +1,4 @@
-import { createAnonClient } from "./client"
+import { createAnonClient } from "./clients/supabaseBrowser"
 
 export async function getClientSession() {
   const supabase = createAnonClient()

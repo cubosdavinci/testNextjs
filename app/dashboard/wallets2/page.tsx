@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { createClient } from "@/lib/supabase/clients/client";
 import UserWallets from "@/components/web3/UserWallets";
 
 export default async function WalletsPage() {

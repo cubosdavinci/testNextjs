@@ -1,6 +1,6 @@
 'use server'
 
-import { createAnonClient } from '@/lib/supabase/client'
+import { createAnonClient } from '@/lib/supabase/clients/client'
 
 type SignInPayload = {
   address: string

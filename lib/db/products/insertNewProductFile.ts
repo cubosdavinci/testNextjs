@@ -1,5 +1,5 @@
 // lib/db/products/insertNewProductFile.ts
-import { supabaseAdmin } from "@/lib/clients/supabaseAdmin";
+import { supabaseAdmin } from "@/lib/supabase/clients/supabaseAdmin";
 import { consoleLog } from "@/lib/utils";
 import { CreateProductFileVars } from "@/lib/db/products/types/CreateProductFileVars";
 

@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { createAnonClient } from "@/lib/supabase/client";
+import { createAnonClient } from "@/lib/supabase/clients/client";
 import Web3SignIn from "./Web3SignIn";
 import { signInWithGoogle } from "./actions";
 

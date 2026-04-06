@@ -20,6 +20,10 @@ import { useSession } from "@/components/auth/useSession";
 import { Spinner } from "@/components/auth/spinner";
 import ErrorAlert from "@/components/banners/ErrorAlert";
 
+import LinkGoogleButton from '@/components/auth/LinkGoogleButton';
+import { browserConsoleLog } from "@/lib/utils";
+import UnlinkGoogleButton from "@/components/auth/UnlinkGoogleButton";
+
 export default function SolanaLoginPage() {
   /**
    * Auth / session state
@@ -52,6 +56,8 @@ export default function SolanaLoginPage() {
    * Handle Sign-In with Solana (SIWS-style)
    */
   const handleSignIn = async () => {
+    browserConsoleLog("Clicked sign in");
+    console.log("Clicked sign in");
     if (!connected || !publicKey || !signMessage) {
       setError("Please connect your Solana wallet first");
       return;
@@ -64,6 +70,10 @@ export default function SolanaLoginPage() {
       const domain = window.location.host;
       const uri = window.location.origin;
       const nonce = crypto.randomUUID();
+      console.log("Domain:", domain);
+      console.log("URI:", uri);
+      //console.log("Nonce:", nonce);
+      //console.log("Message)
 
       const message = `${domain} wants you to sign in with your Solana account:
 ${publicKey.toBase58()}
@@ -154,6 +164,11 @@ Issued At: ${new Date().toISOString()}`;
           {loading ? "Signing in..." : "Sign In With Wallet"}
         </button>
       )}
+
+      {/* ←←← Add the Link Google button here →→→ */}
+      <LinkGoogleButton />
+
+      <UnlinkGoogleButton/>
 
       {/* Success state */}
       {user && (

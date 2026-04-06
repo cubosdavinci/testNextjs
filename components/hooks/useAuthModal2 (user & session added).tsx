@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { createAnonClient } from "@/lib/supabase/client";
+import { createAnonClient } from "@/lib/supabase/clients/client";
 import { useWalletClient, useAccount } from "wagmi";
 import { useRouter } from "next/navigation";
 import type { Session, User } from "@supabase/supabase-js";

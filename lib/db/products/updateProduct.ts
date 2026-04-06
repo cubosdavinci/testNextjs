@@ -1,5 +1,5 @@
 // lib/supabase/products/UpdateProduct.ts
-import { supabaseClient } from "@/lib/clients/supabaseAdmin";
+import { supabaseClient } from "@/lib/supabase/clients/supabaseAdmin";
 import { consoleLog } from "@/lib/utils";
 import { UploadFile } from "../storage/updateFile";
 

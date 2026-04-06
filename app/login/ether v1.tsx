@@ -1,6 +1,6 @@
 'use client'
 
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from '@/lib/supabase/clients/client'
 import { BrowserProvider } from 'ethers'
 import { EthereumWeb3Credentials } from '@supabase/supabase-js'
 

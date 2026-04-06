@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
-import { createAnonClient } from '@/lib/supabase/client'
+import { createAnonClient } from '@/lib/supabase/clients/client'
 
 type Profile = {
   id: string

@@ -1,13 +1,12 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { createAnonClient } from '@/lib/supabase/client'
+import { supabaseBrowser} from '@/lib/supabase/clients/supabaseBrowser'
 import type { Session, User } from '@supabase/supabase-js'
 import { useWallet } from '@solana/wallet-adapter-react'
-import { Console } from 'console'
 
 export function useSession() {
-  const supabase = useMemo(() => createAnonClient(), [])
+  const supabase = useMemo(() => supabaseBrowser(), [])
 
   const [session, setSession] = useState<Session | null>(null)
   const [user, setUser] = useState<User | null | undefined>(undefined)

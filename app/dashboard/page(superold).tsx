@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createAnonClient } from '@/lib/supabase/client'
+import { createAnonClient } from '@/lib/supabase/clients/client'
 import { appKit } from '@/app/providers' // Use appKit directly
 import type { User } from '@supabase/supabase-js'
 

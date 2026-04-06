@@ -1,6 +1,6 @@
 "use client"
 // lib/web3/wallets/db/repository.ts
-import { createAnonClient } from "@/lib/supabase/client"
+import { createAnonClient } from "@/lib/supabase/clients/client"
 import type { UserWalletDbRow } from "./types/UserWalletDbRow"
 import { mapUserWalletRow, mapUserWalletRows } from "./mapping"
 import { INewWalletInput } from "./types/INewWalletInput"

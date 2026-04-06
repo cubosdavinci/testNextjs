@@ -3,7 +3,7 @@
 import { useConnection } from 'wagmi';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { createAnonClient } from "@/lib/supabase/client";
+import { createAnonClient } from "@/lib/supabase/clients/client";
 
 export default function LoginButton() {
   const supabase = createAnonClient();

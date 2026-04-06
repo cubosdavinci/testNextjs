@@ -1,4 +1,4 @@
-import { supabaseAdmin } from "@/lib/clients/supabaseAdmin";
+import { supabaseAdmin } from "@/lib/supabase/clients/supabaseAdmin";
 import { Product, LicenseProduct } from "@/types/db/products";
 
 /**

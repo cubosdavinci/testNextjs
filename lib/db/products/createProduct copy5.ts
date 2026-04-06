@@ -1,5 +1,5 @@
 // lib/supabase/products/CreateProduct.ts
-import { supabaseClient } from "@/lib/clients/supabaseAdmin";
+import { supabaseClient } from "@/lib/supabase/clients/supabaseAdmin";
 import { consoleLog } from "@/lib/utils";
 import { Product, ProductLicense, CreateProductVars } from "@/types/db/products";
 
