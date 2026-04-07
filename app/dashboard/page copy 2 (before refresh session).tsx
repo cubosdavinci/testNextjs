@@ -4,8 +4,6 @@ import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuthModal } from '@/components/hooks/useAuthModal'
 import ErrorAlert from '@/components/banners/ErrorAlert'
-import { useRefreshSessionFromQuery } from '@/components/auth/useRefreshSessionFromQuery'
-
 
 import { UserInfoTable } from './UserInfoTable'
 import { AppMetadataTable } from './AppMetadataTable'
@@ -15,8 +13,6 @@ import { JwtSessionTable } from './tables/JwtSessionTable'
 import { WalletSyncWarning } from '@/components/auth/WalletSyncWarning'
 
 export default function DashboardPage() {
-
-  useRefreshSessionFromQuery()
   const router = useRouter()
 
   const { isSignedIn, loading, user, signIn, logout, isError, error } = useAuthModal({

@@ -1,81 +1,195 @@
-import { login, signup, signInWithGoogle } from './actions'
-import EthereumLoginButton from './Web3SignIn' // <-- import it
+'use client';
 
-export default function LoginPage() {
-  console.log('Page: app/login')
+/**
+ * ================================
+ * Solana Login Page (Reactive)
+ * ================================
+ */
 
-  return (  
-    <div className="mx-auto mt-16 max-w-sm">
-      {/* Google Sign-In Form */}
-      <form className="mb-6" action={signInWithGoogle}>
+import { useState, useEffect } from "react";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
+
+import { useSession } from "@/components/auth/useSession";
+import { Spinner } from "@/components/auth/spinner";
+import ErrorAlert from "@/components/banners/ErrorAlert";
+
+import LinkGoogleButton from '@/components/auth/LinkGoogleButton';
+import UnlinkGoogleButton from "@/components/auth/UnlinkGoogleButton";
+
+export default function SolanaLoginPage() {
+  /**
+   * 🔑 Reactive auth state (single source of truth)
+   */
+  const {
+    user,
+    sessionLoading,
+    signInWithWeb3Account,
+  } = useSession();
+
+  /**
+   * 🪙 Wallet state
+   */
+  const { publicKey, connected, signMessage } = useWallet();
+
+  /**
+   * 🎛️ UI state
+   */
+  const [error, setError] = useState<string | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
+
+  /**
+   * ⏳ Auto-clear errors
+   */
+  useEffect(() => {
+    if (!error) return;
+
+    const timer = setTimeout(() => setError(null), 8000);
+    return () => clearTimeout(timer);
+  }, [error]);
+
+  /**
+   * 🔐 Sign-In with Solana
+   */
+  const handleSignIn = async () => {
+    if (!connected || !publicKey || !signMessage) {
+      setError("Please connect your Solana wallet first");
+      return;
+    }
+
+    try {
+      setActionLoading(true);
+      setError(null);
+
+      const domain = window.location.host;
+      const uri = window.location.origin;
+      const nonce = crypto.randomUUID();
+
+      const message = `${domain} wants you to sign in with your Solana account:
+${publicKey.toBase58()}
+
+URI: ${uri}
+Version: 1
+Nonce: ${nonce}
+Issued At: ${new Date().toISOString()}`;
+
+      const messageBytes = new TextEncoder().encode(message);
+      const signature = await signMessage(messageBytes);
+
+      const result = await signInWithWeb3Account({
+        chain: "solana",
+        message,
+        signature,
+      });
+
+      if (result?.error) {
+        setError(
+          `Verification failed: ${
+            result.error.message || JSON.stringify(result.error)
+          }`
+        );
+      }
+
+      // ✅ No manual state update needed
+      // useSession will update automatically
+
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : "Failed to sign message or verify wallet";
+      setError(message);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  /**
+   * ⏳ Global loading (session bootstrap)
+   */
+  if (sessionLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <Spinner size="lg" />
+      </div>
+    );
+  }
+
+  /**
+   * 🎨 UI
+   */
+  return (
+    <div className="p-6 space-y-6 max-w-md mx-auto">
+      <div className="space-y-2">
+        <h1 className="text-2xl font-bold">Sign in with Solana</h1>
+        <p className="text-gray-600">
+          Connect your wallet and sign a message to authenticate.
+        </p>
+      </div>
+
+      {/* Wallet */}
+      <div className="space-y-3">
+        <p className="text-sm text-gray-500">Wallet Status</p>
+
+        <div className="bg-gray-50 border rounded-lg p-4 space-y-2">
+          <p>
+            <span className="font-medium">Address:</span>{" "}
+            {publicKey ? (
+              <span className="font-mono text-sm break-all">
+                {publicKey.toBase58()}
+              </span>
+            ) : (
+              "Not connected"
+            )}
+          </p>
+
+          <p>
+            <span className="font-medium">Connected:</span>{" "}
+            <span className={connected ? "text-green-600" : "text-red-500"}>
+              {connected ? "Yes" : "No"}
+            </span>
+          </p>
+        </div>
+
+        <WalletMultiButton className="w-full" />
+      </div>
+
+      {/* Error */}
+      {error && <ErrorAlert message={error} />}
+
+      {/* Sign In */}
+      {!user && connected && (
         <button
-          className="flex w-full items-center justify-center gap-2 rounded border bg-white py-2 font-semibold hover:bg-gray-50"
+          onClick={handleSignIn}
+          disabled={actionLoading}
+          className="w-full px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition disabled:opacity-50"
         >
-          {/* ...existing Google SVG and text... */}
-          <svg className="h-5 w-5" viewBox="0 0 48 48">
-            {/* Google icon paths */}
-            <path fill="#FFC107" d="M43.6 20.4H42V20H24v8h11.3C33.7 32.4 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.1 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.2-.4-3.6z" />
-            <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 16.2 19 12 24 12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.1 6.1 29.3 4 24 4c-7.7 0-14.4 4.3-17.7 10.7z" />
-            <path fill="#4CAF50" d="M24 44c5.2 0 10-2 13.5-5.2l-6.2-5.2C29.2 35.2 26.7 36 24 36c-5.3 0-9.7-3.6-11.3-8.5l-6.5 5C9.4 39.5 16.2 44 24 44z" />
-            <path fill="#1976D2" d="M43.6 20.4H42V20H24v8h11.3c-.8 2.3-2.4 4.2-4.4 5.6l6.2 5.2C39.9 36 44 30.7 44 24c0-1.3-.1-2.2-.4-3.6z" />
-          </svg>
-          Continue with Google
+          {actionLoading ? "Signing in..." : "Sign In With Wallet"}
         </button>
-      </form>
+      )}
 
-      {/* Web3 / MetaMask Sign-In */}
-      <div className="mb-6">
-        <EthereumLoginButton />
-      </div>
+      {/* Google Linking */}
+      <LinkGoogleButton />
+      <UnlinkGoogleButton />
 
-      <div className="relative text-center mb-6">
-        <span className="bg-gray-100 px-2 text-sm text-gray-500">or</span>
-      </div>
+      {/* Success */}
+      {user && (
+        <div className="mt-8 border rounded-lg p-4 bg-gray-50">
+          <p className="font-semibold text-green-600 mb-2">
+            ✅ Successfully signed in
+          </p>
 
-      {/* Email / Password Form */}
-      <form className="space-y-4" action={login}>
-        <h1 className="text-center text-2xl font-semibold">Sign in</h1>
+          <details>
+            <summary className="cursor-pointer text-sm font-medium text-gray-700">
+              View user details
+            </summary>
 
-        <div>
-          <label htmlFor="email" className="block font-semibold">
-            Email
-          </label>
-          <input
-            id="email"
-            name="email"
-            type="email"
-            required
-            className="mt-1 w-full rounded border px-3 py-2"
-          />
+            <pre className="mt-3 text-xs overflow-auto bg-white p-3 rounded border">
+              {JSON.stringify(user, null, 2)}
+            </pre>
+          </details>
         </div>
-
-        <div>
-          <label htmlFor="password" className="block font-semibold">
-            Password
-          </label>
-          <input
-            id="password"
-            name="password"
-            type="password"
-            required
-            className="mt-1 w-full rounded border px-3 py-2"
-          />
-        </div>
-
-        <div className="flex gap-2">
-          <button
-            className="flex-1 rounded bg-blue-600 py-2 font-semibold text-white"
-          >
-            Log in
-          </button>
-          <button
-            formAction={signup}
-            className="flex-1 rounded bg-gray-300 py-2 font-semibold"
-          >
-            Sign up
-          </button>
-        </div>
-      </form>
+      )}
     </div>
-  )
+  );
 }

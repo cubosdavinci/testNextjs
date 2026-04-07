@@ -1,3 +1,4 @@
+// components/auth/LinkGoogleButton.tsx
 'use client';
 
 import { useState } from 'react';
@@ -6,18 +7,13 @@ import { useSession } from '@/components/auth/useSession';
 import { browserConsoleLog } from '@/lib/utils';
 
 export default function LinkGoogleButton() {
-  browserConsoleLog("----------- Linking Google Button ---------------");
-
-  const { user, sessionLoading } = useSession();
-
+  console.log("----------- Linking Google Button ---------------")
+  const { user } = useSession();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // ✅ Show only if user exists AND Google is NOT linked
-  const shouldShowButton =
-    !sessionLoading &&
-    !!user &&
-    !user.identities?.some((i) => i.provider === 'google');
+  // Show button only if user is signed in and has no email yet
+  const shouldShowButton = !!user && !user.email;
 
   const handleLinkGoogle = async () => {
     if (!user) {
@@ -30,14 +26,12 @@ export default function LinkGoogleButton() {
 
     try {
       const supabase = supabaseBrowser();
-
-      browserConsoleLog("Window Location Origin: ", window.location.origin);
+      browserConsoleLog("Window Location Origin: ", window.location.origin)
 
       const { error: linkError } = await supabase.auth.linkIdentity({
         provider: 'google',
         options: {
-          //redirectTo: `${window.location.origin}/api/auth/callback/google`,
-          redirectTo: `${window.location.origin}/dashboard`,
+          redirectTo: `${window.location.origin}/api/auth/callback/google`,
           scopes: 'https://www.googleapis.com/auth/youtube.readonly',
           queryParams: {
             prompt: 'select_account',
@@ -49,20 +43,12 @@ export default function LinkGoogleButton() {
       if (linkError) {
         console.error('linkIdentity error:', linkError);
         setError(linkError.message || 'Failed to start Google linking.');
-        setLoading(false);
-        return;
       }
-
-      // ✅ No refresh here — redirect will happen
-      // Supabase takes over → Google OAuth → callback → session updated
-
+      // If no error → Supabase automatically redirects to Google
     } catch (err: unknown) {
       console.error('Unexpected error during linkIdentity:', err);
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'An unexpected error occurred.'
-      );
+      setError(err instanceof Error ? err.message : 'An unexpected error occurred.');
+    } finally {
       setLoading(false);
     }
   };
@@ -83,9 +69,7 @@ export default function LinkGoogleButton() {
         {loading ? "Preparing Google link..." : "🔗 Link Google Account"}
       </button>
 
-      {error && (
-        <p className="text-red-600 text-sm text-center">{error}</p>
-      )}
+      {error && <p className="text-red-600 text-sm text-center">{error}</p>}
     </div>
   );
 }

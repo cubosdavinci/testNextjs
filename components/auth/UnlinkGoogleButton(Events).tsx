@@ -1,25 +1,42 @@
+// components/auth/UnlinkGoogleButton.tsx
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabaseBrowser } from '@/lib/supabase/clients/supabaseBrowser';
 import { useSession } from '@/components/auth/useSession';
 import type { UserIdentity } from '@supabase/supabase-js';
 import { browserConsoleLog } from '@/lib/utils';
 
 export default function UnlinkGoogleButton() {
-  browserConsoleLog("Unlinking Google Button");
-
-  const { user, sessionLoading, refreshSession } = useSession();
-
+  browserConsoleLog("Unlinking Google Button")
+  const { user, sessionLoading } = useSession();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  // ✅ Simplified condition (removed identities length check)
+  // Show button only if Google is linked and user has at least 2 identities
   const shouldShowButton =
     !sessionLoading &&
     !!user &&
-    user.identities?.some((i) => i.provider === 'google');
+    user.identities?.some((i) => i.provider === 'google') &&
+    (user.identities?.length ?? 0) >= 2;
+
+  // Listen to auth state changes (best long-term solution)
+  useEffect(() => {
+    const {
+      data: { subscription },
+    } = supabaseBrowser().auth.onAuthStateChange((event, session) => {
+      //if (event === 'USER_UPDATED' || event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
+        console.log(`Auth event: ${event} - refreshing UI`);
+        console.log('Session: ', session);
+        // Your useSession hook should automatically pick this up
+      //}
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
 
   const handleUnlinkGoogle = async () => {
     if (!user) {
@@ -34,17 +51,15 @@ export default function UnlinkGoogleButton() {
     try {
       const supabase = supabaseBrowser();
 
-      // 1. Fetch fresh identities
-      const { data: identitiesData, error: fetchError } =
-        await supabase.auth.getUserIdentities();
+      // 1. Fetch fresh identities right before unlinking
+      const { data: identitiesData, error: fetchError } = await supabase.auth.getUserIdentities();
 
       if (fetchError) {
         throw new Error(`Failed to fetch identities: ${fetchError.message}`);
       }
 
       const googleIdentity = identitiesData?.identities?.find(
-        (identity): identity is UserIdentity =>
-          identity.provider === 'google'
+        (identity): identity is UserIdentity => identity.provider === 'google'
       );
 
       if (!googleIdentity) {
@@ -52,31 +67,28 @@ export default function UnlinkGoogleButton() {
         return;
       }
 
-      // 2. Unlink
-      const { error: unlinkError } =
-        await supabase.auth.unlinkIdentity(googleIdentity);
+      // 2. Unlink the identity
+      const { error: unlinkError } = await supabase.auth.unlinkIdentity(googleIdentity);
 
       if (unlinkError) {
         console.error('Unlink error:', unlinkError);
         setError(unlinkError.message || 'Failed to unlink Google account');
-        return;
+      } else {
+        console.log('✅ Google identity unlinked successfully');
+
+        setSuccess(true);
+
+        // 3. Refresh session
+        await supabase.auth.refreshSession();
+
+        // Show success message for a moment, then reload to ensure UI is fully updated
+        setTimeout(() => {
+          window.location.reload();
+        }, 1200);
       }
-
-      console.log('✅ Google identity unlinked successfully');
-      setSuccess(true);
-
-      // ✅ Use your hook instead of direct call
-      await refreshSession();
-
-      // ❌ Removed hard reload — React state should update automatically
-
     } catch (err: unknown) {
       console.error('Unexpected error while unlinking:', err);
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'An unexpected error occurred'
-      );
+      setError(err instanceof Error ? err.message : 'An unexpected error occurred');
     } finally {
       setLoading(false);
     }
@@ -99,11 +111,7 @@ export default function UnlinkGoogleButton() {
       </button>
 
       {error && <p className="text-red-600 text-sm">{error}</p>}
-      {success && (
-        <p className="text-green-600 text-sm">
-          ✅ Google account has been unlinked successfully.
-        </p>
-      )}
+      {success && <p className="text-green-600 text-sm">✅ Google account has been unlinked successfully.</p>}
     </div>
   );
 }

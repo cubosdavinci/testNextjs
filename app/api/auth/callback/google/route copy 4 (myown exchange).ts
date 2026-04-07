@@ -3,20 +3,11 @@ import { createClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import type { UserIdentity } from '@supabase/supabase-js';
 import { exchangeGoogleOAuthCode} from "@/lib/utils/exchangeGoogleOAuthCode"
-import { consoleLog } from '@/lib/utils';
+import { GoogleOAuthResponse } from '@/lib/utils/exchangeGoogleOAuthCode copy';
 
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
-  const baseUrl =
-  process.env.NGROK_URL && process.env.NGROK_URL.length > 0
-    ? process.env.NGROK_URL
-    : requestUrl.origin;
 
-
-  consoleLog('------------------------- Google Callback API Route -------------')
-  consoleLog('Request Url (routes)', request.url)
-  consoleLog('Request Origin (routes)', requestUrl.origin)
-  consoleLog('Request Params: ', requestUrl) 
   const code = requestUrl.searchParams.get('code');
   const error = requestUrl.searchParams.get('error');
   const errorCode = requestUrl.searchParams.get('error_code');
@@ -24,24 +15,22 @@ export async function GET(request: NextRequest) {
 
   // Handle OAuth errors
   if (error) {
-    consoleLog('Google OAuth error:', { error, errorCode, errorDescription });
+    console.error('Google OAuth error:', { error, errorCode, errorDescription });
 
     if (errorCode === 'identity_already_exists') {
-      // Construct full redirect URL with template litera
-      const redirectUrl = `${baseUrl}/dashboard?refresh_session=true`
-      return NextResponse.redirect(redirectUrl);
+      return NextResponse.redirect(new URL('/dashboard?message=google_already_linked', requestUrl.origin));
     }
 
     return NextResponse.redirect(
       new URL(
         `/?error=${encodeURIComponent(error)}&error_code=${encodeURIComponent(errorCode || '')}&error_description=${encodeURIComponent(errorDescription || error)}`,
-        baseUrl
+        requestUrl.origin
       )
     );
   }
 
   if (!code) {
-    return NextResponse.redirect(new URL('/?error=no_code_received', baseUrl));
+    return NextResponse.redirect(new URL('/?error=no_code_received', requestUrl.origin));
   }
 
   const supabase = await createClient();
@@ -67,7 +56,6 @@ export async function GET(request: NextRequest) {
       }
     }
 
-
     // Exchange the code for a Supabase session
     const { data: exchangeData, error: exchangeError } = await exchangeGoogleOAuthCode(code);
     if (exchangeError) throw exchangeError;
@@ -78,8 +66,8 @@ export async function GET(request: NextRequest) {
 const googleAccessToken = exchangeData?.access_token
 const googleRefreshToken = exchangeData?.refresh_token
 
-    consoleLog('✅ Google Access Token received:', googleAccessToken ? 'Yes (present)' : 'No');
-    consoleLog('✅ Google Access Refresh received:', googleRefreshToken ? 'Yes (present)' : 'No');
+    console.log('✅ Google Access Token received:', googleAccessToken ? 'Yes (present)' : 'No');
+    console.log('✅ Google Access Refresh received:', googleRefreshToken ? 'Yes (present)' : 'No');
 
     if (googleAccessToken) {
       console.log('Google Access Token (first 30 chars):', googleAccessToken.substring(0, 30) + '...');
@@ -98,14 +86,14 @@ const googleRefreshToken = exchangeData?.refresh_token
       )
     } else {
       console.warn('⚠️ No Refresh Token received')
-    }    
+    }
 
     // await supabase.auth.refreshSession();
   } catch (err: unknown) {
     console.error('Error processing Google callback:', err);
-    return NextResponse.redirect(new URL('/?error=link_failed', baseUrl));
+    return NextResponse.redirect(new URL('/?error=link_failed', requestUrl.origin));
   }
 
   // Success → redirect to dashboard
-  return NextResponse.redirect(new URL('/dashboard', baseUrl));
+  return NextResponse.redirect(new URL('/dashboard', requestUrl.origin));
 }
