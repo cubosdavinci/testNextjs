@@ -5,10 +5,8 @@
   "scripts": {
     "supabase:types": "npx supabase gen types typescript --project-id gzjluxccvxvjfywbwonv --schema public > ./types/supabase.ts",
     "supabase:types:local": "npx supabase gen types typescript --local > ./types/supabase.ts",
-
     "predev": "pnpm supabase:types",
     "prebuild": "pnpm supabase:types",
-
     "dev": "next dev",
     "build": "next build",
     "lint": "eslint"
@@ -22,7 +20,6 @@
     "@solana/wallet-adapter-react-ui": "^0.9.39",
     "@solana/wallet-adapter-solflare": "^0.6.32",
     "@solana/web3.js": "^1.98.4",
-    "@supabase/auth-helpers-nextjs": "^0.15.0",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.91.0",
     "@tanstack/react-query": "^5.90.20",
@@ -32,9 +29,11 @@
     "bs58": "^6.0.0",
     "clsx": "^2.1.1",
     "flag-icons": "^7.5.0",
+    "google-auth-library": "^10.6.2",
     "next": "16.1.2",
     "react": "19.2.3",
     "react-dom": "19.2.3",
+    "react-google-drive-picker": "^1.2.2",
     "tailwind-merge": "^3.4.0",
     "uuid": "^13.0.0",
     "zod": "^4.3.5"

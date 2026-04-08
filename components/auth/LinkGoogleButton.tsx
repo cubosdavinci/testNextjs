@@ -37,10 +37,11 @@ export default function LinkGoogleButton() {
         provider: 'google',
         options: {
           //redirectTo: `${window.location.origin}/api/auth/callback/google`,
-          redirectTo: `${window.location.origin}/dashboard`,
+          //redirectTo: `${window.location.origin}/dashboard`,
           scopes: 'https://www.googleapis.com/auth/youtube.readonly',
           queryParams: {
-            prompt: 'select_account',
+            /*prompt: 'select_account',*/
+            prompt: 'consent',
             access_type: 'offline',
           },
         },

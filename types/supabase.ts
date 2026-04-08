@@ -718,6 +718,45 @@ export type Database = {
         }
         Relationships: []
       }
+      user_google_credentials: {
+        Row: {
+          access_token: string
+          consent_status: boolean | null
+          created_at: string | null
+          expires_at: string
+          google_email: string
+          id: string
+          is_main_linked: boolean
+          refresh_token: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          access_token: string
+          consent_status?: boolean | null
+          created_at?: string | null
+          expires_at: string
+          google_email: string
+          id?: string
+          is_main_linked?: boolean
+          refresh_token?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          access_token?: string
+          consent_status?: boolean | null
+          created_at?: string | null
+          expires_at?: string
+          google_email?: string
+          id?: string
+          is_main_linked?: boolean
+          refresh_token?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_wallets: {
         Row: {
           created_at: string | null

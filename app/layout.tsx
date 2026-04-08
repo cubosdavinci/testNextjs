@@ -5,6 +5,8 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin'] })
 import {Wallet} from '@/app/my-solana-provider'
 import { WalletSyncWarning } from '@/components/auth/WalletSyncWarning'
+import Script from 'next/script'
+
 
 /*
 export const metadata: Metadata = {
@@ -21,11 +23,16 @@ export default async function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
+                {/* Load Google Identity Services SDK after hydration */}
+        <Script
+          src="https://accounts.google.com/gsi/client"
+          strategy="afterInteractive"
+        />
         <Wallet>
-           <div>
-      <WalletSyncWarning />
-      {/* rest of your dashboard */}
-    </div>
+          <div>
+            <WalletSyncWarning />
+            {/* rest of your dashboard */}
+          </div>
           {children}
         </Wallet>
 
