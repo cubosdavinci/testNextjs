@@ -12,6 +12,67 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "13.0.4"
   }
+  gotit: {
+    Tables: {
+      google_linked_accounts: {
+        Row: {
+          access_token: string
+          consent_expired: boolean | null
+          created_at: string | null
+          expires_at: string
+          google_email: string
+          google_sub: string
+          id: string
+          is_main: boolean
+          refresh_token: string | null
+          scopes: string[]
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          access_token: string
+          consent_expired?: boolean | null
+          created_at?: string | null
+          expires_at: string
+          google_email: string
+          google_sub: string
+          id?: string
+          is_main?: boolean
+          refresh_token?: string | null
+          scopes?: string[]
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          access_token?: string
+          consent_expired?: boolean | null
+          created_at?: string | null
+          expires_at?: string
+          google_email?: string
+          google_sub?: string
+          id?: string
+          is_main?: boolean
+          refresh_token?: string | null
+          scopes?: string[]
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      [_ in never]: never
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       accounts: {
@@ -718,45 +779,6 @@ export type Database = {
         }
         Relationships: []
       }
-      user_google_credentials: {
-        Row: {
-          access_token: string
-          consent_status: boolean | null
-          created_at: string | null
-          expires_at: string
-          google_email: string
-          id: string
-          is_main_linked: boolean
-          refresh_token: string | null
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          access_token: string
-          consent_status?: boolean | null
-          created_at?: string | null
-          expires_at: string
-          google_email: string
-          id?: string
-          is_main_linked?: boolean
-          refresh_token?: string | null
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          access_token?: string
-          consent_status?: boolean | null
-          created_at?: string | null
-          expires_at?: string
-          google_email?: string
-          id?: string
-          is_main_linked?: boolean
-          refresh_token?: string | null
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: []
-      }
       user_wallets: {
         Row: {
           created_at: string | null
@@ -1396,6 +1418,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  gotit: {
+    Enums: {},
+  },
   public: {
     Enums: {
       membership_status: ["active", "paused", "expired"],

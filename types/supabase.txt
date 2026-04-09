@@ -2,3 +2,9 @@ npx supabase gen types typescript \
   --project-id gzjluxccvxvjfywbwonv \
   --schema public \
   > ./types/supabase.ts
+
+  npx supabase gen types typescript \
+  --project-id gzjluxccvxvjfywbwonv \
+  --schema public \
+  --schema private \
+  > ./types/supabase.ts

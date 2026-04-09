@@ -1,3 +1,4 @@
+// app/api/auth/google/callback/route.ts
 import { supabaseServer } from '@/lib/supabase/clients/supabaseServer';
 import { supabaseAdmin } from '@/lib/supabase/clients/supabaseAdmin';
 import { NextRequest, NextResponse } from 'next/server';
@@ -11,7 +12,7 @@ async function handleGoogleCode(code: string, userId: string) {
 const oAuth2Client = new OAuth2Client(
   process.env.GOOGLE_CLIENT_ID,
   process.env.GOOGLE_CLIENT_SECRET, // NOT API KEY
-  'postmessage'
+  'postmessage' // if it were a GET request should use: process.env.GOOGLE_REDIRECT_URI
 );
 
   // Exchange code for tokens
@@ -22,7 +23,7 @@ const oAuth2Client = new OAuth2Client(
   if (!tokens.id_token) throw new Error('No ID token received from Google');
   const ticket = await oAuth2Client.verifyIdToken({
     idToken: tokens.id_token,
-    audience: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
+    audience: process.env.GOOGLE_CLIENT_ID,
   });
   const payload = ticket.getPayload();
   if (!payload?.email) throw new Error('Google ID token missing email');
