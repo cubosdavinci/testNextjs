@@ -4,13 +4,11 @@ import { OAuth2Client, OAuth2ClientOptions, } from 'google-auth-library';
 import { GaxiosError } from 'gaxios';
 import type { Database } from '@/types/supabase';
 import { supabaseAdmin } from '../supabase/clients/supabaseAdmin';
+import {type GoogleLinkedAccount} from './google-auth-service-types'
 
 import { consoleLog } from '../utils';
 
 type CredentialRow = Database['public']['Tables']['user_google_credentials']['Row'];
-type RefreshTokenResult =
-  | { data: { accessToken: string; expiryDate?: number | null } }
-  | { error: { message: string; exception?: Error | unknown; details?: string } };
 type GoogleLinkedAccountRow = {
   google_sub: string;
   access_token: string;
@@ -20,12 +18,7 @@ type GoogleLinkedAccountRow = {
   expires_in_seconds: number;
   refresh_now: boolean;
 };
-type GoogleLinkedAccounts = {
-  google_sub: string;       // Google account ID
-  access_token: string;     // The current (or refreshed) access token
-  expires_at: number; // Token expiration datetime in ISO format
-  consent_expired: boolean;  // Whether the user has revoked consent
-};
+
 export class GoogleAuthService {
   private oauth2Client: OAuth2Client;
   private supabase;
@@ -194,8 +187,18 @@ export class GoogleAuthService {
     return { success: true, email: payload.email };
   }
 
-
-  async getLinkedAccounts(userId: string):Promise<GoogleLinkedAccounts[] | undefined> {
+  /**
+   * Retrieves all Google accounts linked to a specific user.
+   * * This method performs the following:
+   * 1. Fetches stored credentials from the 'google_linked_accounts' table.
+   * 2. Checks if the access token is near expiration (within 15 minutes).
+   * 3. Automatically attempts a refresh if needed and consent is still valid.
+   * 4. Maps the internal DB row format to a browser-friendly format (converting dates to ms).
+   * * @param userId - The internal unique identifier for the user.
+   * @returns A promise resolving to an array of GoogleLinkedAccount.
+   * @throws Relays database errors if the Supabase query fails.
+   */
+  async getLinkedAccounts(userId: string):Promise<GoogleLinkedAccount[]> {
     try {
       const supabase = supabaseAdmin('gotit');
 
@@ -237,6 +240,8 @@ export class GoogleAuthService {
       // 2️⃣ Refresh eligible tokens
       const refreshedData = await Promise.all(
         rows.map(async (row) => {
+          const currentExpiryAsNumber = new Date(row.expires_at).getTime();
+
           // Only refresh if consent is valid and token is about to expire
           if (!row.consent_expired && row.refresh_now) {
             // Call your refreshAccessToken function
@@ -251,7 +256,7 @@ export class GoogleAuthService {
               return {
                 google_sub: row.google_sub,
                 access_token: result.data.accessToken,
-                expires_at: result.data.expiryDate ?? new Date(row.expires_at).getTime(),
+                expires_at: result.data.expiryDate ?? currentExpiryAsNumber,
                 consent_expired: row.consent_expired,
               };
             } else {
@@ -260,7 +265,7 @@ export class GoogleAuthService {
               return {
                 google_sub: row.google_sub,
                 access_token: row.access_token,
-                expires_at: row.expires_at,
+                expires_at: currentExpiryAsNumber,
                 consent_expired: row.consent_expired,
               };
             }
@@ -269,7 +274,7 @@ export class GoogleAuthService {
               return {
                 google_sub: row.google_sub,
                 access_token: row.access_token,
-                expires_at: row.expires_at,
+                expires_at: currentExpiryAsNumber,
                 consent_expired: row.consent_expired,
               };
           }
@@ -280,6 +285,7 @@ export class GoogleAuthService {
 
     } catch (err) {
       consoleLog('Unexpected error accessing Supabase', err);
+      throw err;
     }    
   }
 
