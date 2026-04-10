@@ -8,6 +8,7 @@ import { supabaseAdmin } from '@/lib/supabase/clients/supabaseAdmin';
 
 // Import your generated types
 import { Database } from '@/types/supabase'
+import { IGoogleAuthService } from './IGoogleAuthService';
 type GoogleLinkedAccountRow = Database['gotit']['Tables']['google_linked_accounts']['Row']
 
 /*
@@ -20,11 +21,11 @@ type GoogleLinkedAccountRow = {
   consent_expired: boolean;
 };*/
 
-export class GoogleAuthService {
+
+
+export class GoogleAuthService implements IGoogleAuthService {
   private oauth2Client: OAuth2Client;
   private supabase;
-
-
 
   // We default to false (popup/postmessage) because it's your main flow
   constructor(isRedirect: boolean = false) {
