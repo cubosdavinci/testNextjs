@@ -3,10 +3,10 @@ import { supabaseServer } from '@/lib/supabase/clients/supabaseServer'
 import { OAuth2Client, OAuth2ClientOptions, } from 'google-auth-library';
 import { GaxiosError } from 'gaxios';
 import type { Database } from '@/types/supabase';
-import { supabaseAdmin } from '../supabase/clients/supabaseAdmin';
-import {type GoogleLinkedAccount} from './google-auth-service-types'
+import { supabaseAdmin } from '../../supabase/clients/supabaseAdmin';
+import {type GoogleLinkedAccount} from './GoogleAuthServiceTypes'
 
-import { consoleLog } from '../utils';
+import { consoleLog } from '../../utils';
 
 type CredentialRow = Database['public']['Tables']['user_google_credentials']['Row'];
 type GoogleLinkedAccountRow = {

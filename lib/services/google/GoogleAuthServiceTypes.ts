@@ -3,23 +3,35 @@
  * This is the cleaned data structure intended for the frontend/browser.
  */
 export type GoogleLinkedAccount = {
-  /** The unique identifier for the Google account (from the 'sub' claim). */
-  google_sub: string;
+
+  id: string;
+
+
+  googleEmail: string;
+
 
   /** The valid OAuth2 access token (refreshed automatically if needed). */
-  access_token: string;
+  accessToken?: string | null;
 
   /** * Token expiration timestamp in Unix Epoch Milliseconds.
    * Use `new Date(expires_at)` to convert to a JS Date object. 
    */
-  expires_at: number;
+  expiresAt?: number | null;
 
   /** * Indicates if the refresh token is invalid or the user has revoked access.
    * If true, the user must re-authenticate to restore functionality. 
    */
-  consent_expired: boolean;
+  consentExpired: boolean;
 };
 
-export type RefreshTokenResult =
+
+export type NewAccessToken = { 
+  /** The valid OAuth2 access token */
+  accessToken?: string | null ;
+  expiresAt?: number | null
+};
+
+
+/*export type RefreshTokenResult =
   | { data: { accessToken: string; expiryDate?: number | null } }
-  | { error: { message: string; exception?: Error | unknown; details?: string } };
+  | { error: { message: string; exception?: Error | unknown; details?: string } };*/

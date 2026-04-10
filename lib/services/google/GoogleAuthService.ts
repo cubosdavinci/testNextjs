@@ -1,0 +1,315 @@
+// lib/services/google-auth-service.ts
+import { errorGoogleAuthService } from './GoogleAuthServiceError';
+import { OAuth2Client, OAuth2ClientOptions, } from 'google-auth-library';
+import { GaxiosError } from 'gaxios';
+import type {GoogleLinkedAccount, NewAccessToken} from './GoogleAuthServiceTypes'
+import { consoleLog } from '../../utils';
+import { supabaseAdmin } from '@/lib/supabase/clients/supabaseAdmin';
+
+// Import your generated types
+import { Database } from '@/types/supabase'
+type GoogleLinkedAccountRow = Database['gotit']['Tables']['google_linked_accounts']['Row']
+
+/*
+type GoogleLinkedAccountRow = {
+  id: string,
+  google_email: string;
+  access_token: string;
+  expires_at: string | number; 
+  refresh_token: string | null;
+  consent_expired: boolean;
+};*/
+
+export class GoogleAuthService {
+  private oauth2Client: OAuth2Client;
+  private supabase;
+
+
+
+  // We default to false (popup/postmessage) because it's your main flow
+  constructor(isRedirect: boolean = false) {
+    const redirectUri = isRedirect
+      ? process.env.GOOGLE_REDIRECT_URI
+      : 'postmessage';
+
+    const options: OAuth2ClientOptions = {
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      redirectUri,
+    };
+
+    this.oauth2Client = new OAuth2Client(options);
+    this.supabase = supabaseAdmin('gotit')
+  }
+  
+  
+
+  /**
+   * Retrieves all Google accounts linked to a specific user.
+   * * This method performs the following:
+   * 1. Fetches stored credentials from the 'google_linked_accounts' table.
+   * 2. Checks if the access token is near expiration (within 15 minutes).
+   * 3. Automatically attempts a refresh if needed and consent is still valid.
+   * 4. Maps the internal DB row format to a browser-friendly format (converting dates to ms).
+   * * @param userId - The internal unique identifier for the user.
+   * @returns A promise resolving to an array of GoogleLinkedAccount.
+   * @throws Relays database errors if the Supabase query fails.
+   */
+  async getLinkedAccounts(userId: string): Promise<GoogleLinkedAccount[]> {
+    try {
+      const { data, error: queryError } = await this.supabase
+        .from('google_linked_accounts')
+        .select('id, google_email, access_token, expires_at, refresh_token, consent_expired')
+        .eq('user_id', userId)
+
+        if (queryError) {
+          const error = errorGoogleAuthService('SUPABASE_QUERY_ERROR', queryError);
+          consoleLog('(Error at GoogleAuthService.getLinkedAccounts)', queryError);
+          throw error;
+        }
+
+        if (!data) return data;
+
+        // Cast the result if inference fails
+        const rows = data as GoogleLinkedAccountRow[]
+        
+        const refreshedData: GoogleLinkedAccount[] = await Promise.all(
+        rows.map(async (row) => {
+          const now = Date.now();
+          const expiryMs = new Date(row.expires_at).getTime();
+
+          const isExpired = expiryMs <= now;
+          const willExpireSoon = expiryMs - now <= 5 * 60 * 1000;
+
+          const shouldRefresh =
+            !!row.refresh_token && // not null
+            !row.consent_expired &&
+            (isExpired || willExpireSoon);
+
+          if (shouldRefresh) {
+            try {
+              const result = await this.refreshAccessToken(
+                row.refresh_token!,
+                row.id
+              );
+
+              // If DB updated version returned
+              if ('accessToken' in result!) {
+                return {
+                  id: row.id,
+                  googleEmail: row.google_email,
+                  accessToken: result.accessToken,
+                  expiresAt: result.expiresAt, // already ms
+                  consentExpired: row.consent_expired!,
+                };
+              }
+
+              // fallback (if your union differs)
+              return {
+                id: row.id,
+                googleEmail: row.google_email,
+                accessToken: row.access_token,
+                expiresAt: expiryMs,
+                consentExpired: row.consent_expired!,
+              };
+
+            } catch (err) {
+              consoleLog("Failed to refresh token", err);
+
+              // fallback to existing token
+              return {
+                id: row.id,
+                googleEmail: row.google_email,
+                accessToken: row.access_token,
+                expiresAt: expiryMs,
+                consentExpired: row.consent_expired!,
+              };
+            }
+          }
+          // No refresh needed
+          return {
+            id: row.id,
+            googleEmail: row.google_email,
+            accessToken: row.access_token,
+            expiresAt: expiryMs, // ✅ UTC → Unix ms
+            consentExpired: row.consent_expired!,
+          };
+        })
+      );
+
+      return refreshedData;
+
+    } catch (err) {
+      consoleLog('Unexpected error accessing Supabase', err);
+      throw err;
+    }
+  }
+  
+  /* Refreshes a Google access token using a provided refresh token,
+  * updates the linked account record in Supabase, and handles revocations.
+  *
+  * @param refreshToken - The Google OAuth2 refresh token for the user
+  * @param user_id - The internal user ID in your system
+  * @param google_sub - The Google account ID (sub) associated with the user
+  * @returns Promise<RefreshTokenResult> - { data: { accessToken, expiryDate } } on success, or { error: { message, exception?, details? } } on failure
+  *
+  * - Supabase update errors are logged but do not block returning the refreshed token.
+  */
+  async refreshAccessToken(
+    refreshToken: string,
+    id: string,   
+  ): Promise<GoogleLinkedAccount | NewAccessToken> {    
+    if (!refreshToken || !refreshToken.trim()) {
+      const error = errorGoogleAuthService('MISSING_REFRESH_TOKEN', new Error('Undefined refresh_token'));
+      consoleLog("(Error at GoogleAuthService.refreshAccessToken)", error);  
+      throw error;
+    }
+    else if (!id){
+      const error = errorGoogleAuthService('MISSING_GOOGLE_LINKED_ACCOUNT_ID', new Error('Undefined id'));
+      consoleLog("(Error at GoogleAuthService.refreshAccessToken)", error);  
+      throw error;
+    }
+    
+    // setting refresh_token
+    this.oauth2Client.setCredentials({ refresh_token: refreshToken});
+
+    try {      
+      const { credentials } = await this.oauth2Client.refreshAccessToken();
+
+      if(!credentials?.access_token || !credentials?.expiry_date){
+        consoleLog('Missing access_token or expiry_date in Google response')
+        throw errorGoogleAuthService(
+          'GOOGLE_OAUTH2_REFRESH_ACCESS_TOKEN_FAILED', 
+          new Error('Missing access_token or expiry_date in Google response')
+        );
+      }
+      
+      const updatedToken: NewAccessToken = {
+        accessToken: credentials.access_token,
+        expiresAt: credentials.expiry_date,
+      };
+
+      if (credentials?.refresh_token && credentials?.refresh_token !== refreshToken) {
+        // Save this new refresh token to your database!
+        refreshToken = credentials.refresh_token
+      }
+
+      try {
+        
+        return await this.dbUpdateAccesstoken(id, credentials.access_token, credentials.expiry_date, refreshToken)
+
+      } catch (err) {        
+        consoleLog("Failed to persist new access token", err);
+
+        const refreshedToken: NewAccessToken = {
+          accessToken: credentials.access_token,
+          expiresAt: credentials.expiry_date
+        }
+        // 
+        return refreshedToken
+
+      }  
+
+    } catch (err) {
+
+      if (err instanceof GaxiosError) {
+        const errorDescription = err.response?.data?.error_description
+        const error = err.response?.data?.error;
+        if (
+          error === 'invalid_grant' ||
+          errorDescription?.includes('revoked') ||
+          errorDescription?.includes('expired')
+        ) {
+          // revoke refresh_token in supabase
+          try {
+            const { data, error: queryError } = await this.supabase
+              .from('google_linked_accounts')
+              .update({
+                refresh_token: null,
+              })
+              .eq('id', id)
+              .select()
+              .single()
+
+            if (queryError ) {
+              consoleLog('Supabase error updating google_linked_accounts table', queryError);
+              throw errorGoogleAuthService('SUPABASE_QUERY_ERROR', queryError);
+            }
+                          
+            const result: GoogleLinkedAccount = {
+                id: data.id,
+                googleEmail: data.google_email,
+                accessToken: data.access_token,
+                expiresAt: new Date(data.expires_at).getTime(),
+                consentExpired: data.consent_expired!,
+            };
+
+            return result;
+          } catch (err) {
+            consoleLog('Supabase catched error updating "google_linked_accounts" table', err);
+            throw errorGoogleAuthService('SUPABASE_QUERY_ERROR', err);
+          }
+        }
+      }
+
+     consoleLog('Catched error: await this.oauth2Client.refreshAccessToken()', err)
+        throw errorGoogleAuthService(
+          'GOOGLE_OAUTH2_REFRESH_ACCESS_TOKEN_FAILED', 
+          err
+        );
+      
+    }
+  }
+
+  async dbUpdateAccesstoken(id: string, accessToken: string, expiryDate: number, refreshToken: string): Promise<GoogleLinkedAccount>{    
+  
+    if (!id) {
+      const error = errorGoogleAuthService('MISSING_GOOGLE_LINKED_ACCOUNT_ID', new Error('(Error) GoogleAuthService.dbUpdateAccesstoken'));
+      consoleLog("GoogleAuthService.dbUpdateAccesstoken (Error) ", error);  
+      throw error;
+    }
+    else if (!accessToken) {  
+      const error = errorGoogleAuthService('MISSING_ACCESS_TOKEN', new Error('(Error) GoogleAuthService.dbUpdateAccesstoken'));
+      consoleLog("(Error at GoogleAuthService.dbUpdateAccesstoken)", error);    
+      throw error
+    }
+
+    const dbExpiryDate = expiryDate
+      ? new Date(expiryDate).toISOString()
+      : new Date(Date.now() + 3600 * 1000).toISOString();
+
+    try {
+      const { data, error:updateError } = await this.supabase
+        .from('google_linked_accounts')
+        .update({
+          access_token: accessToken,
+          expires_at: dbExpiryDate,
+          refresh_token: refreshToken
+        })
+        .eq('id', id)
+        .select()
+        .single()
+        
+      if (updateError) {
+        const error = errorGoogleAuthService('SUPABASE_QUERY_ERROR', updateError);
+        consoleLog('(Error at GoogleAuthService.dbUpdateAccesstoken)', updateError);
+        throw error;
+      }
+
+     const result: GoogleLinkedAccount = {
+        id: data.id,
+        googleEmail: data.google_email,
+        accessToken: data.access_token,
+        expiresAt: new Date(data.expires_at).getTime(),
+        consentExpired: data.consent_expired!,
+      };
+
+      return result;
+                
+    } catch (err: unknown) {
+        const error = errorGoogleAuthService('SUPABASE_CATCHED_ERROR', err);
+        consoleLog('(Error at GoogleAuthService.dbUpdateAccesstoken)', err);
+        throw error;
+    }   
+  }
+}

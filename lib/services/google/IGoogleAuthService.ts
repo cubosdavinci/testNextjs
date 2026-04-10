@@ -1,4 +1,4 @@
-import { GoogleLinkedAccount } from './google-auth-service-types';
+import { GoogleLinkedAccount } from './GoogleAuthServiceTypes';
 
 export interface IGoogleAuthService {
   getLinkedAccounts(userId: string): Promise<GoogleLinkedAccount[]>;
