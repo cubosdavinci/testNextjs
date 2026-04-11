@@ -43,7 +43,76 @@ export class GoogleAuthService implements IGoogleAuthService {
     this.supabase = supabaseAdmin('gotit')
   }
   
-  
+  /**
+   * Universal exchange method
+   * @param code The auth code from Google
+   * @param userId The Supabase User ID
+   */
+  async exchangeCode(code: string, userId: string): Promise<GoogleLinkedAccount> {
+
+    try {
+      
+      const { tokens } = await this.oauth2Client.getToken(code);
+
+      // 3. Decode Email from ID Token
+      if (!tokens.id_token) throw new Error('No ID token received from Google');
+
+      const ticket = await this.oauth2Client.verifyIdToken({
+        idToken: tokens.id_token,
+        audience: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
+      });
+
+      const payload = ticket.getPayload();
+      if (!payload?.email) throw new Error('Google ID token missing email');
+
+      // 4. Calculate metadata
+      const expiresAt = tokens.expiry_date
+        ? new Date(tokens.expiry_date).toISOString()
+        : new Date(Date.now() + 3600 * 1000).toISOString();
+
+      const scopeArray = tokens.scope ? tokens.scope.split(' ') : [];
+
+
+      // 5. Database logic using Admin client (to bypass RLS for initial link if needed)
+
+      const { data, error: queryError } = await this.supabase
+        .from('google_linked_accounts')
+        .insert({
+          user_id: userId,
+          google_sub: payload.sub,
+          google_email: payload.email,
+          access_token: tokens.access_token!,
+          refresh_token: tokens.refresh_token!,
+          expires_at: expiresAt,
+          scopes: scopeArray,
+        })
+        .select()
+        .single(); // ensures a singl
+
+
+      if (queryError) {
+        consoleLog('Supabase error inserting new  google_linked_account', queryError);
+        throw errorGoogleAuthService('SUPABASE_QUERY_ERROR', queryError);
+      }
+
+      const result: GoogleLinkedAccount = {
+        id: data.id,
+        googleEmail: data.google_email,
+        accessToken: data.access_token,
+        expiresAt: new Date(data.expires_at).getTime(),
+        consentExpired: data.consent_expired!,
+      };
+
+      return result;
+
+    }
+    catch (err) {
+      consoleLog('Google GIS exchange code Failed. No valid Credentials', err);
+      throw errorGoogleAuthService('GOOGLE_OAUTH2_EXCHANGE_CODE_FAILED', err);
+    }
+   
+
+  }
 
   /**
    * Retrieves all Google accounts linked to a specific user.

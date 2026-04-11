@@ -34,9 +34,9 @@ const oAuth2Client = new OAuth2Client(
     : new Date(Date.now() + 3600 * 1000).toISOString();
 
   // Upsert into Supabase
-  const supabase =  await supabaseAdmin();
+  const supabase =  supabaseAdmin('gotit');
   const { error } = await supabase
-    .from('user_google_credentials')
+    .from('google_linked_accounts')
     .upsert({
       user_id: userId,
       google_email: decodedEmail,

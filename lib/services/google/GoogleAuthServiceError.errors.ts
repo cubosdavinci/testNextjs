@@ -24,12 +24,13 @@ export const GoogleAuthErrors = {
     code: 'GOOGLE_OAUTH2_REFRESH_ACCESS_TOKEN_FAILED',
     message: 'Google did not return a valid access token.',
   },
+  GOOGLE_OAUTH2_EXCHANGE_CODE_FAILED: {
+    code: 'GOOGLE_OAUTH2_EXCHANGE_CODE_FAILED',
+    message: 'Google GIS exchange code Failed. No valid Credentials',
+  },
   LINK_FAILED: {
     code: 'LINK_FAILED',
     message: 'Failed to link Google account',
   },
-  TOKEN_EXCHANGE_FAILED: {
-    code: 'TOKEN_EXCHANGE_FAILED',
-    message: 'Failed to exchange authorization code',
-  },
+
 } as const;

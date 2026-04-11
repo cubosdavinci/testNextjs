@@ -1,24 +1,44 @@
-// components/banners/ErrorAlert.tsx
-'use client';
-
-import { ReactNode } from "react";
+import React, { useState } from 'react';
 
 interface ErrorAlertProps {
-  message?: string | ReactNode | null;
-  className?: string;
+  message: string | null;
+  onClose: () => void;
+  duration?: number; // Duration in ms for exit animation
 }
 
-/**
- * Displays a red error banner with a yellow warning triangle.
- * Example: <ErrorAlert message={error} />
- */
-export default function ErrorAlert({ message, className = "" }: ErrorAlertProps) {
+const ErrorAlert: React.FC<ErrorAlertProps> = ({
+  message,
+  onClose,
+  duration = 300
+}) => {
+  const [isExiting, setIsExiting] = useState(false);
+
+  // Trigger exit animation
+  const handleClose = () => {
+    setIsExiting(true);
+    setTimeout(onClose, duration); // Delay actual state clear until animation finishes
+  };
+
   if (!message) return null;
 
   return (
-    <div className={`p-3 bg-red-100 border border-red-400 text-red-700 rounded-md flex items-center ${className}`}>
-      <span className="mr-2 text-yellow-500">⚠️</span>
-      <span>{message}</span>
+    <div
+      className={`overflow-hidden transition-all ease-in-out ${isExiting ? 'opacity-0 max-h-0 py-0 border-0' : 'opacity-100 max-h-40 py-4 border'
+        }`}
+      style={{ transitionDuration: `${duration}ms` }}
+    >
+      <div className="relative p-4 bg-red-50 border border-red-200 rounded text-red-700">
+        <button
+          onClick={handleClose}                    // ← Fixed: was using undefined clearError
+          className="absolute top-3 right-3 text-red-500 hover:text-red-700 text-2xl leading-none font-light"
+          aria-label="Close"
+        >
+          ×
+        </button>
+        {message}
+      </div>
     </div>
   );
-}
+};
+
+export default ErrorAlert;

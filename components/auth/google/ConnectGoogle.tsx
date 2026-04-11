@@ -1,62 +1,66 @@
+// components / auth / google / ConnectGoogle.tsx
 'use client';
 
+import { useState, useCallback } from "react";
+import { browserConsoleLog } from "@/lib/utils";
+import ErrorAlert from "@/components/banners/ErrorAlert";
+
 export default function ConnectGoogle() {
+  const [error, setError] = useState<string | null>(null);
+  const clearError = useCallback(() => setError(null), []);
+
   const handleConnect = () => {
     if (!window.google?.accounts?.oauth2) {
-      console.error('Google SDK not loaded');
+      setError('Google SDK not loaded');
       return;
     }
 
     const client = window.google.accounts.oauth2.initCodeClient({
-      client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
-      scope: 'https://www.googleapis.com/auth/drive.file email profile',
-      ux_mode: 'popup',        // try popup first
-      access_type: 'offline',   // important for refresh token
-      prompt: 'consent',        // always ask consent
+      client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!,
+      scope: 'openid https://www.googleapis.com/auth/drive.file email profile',
+      ux_mode: 'popup',
+      access_type: 'offline',
+      prompt: 'consent',
       callback: async (response) => {
         if (response.code) {
           try {
-            await fetch('/api/auth/google/callback', {
+            const res = await fetch('/api/auth/google/callback', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ code: response.code }),
             });
-            //window.location.reload();
+
+            if (!res.ok) throw new Error('Failed to save connection');
           } catch (err) {
+            setError('Error sending code to server');
             console.error('Error sending code to server', err);
           }
         } else {
-          console.error('No code received from Google');
+          setError('No code received from Google');
         }
       },
     });
 
-    // Try popup first
     try {
       client.requestCode();
     } catch (err) {
-      console.warn('Popup blocked, falling back to redirect', err);
-      // fallback to redirect
-      const redirectClient = window.google.accounts.oauth2.initCodeClient({
-        client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
-        scope: 'https://www.googleapis.com/auth/drive.file email profile',
-        ux_mode: 'redirect',   // redirect fallback
-        access_type: 'offline',
-        prompt: 'consent',
-        callback: () => {
-          // callback is required but won't be called in redirect mode
-        },
-      });
-      redirectClient.requestCode();
+      setError('Could not open the login window');
+      browserConsoleLog('Popup trigger error');
     }
   };
 
   return (
-    <button
-      onClick={handleConnect}
-      className="px-4 py-2 bg-blue-600 text-white rounded"
-    >
-      Connect Google Drive
-    </button>
+    // Wrap in a fragment <> or div to return multiple elements
+    <>
+      {error && <ErrorAlert message={error} onClose={clearError} />
+      }
+
+      <button
+        onClick={handleConnect}
+        className="px-4 py-2 bg-blue-600 text-white rounded"
+      >
+        Connect Google Drive
+      </button>
+    </>
   );
 }
