@@ -17,7 +17,7 @@ export default function ConnectGoogle() {
 
     const client = window.google.accounts.oauth2.initCodeClient({
       client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!,
-      scope: 'openid https://www.googleapis.com/auth/drive.file email profile',
+      scope: 'openid email profile https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.readonly',
       ux_mode: 'popup',
       access_type: 'offline',
       prompt: 'consent',

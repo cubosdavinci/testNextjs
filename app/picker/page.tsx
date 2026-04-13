@@ -10,6 +10,8 @@ import GoogleDrivePicker from '@/components/auth/google/GoogleDrivePicker';
 
 import { GoogleLinkedAccount } from '@/lib/services/google/GoogleAuthServiceTypes';
 import { downloadDriveFileBlob, fetchDriveFileContent } from '@/lib/google-drive-utils';
+import { useGoogleToken } from '@/hooks/useGoogleToken';
+import GetValidTokenStatus from '@/components/auth/google/GetValidTokenStatus';
 
 interface SelectedFile {
   id: string;
@@ -25,6 +27,7 @@ export default function DriveTestPage() {
   const [selectedFile, setSelectedFile] = useState<SelectedFile | null>(null);
   const [selectedAccount, setSelectedAccount] = useState<GoogleLinkedAccount | null>(null);
 
+  const { getValidToken, isRefreshing, getValidTokenError, getValidTokenErrorDescription } = useGoogleToken();
   const handleCloseError = () => setError(null);
 
   // Fetch linked Google accounts
@@ -70,8 +73,21 @@ export default function DriveTestPage() {
     try {
       setError(null);
 
-      // Use the new binary-safe function
-      const blob = await downloadDriveFileBlob(selectedFile.id, selectedAccount.accessToken!);
+      // 1. Get the updated account object from the hook
+      const updatedAccount = await getValidToken(selectedAccount);
+
+      // 2. Update the local 'selectedAccount' (to keep current context active)
+      setSelectedAccount(updatedAccount);
+
+      // 3. Update the 'googleAccounts' array (to update the list)
+      setGoogleAccounts(prevAccounts =>
+        prevAccounts?.map(acc =>
+          acc.id === updatedAccount.id ? updatedAccount : acc
+        ) ?? null
+      );
+
+      // 4. Proceed with the download using the new token
+      const blob = await downloadDriveFileBlob(selectedFile.id, updatedAccount.accessToken!);
 
       // Trigger browser download
       const url = window.URL.createObjectURL(blob);
@@ -147,6 +163,13 @@ export default function DriveTestPage() {
               >
                 ⬇️ Download Actual File
               </button>
+
+              {/* Status Component placed directly below the button */}
+              <GetValidTokenStatus
+                isRefreshing={isRefreshing}
+                error={getValidTokenError}
+                description={getValidTokenErrorDescription}
+              />
             </div>
           )}
         </div>
@@ -156,6 +179,7 @@ export default function DriveTestPage() {
           <ConnectGoogle />
         </div>
       )}
+      <ConnectGoogle />
     </div>
   );
 }
