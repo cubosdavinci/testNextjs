@@ -26,9 +26,8 @@ const oAuth2Client = new OAuth2Client(
     audience: process.env.GOOGLE_CLIENT_ID,
   });
   const payload = ticket.getPayload();
-  if (!payload?.email) throw new Error('Google ID token missing email');
-  const decodedEmail = payload.email;
-
+  if (!payload?.email || !payload?.sub) throw new Error('Google ID token missing email');
+  
   const expiresAt = tokens.expiry_date
     ? new Date(tokens.expiry_date).toISOString()
     : new Date(Date.now() + 3600 * 1000).toISOString();
@@ -37,14 +36,20 @@ const oAuth2Client = new OAuth2Client(
   const supabase =  supabaseAdmin('gotit');
   const { error } = await supabase
     .from('google_linked_accounts')
-    .upsert({
-      user_id: userId,
-      google_email: decodedEmail,
-      access_token: tokens.access_token ?? '',
-      refresh_token: tokens.refresh_token ?? null,
-      expires_at: expiresAt,
-      is_main_linked: false,
-    });
+    .upsert(
+      {
+        user_id: userId,
+        google_sub: payload.sub,
+        google_email: payload.email,
+        access_token: tokens.access_token ?? null,
+        refresh_token: tokens.refresh_token ?? null,
+        expires_at: expiresAt,
+        scopes: tokens.scope?.length > 0 ? tokens.scope.split(' ') : [],
+      },
+      {
+        onConflict: 'user_id,google_sub',
+      }
+    );
 
   if (error) throw new Error(error.message);
 
@@ -67,7 +72,7 @@ export async function POST(req: Request) {
     return NextResponse.json(result);
   } catch (err: unknown) {
     const  errMessage = (err instanceof Error) ? err.message : 'Unknown error';
-    consoleLog('Google OAuth callback error:', errMessage); // log on server too
+    consoleLog('Google OAuth callback error:', err); // log on server too
     return NextResponse.json({ error: errMessage }, { status: 500 });
   }
 }
