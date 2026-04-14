@@ -1,4 +1,4 @@
-// lib / services / google / GoogleAuthServiceTypes.ts
+// lib/services/google/GoogleAuthServiceTypes.ts
 
 /**
  * Represents a Google account linked to the user's profile.

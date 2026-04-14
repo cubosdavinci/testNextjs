@@ -49,10 +49,10 @@ export default function ErrorAlert({
 
   return (
     <div
-      className={`relative p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 overflow-hidden transition-all ease-out
+      className={`relative w-full p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 overflow-hidden transition-all ease-out
         ${isExiting 
-        ? "opacity-0 -translate-y-2 scale-95"
-        : "opacity-100 translate-y-0 scale-100"
+          ? "opacity-0 max-h-0 py-0 my-0" 
+          : "opacity-100 max-h-[200px]"
         }`}
       style={{ transitionDuration: `${fadeTime}ms` }}
     >

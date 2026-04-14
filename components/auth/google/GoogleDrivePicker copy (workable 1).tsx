@@ -1,10 +1,9 @@
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback } from 'react';
 import useDrivePicker from 'react-google-drive-picker';
 import { GoogleLinkedAccount } from '@/lib/services/google/GoogleAuthServiceTypes';
 import { validateGoogleToken } from '@/lib/google-drive-utils';
-import { useGoogle } from '@/context/GoogleContext';
 
 const CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 const API_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_BROWSER_KEY;
@@ -14,37 +13,30 @@ interface GoogleDriveFile {
     name: string;
     mimeType: string;
     sizeBytes?: number;
-    url?: string;
+    url?: string;        // this is only view link
     embedUrl?: string;
     [key: string]: unknown;
 }
 
-export default function GoogleDrivePicker() {
+type Props = {
+    googleLinkedAccounts: GoogleLinkedAccount[] | null;
+    onError?: (message: string) => void;
+    /** Pass the selected file metadata so parent can download it */
+    onFileSelected?: (file: GoogleDriveFile, account: GoogleLinkedAccount) => void;
+};
+
+export default function GoogleDrivePicker({
+    googleLinkedAccounts,
+    onError,
+    onFileSelected,
+}: Props) {
     const [openPicker] = useDrivePicker();
     const [loadingId, setLoadingId] = useState<string | null>(null);
-
-    const {
-        googleAccounts,
-    } = useGoogle();
-
-    const validAccounts = useMemo(
-        () => googleAccounts?.filter(acc => acc.consentExpired === false) ?? [],
-        [googleAccounts]
-    );
-
-    const openConnectPopup = () => {
-        window.open(
-            '/dashboard/settings/google',
-            'google-connect',
-            'width=600,height=700,left=200,top=100'
-        );
-    };
 
     const handleOpenPicker = useCallback(
         async (account: GoogleLinkedAccount) => {
             if (!CLIENT_ID || !API_KEY) {
-                console.error('Missing Google configuration.');
-                return;
+                return onError?.('Missing Google configuration.');
             }
 
             setLoadingId(account.id);
@@ -52,8 +44,7 @@ export default function GoogleDrivePicker() {
             const isValid = await validateGoogleToken(account.accessToken!);
             if (!isValid) {
                 setLoadingId(null);
-                console.error(`Session expired for ${account.googleEmail}`);
-                return;
+                return onError?.(`Session expired for ${account.googleEmail.split('@')[0]}`);
             }
 
             openPicker({
@@ -70,45 +61,35 @@ export default function GoogleDrivePicker() {
 
                     if (data?.action === 'picked' && data.docs?.[0]) {
                         const file = data.docs[0] as GoogleDriveFile;
-                        console.log('Selected file:', file);
-                    }
+                        console.log('Selected file metadata:', file);
 
-                    if (data?.action === 'error') {
-                        console.error('Google Picker error occurred.');
+                        // Pass both file metadata + the linked account (so we have the token)
+                        onFileSelected?.(file, account);
+                    }
+                    else if (data?.action === 'cancel') {
+                        console.log('Picker cancelled');
+                    }
+                    else if (data?.action === 'error') {
+                        onError?.('Google Picker error occurred.');
                     }
                 },
             });
         },
-        [openPicker]
+        [openPicker, onError, onFileSelected]
     );
 
-    // CASE 1: no valid accounts
-    if (validAccounts.length === 0) {
-        return (
-            <div className="mt-4">
-                <button
-                    onClick={openConnectPopup}
-                    className="px-4 py-2 bg-green-600 text-white rounded"
-                >
-                    Connect Google Account
-                </button>
-            </div>
-        );
-    }
+    if (!googleLinkedAccounts?.length) return null;
 
-    // CASE 2: show drive buttons
     return (
         <div className="flex flex-col gap-2 mt-4">
-            {validAccounts.map((account) => (
+            {googleLinkedAccounts.map((account) => (
                 <button
                     key={account.id}
                     onClick={() => handleOpenPicker(account)}
                     disabled={!!loadingId}
                     className="px-4 py-2 bg-blue-600 text-white rounded disabled:bg-blue-400"
                 >
-                    {loadingId === account.id
-                        ? 'Opening...'
-                        : `Drive (${account.googleEmail.split('@')[0]})`}
+                    {loadingId === account.id ? 'Opening...' : `Drive (${account.googleEmail.split('@')[0]})`}
                 </button>
             ))}
         </div>

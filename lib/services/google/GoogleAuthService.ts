@@ -42,6 +42,162 @@ export class GoogleAuthService implements IGoogleAuthService {
     this.oauth2Client = new OAuth2Client(options);
     this.supabase = supabaseAdmin('gotit')
   }
+
+  async revokeAccessToken(accessToken: string) {
+    try {
+      await this.oauth2Client.revokeToken(accessToken);
+    } catch (err) {
+      consoleLog('Failed to revoke Google access token', err);
+      throw err;
+    }
+  }
+  
+  async disconnectAccount(
+    userId: string,
+    accountId: string
+  ): Promise<GoogleLinkedAccount> {
+    let account: GoogleLinkedAccountRow;
+
+    // 1. Get account from DB
+    try {
+      const { data, error } = await this.supabase
+        .from('google_linked_accounts')
+        .select('*')
+        .eq('id', accountId)
+        .eq('user_id', userId)
+        .single();
+
+      if (error || !data) {
+        throw errorGoogleAuthService(
+          'SUPABASE_QUERY_ERROR',
+          error ?? new Error('Account not found')
+        );
+      }
+
+      account = data;
+    } catch (err) {
+      consoleLog('(disconnectAccount) Step 1 - fetch account failed', err);
+      throw err; // cannot continue without account
+    }
+
+    // 2. Revoke refresh token (if exists)
+    try {
+      if (account.refresh_token) {
+        await this.oauth2Client.revokeToken(account.refresh_token);
+      }
+    } catch (err) {
+      consoleLog('(disconnectAccount) Step 2 - revoke refresh token failed', err);
+    }
+
+    // 3. Revoke access token if not expired
+    try {
+      const expiresAt = new Date(account.expires_at).getTime();
+      const isExpired = expiresAt <= Date.now();
+
+      if (!isExpired && account.access_token) {
+        await this.oauth2Client.revokeToken(account.access_token);
+      }
+    } catch (err) {
+      consoleLog('(disconnectAccount) Step 3 - revoke access token failed', err);
+    }
+
+    // 4. Update DB (clear refresh token)
+    try {
+      const { data, error } = await this.supabase
+        .from('google_linked_accounts')
+        .update({
+          refresh_token: null,
+        })
+        .eq('id', accountId)
+        .eq('user_id', userId)
+        .select()
+        .single();
+
+      if (error || !data) {
+        throw errorGoogleAuthService(
+          'SUPABASE_QUERY_ERROR',
+          error ?? new Error('Failed to update account')
+        );
+      }
+
+      account = data;
+    } catch (err) {
+      consoleLog('(disconnectAccount) Step 4 - DB update failed', err);
+      throw err;
+    }
+
+    // Map to service type
+    const result: GoogleLinkedAccount = {
+      id: account.id,
+      googleEmail: account.google_email,
+      accessToken: account.access_token,
+      expiresAt: new Date(account.expires_at).getTime(),
+      consentExpired: account.consent_expired!,
+    };
+
+    return result;
+  }
+  async removeAccount(
+    id: string,
+    userId: string
+  ): Promise<{ google_linked_account: GoogleLinkedAccount }> {
+    if (!id) {
+      const error = errorGoogleAuthService(
+        'MISSING_GOOGLE_LINKED_ACCOUNT_ID',
+        new Error('(Error) GoogleAuthService.removeAccount')
+      );
+      consoleLog('(Error at GoogleAuthService.removeAccount)', error);
+      throw error;
+    }
+
+    if (!userId) {
+      const error = errorGoogleAuthService(
+        'MISSING_USER_ID',
+        new Error('(Error) GoogleAuthService.removeAccount')
+      );
+      consoleLog('(Error at GoogleAuthService.removeAccount)', error);
+      throw error;
+    }
+
+    try {
+      const { data, error: deleteError } = await this.supabase
+        .from('google_linked_accounts')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', userId)
+        .select()
+        .single<GoogleLinkedAccountRow>(); // 👈 ensures single row
+
+      if (deleteError) {
+        const error = errorGoogleAuthService(
+          'SUPABASE_QUERY_ERROR',
+          deleteError
+        );
+        consoleLog('(Error at GoogleAuthService.removeAccount)', deleteError);
+        throw error;
+      }
+
+      const mapped: GoogleLinkedAccount = {
+        id: data.id,
+        googleEmail: data.google_email,
+        accessToken: data.access_token,
+        expiresAt: new Date(data.expires_at).getTime(),
+        consentExpired: data.consent_expired!,
+      };
+
+      return {
+        google_linked_account: mapped,
+      };
+
+    } catch (err: unknown) {
+      const error = errorGoogleAuthService(
+        'SUPABASE_CATCHED_ERROR',
+        err
+      );
+      consoleLog('(Error at GoogleAuthService.removeAccount)', err);
+      throw error;
+    }
+  }
   
   /**
    * Universal exchange method

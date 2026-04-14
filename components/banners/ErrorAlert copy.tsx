@@ -4,10 +4,10 @@ import { useState, useEffect, useCallback } from "react";
 
 type ErrorAlertProps = {
   message: string | null;
-  onClose: () => void;         // Required: Parent controls what happens on close
-  dismiss?: boolean;           // Default: false (no auto-dismiss)
-  duration?: number;           // Only used when dismiss = true
-  fadeTime?: number;           // Animation duration (default 500ms)
+  onClose?: () => void;
+  dismiss?: boolean;
+  duration?: number;
+  fadeTime?: number;
 };
 
 export default function ErrorAlert({
@@ -17,47 +17,59 @@ export default function ErrorAlert({
   duration = 4000,
   fadeTime = 500,
 }: ErrorAlertProps) {
-  const [visible, setVisible] = useState(true);
+  const [isVisible, setIsVisible] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
+
+  // Reset visibility when message changes
+  useEffect(() => {
+    if (message) {
+      setIsExiting(false);
+      setIsVisible(true);
+    } else {
+      setIsVisible(false);
+    }
+  }, [message]);
 
   const triggerExit = useCallback(() => {
     setIsExiting(true);
 
-    // After animation finishes → call parent's onClose
-    setTimeout(() => {
-      setVisible(false);
-      onClose();
+    // Delay the actual hiding + onClose until animation finishes
+    const timeout = setTimeout(() => {
+      setIsVisible(false);
+      onClose?.();
     }, fadeTime);
+
+    return () => clearTimeout(timeout);
   }, [fadeTime, onClose]);
 
-  // Auto-dismiss logic
+  // Auto-dismiss
   useEffect(() => {
-    if (!dismiss || !message) return;
+    if (!dismiss || !message || !isVisible) return;
 
     const timer = setTimeout(() => {
       triggerExit();
     }, duration);
 
     return () => clearTimeout(timer);
-  }, [dismiss, duration, message, triggerExit]);
+  }, [dismiss, duration, message, isVisible, triggerExit]);
 
   const handleClose = () => {
     triggerExit();
   };
 
-  if (!message || !visible) return null;
+  if (!message || !isVisible) return null;
 
   return (
     <div
       className={`relative p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 overflow-hidden transition-all ease-out
-        ${isExiting 
-        ? "opacity-0 -translate-y-2 scale-95"
-        : "opacity-100 translate-y-0 scale-100"
+        ${isExiting
+          ? "opacity-0 max-h-0 py-0 my-0"
+          : "opacity-100 max-h-[200px]"
         }`}
       style={{ transitionDuration: `${fadeTime}ms` }}
     >
-      {/* Close button */}
       <button
+        type="button"
         onClick={handleClose}
         className="absolute top-3 right-3 text-red-400 hover:text-red-600 text-2xl leading-none font-light transition-colors"
         aria-label="Close error"
@@ -65,10 +77,7 @@ export default function ErrorAlert({
         ×
       </button>
 
-      {/* Error message */}
-      <div className="pr-8">
-        {message}
-      </div>
+      <div className="pr-8">{message}</div>
     </div>
   );
 }
