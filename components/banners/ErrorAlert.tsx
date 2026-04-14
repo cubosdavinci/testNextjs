@@ -1,44 +1,47 @@
-import React, { useState } from 'react';
+"use client";
 
-interface ErrorAlertProps {
+import { useEffect } from "react";
+
+type ErrorAlertProps = {
   message: string | null;
   onClose: () => void;
-  duration?: number; // Duration in ms for exit animation
-}
+  autoDismiss?: boolean;
+  duration?: number;
+};
 
-const ErrorAlert: React.FC<ErrorAlertProps> = ({
+export default function ErrorAlert({
   message,
   onClose,
-  duration = 300
-}) => {
-  const [isExiting, setIsExiting] = useState(false);
+  autoDismiss = false,
+  duration = 4000,
+}: ErrorAlertProps) {
+  useEffect(() => {
+    if (!autoDismiss || !message) return;         //animate-fade-in   
 
-  // Trigger exit animation
-  const handleClose = () => {
-    setIsExiting(true);
-    setTimeout(onClose, duration); // Delay actual state clear until animation finishes
-  };
+    const timer = setTimeout(() => {
+      onClose();
+    }, duration);
+
+    return () => clearTimeout(timer);
+  }, [autoDismiss, duration, message, onClose]);
 
   if (!message) return null;
 
-  return (
-    <div
-      className={`overflow-hidden transition-all ease-in-out ${isExiting ? 'opacity-0 max-h-0 py-0 border-0' : 'opacity-100 max-h-40 py-4 border'
-        }`}
-      style={{ transitionDuration: `${duration}ms` }}
+return (
+  <div className="relative p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 ">
+    {/* Close button */}
+    <button
+      onClick={onClose}
+      className="absolute top-3 right-3 text-red-400 hover:text-red-600 text-2xl leading-none font-light " 
+      aria-label="Close"
     >
-      <div className="relative p-4 bg-red-50 border border-red-200 rounded text-red-700">
-        <button
-          onClick={handleClose}                    // ← Fixed: was using undefined clearError
-          className="absolute top-3 right-3 text-red-500 hover:text-red-700 text-2xl leading-none font-light"
-          aria-label="Close"
-        >
-          ×
-        </button>
-        {message}
-      </div>
-    </div>
-  );
-};
+      ×
+    </button>
 
-export default ErrorAlert;
+    {/* Error text */}
+    <div className="pr-6">
+      {message}
+    </div>
+  </div>
+);
+}

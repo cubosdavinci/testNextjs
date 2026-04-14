@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Product } from "@/types/db/products";
 import ErrorAlert from "@/components/banners/ErrorAlert";
-import InfoAlert from "@/components/banners/InfoAlert";
+import InfoAlert from "@/components/banners/old/InfoAlert";
 import { useRouter } from "next/navigation";
 
 interface EditProductsProps {

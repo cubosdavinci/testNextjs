@@ -25,7 +25,7 @@ import {
   createAssociatedTokenAccountIdempotentInstruction,
 } from "@solana/spl-token";
 
-import ErrorAlert  from "@/components/banners/ErrorAlert";
+//import ErrorAlert  from "@/components/banners/ErrorAlert";
 
 const USDC_MINT_DEVNET = new PublicKey("4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU");
 const DEFAULT_COMMITMENT: Commitment = "confirmed";

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import ProductStatusFilter from "./ProductStatusFilter";
 import { Product } from "@/types/db/products";
 import ErrorAlert from "@/components/banners/ErrorAlert";
-import InfoAlert from "@/components/banners/InfoAlert";
+import InfoAlert from "@/components/banners/old/InfoAlert";
 
 interface Props {
   categoryFilter?: number | null;

@@ -4,7 +4,7 @@ import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Underline from '@tiptap/extension-underline'
 import { useEffect, useState } from 'react'
-import WarningAlert from '@/components/banners/WarningAlert'
+import WarningAlert from '@/components/banners/old/WarningAlert'
 import { validateProductDescription } from '@/lib/validate/products/description'
 import { ZodError } from 'zod'
 

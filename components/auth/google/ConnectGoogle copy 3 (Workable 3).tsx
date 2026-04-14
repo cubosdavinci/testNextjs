@@ -1,13 +1,14 @@
 'use client';
 
 import { useGoogle } from '@/context/GoogleContext';
+import ErrorAlert from '@/components/banners/ErrorAlert';
 
 interface ConnectGoogleProps {
   sub?: string;
 }
 
 export default function ConnectGoogle({ sub }: ConnectGoogleProps) {
-  const { canConnect, connectWithCode } = useGoogle();
+  const { canConnect, connectWithCode, error, clearError } = useGoogle();
 
   const handleConnect = () => {
     const client = window?.google?.accounts.oauth2.initCodeClient({
@@ -31,9 +32,16 @@ export default function ConnectGoogle({ sub }: ConnectGoogleProps) {
 
   return (
     <>
+      {error && (
+        <ErrorAlert
+          message={error}
+          onClose={clearError}
+        />
+      )}
+
       <button
         onClick={handleConnect}
-        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition disabled:opacity-50"        
+        className="px-4 py-2 bg-blue-600 text-white rounded"
       >
         {sub ? 'Give consent' : 'Connect New Account'}
       </button>

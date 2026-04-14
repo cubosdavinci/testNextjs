@@ -1,3 +1,5 @@
+// lib / services / google / GoogleAuthServiceTypes.ts
+
 /**
  * Represents a Google account linked to the user's profile.
  * This is the cleaned data structure intended for the frontend/browser.

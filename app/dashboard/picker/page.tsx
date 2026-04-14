@@ -10,7 +10,7 @@ import GoogleDrivePicker from '@/components/auth/google/GoogleDrivePicker';
 
 import { GoogleLinkedAccount } from '@/lib/services/google/GoogleAuthServiceTypes';
 import { downloadDriveFileBlob, fetchDriveFileContent } from '@/lib/google-drive-utils';
-import { useGoogleToken } from '@/hooks/useGoogleToken';
+import { useGoogleAccounts } from '@/hooks/useGoogleAccounts';
 import GetValidTokenStatus from '@/components/auth/google/GetValidTokenStatus';
 
 interface SelectedFile {
@@ -27,7 +27,7 @@ export default function DriveTestPage() {
   const [selectedFile, setSelectedFile] = useState<SelectedFile | null>(null);
   const [selectedAccount, setSelectedAccount] = useState<GoogleLinkedAccount | null>(null);
 
-  const { getValidToken, isRefreshing, getValidTokenError, getValidTokenErrorDescription } = useGoogleToken();
+  const { getValidToken, isRefreshing, getValidTokenError, getValidTokenErrorDescription } = useGoogleAccounts();
   const handleCloseError = () => setError(null);
 
   // Fetch linked Google accounts

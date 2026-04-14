@@ -4,7 +4,7 @@ import { useCallback, useState } from "react";
 import { License } from "@/lib/db/licenses/types/License";
 import CardProductLicenses from "@/components/products/create/CardProductLicenses";
 import ErrorAlert from "@/components/banners/ErrorAlert";
-import InfoAlert from "@/components/banners/InfoAlert";
+import InfoAlert from "@/components/banners/old/InfoAlert";
 import { MembershipEnum } from "@/lib/enum/MembershipEnum";
 
 interface Props {

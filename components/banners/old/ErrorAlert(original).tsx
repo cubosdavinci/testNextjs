@@ -16,7 +16,7 @@ export default function ErrorAlert({ message, className = "" }: ErrorAlertProps)
   if (!message) return null;
 
   return (
-    <div className={`p-3 bg-red-100 border border-red-400 text-red-700 rounded-md flex items-center ${className}`}>
+    <div className={`p-3 bg-red-500 border border-red-400 text-red-700 rounded-md flex items-center ${className}`}>
       <span className="mr-2 text-yellow-500">⚠️</span>
       <span>{message}</span>
     </div>

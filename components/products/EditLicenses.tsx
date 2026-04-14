@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { ProductLicense } from "@/types/db/products";
 import ErrorAlert from "@/components/banners/ErrorAlert";
-import InfoAlert from "@/components/banners/InfoAlert";
+import InfoAlert from "@/components/banners/old/InfoAlert";
 
 interface EditLicensesProps {
   productId: string;
