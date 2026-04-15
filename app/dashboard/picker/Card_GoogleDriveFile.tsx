@@ -5,7 +5,7 @@ import { useGoogle } from '@/context/GoogleContext';
 
 import ErrorAlert from '@/components/banners/ErrorAlert';
 import GoogleDrivePicker from '@/components/auth/google/GoogleDrivePicker';
-import GetValidTokenStatus from '@/components/auth/google/GetValidTokenStatus';
+import GetValidTokenStatus from '@/components/google/GetValidTokenStatus';
 
 import { downloadDriveFileBlob } from '@/lib/google-drive-utils';
 import type { GoogleLinkedAccount } from '@/lib/services/google/GoogleAuthServiceTypes';
@@ -51,14 +51,14 @@ export default function Card_GoogleDriveFile() {
       // ✅ Optional: resync everything after token refresh
       await refreshAccounts();
 
-        if (!updatedAccount.accessToken) {
-            throw new Error('Missing access token');
-        }
+      if (!updatedAccount.accessToken) {
+        throw new Error('Missing access token');
+      }
 
-        const blob = await downloadDriveFileBlob(
-            selectedFile.id,
-            updatedAccount.accessToken
-        );
+      const blob = await downloadDriveFileBlob(
+        selectedFile.id,
+        updatedAccount.accessToken
+      );
 
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');

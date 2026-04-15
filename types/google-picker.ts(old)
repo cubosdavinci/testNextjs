@@ -1,0 +1,10 @@
+// Define the structure of the Google API objects
+interface GooglePickerData {
+    action: string;
+    docs: any[]; // You can refine this to a specific file interface if you want
+}
+
+interface GooglePickerAction {
+    PICKED: string;
+    CANCEL: string;
+}

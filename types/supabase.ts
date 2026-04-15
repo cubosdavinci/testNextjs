@@ -262,6 +262,60 @@ export type Database = {
         }
         Relationships: []
       }
+      external_file_cache: {
+        Row: {
+          created_at: string
+          file_name: string
+          id: string
+          last_accessed_at: string
+          last_synced_at: string | null
+          mime_type: string
+          provider: Database["public"]["Enums"]["storage_provider"]
+          provider_etag: string | null
+          provider_file_id: string
+          provider_hash: string | null
+          provider_md5: string | null
+          raw_metadata: Json | null
+          size_bytes: number
+          supabase_path: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          file_name: string
+          id?: string
+          last_accessed_at?: string
+          last_synced_at?: string | null
+          mime_type: string
+          provider?: Database["public"]["Enums"]["storage_provider"]
+          provider_etag?: string | null
+          provider_file_id: string
+          provider_hash?: string | null
+          provider_md5?: string | null
+          raw_metadata?: Json | null
+          size_bytes: number
+          supabase_path: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          file_name?: string
+          id?: string
+          last_accessed_at?: string
+          last_synced_at?: string | null
+          mime_type?: string
+          provider?: Database["public"]["Enums"]["storage_provider"]
+          provider_etag?: string | null
+          provider_file_id?: string
+          provider_hash?: string | null
+          provider_md5?: string | null
+          raw_metadata?: Json | null
+          size_bytes?: number
+          supabase_path?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       memberships: {
         Row: {
           created_at: string | null
@@ -303,6 +357,128 @@ export type Database = {
           tier?: Database["public"]["Enums"]["membership_tier_old"]
         }
         Relationships: []
+      }
+      order_downloads: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          order_id: string
+          product_file_id: string
+          signed_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          id?: string
+          order_id: string
+          product_file_id: string
+          signed_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          order_id?: string
+          product_file_id?: string
+          signed_url?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_downloads_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          created_at: string
+          crypto_base_price: number | null
+          crypto_currency: Database["public"]["Enums"]["crypto_currency"]
+          crypto_fee: number | null
+          crypto_network: Database["public"]["Enums"]["crypto_network"]
+          crypto_price: number | null
+          fiat_base_price: number | null
+          fiat_currency: Database["public"]["Enums"]["fiat_currency"]
+          fiat_fee: number | null
+          fiat_payment_id: string | null
+          fiat_payment_provider: string | null
+          fiat_price: number | null
+          id: string
+          license_code: string
+          license_id: string | null
+          payment_type: Database["public"]["Enums"]["payment_type"]
+          product_id: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          crypto_base_price?: number | null
+          crypto_currency?: Database["public"]["Enums"]["crypto_currency"]
+          crypto_fee?: number | null
+          crypto_network?: Database["public"]["Enums"]["crypto_network"]
+          crypto_price?: number | null
+          fiat_base_price?: number | null
+          fiat_currency?: Database["public"]["Enums"]["fiat_currency"]
+          fiat_fee?: number | null
+          fiat_payment_id?: string | null
+          fiat_payment_provider?: string | null
+          fiat_price?: number | null
+          id?: string
+          license_code: string
+          license_id?: string | null
+          payment_type: Database["public"]["Enums"]["payment_type"]
+          product_id: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          crypto_base_price?: number | null
+          crypto_currency?: Database["public"]["Enums"]["crypto_currency"]
+          crypto_fee?: number | null
+          crypto_network?: Database["public"]["Enums"]["crypto_network"]
+          crypto_price?: number | null
+          fiat_base_price?: number | null
+          fiat_currency?: Database["public"]["Enums"]["fiat_currency"]
+          fiat_fee?: number | null
+          fiat_payment_id?: string | null
+          fiat_payment_provider?: string | null
+          fiat_price?: number | null
+          id?: string
+          license_code?: string
+          license_id?: string | null
+          payment_type?: Database["public"]["Enums"]["payment_type"]
+          product_id?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_license_id_fkey"
+            columns: ["license_id"]
+            isOneToOne: false
+            referencedRelation: "product_licenses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       plans: {
         Row: {
@@ -411,30 +587,128 @@ export type Database = {
       }
       product_files: {
         Row: {
-          file_size_mb: number | null
-          file_url: string
-          format: string | null
+          checksum: string | null
+          created_at: string
+          description: string | null
+          display_name: string | null
+          file_cache_id: string
+          file_name: string
+          file_size: number
+          file_type: string
+          hash: string | null
           id: string
-          is_primary: boolean | null
-          product_id: string | null
+          product_id: string
+          provider: Database["public"]["Enums"]["storage_provider"]
+          provider_metadata: Json | null
+          sort_order: number | null
+          updated_at: string
         }
         Insert: {
-          file_size_mb?: number | null
-          file_url: string
-          format?: string | null
+          checksum?: string | null
+          created_at?: string
+          description?: string | null
+          display_name?: string | null
+          file_cache_id: string
+          file_name: string
+          file_size: number
+          file_type: string
+          hash?: string | null
           id?: string
-          is_primary?: boolean | null
-          product_id?: string | null
+          product_id: string
+          provider?: Database["public"]["Enums"]["storage_provider"]
+          provider_metadata?: Json | null
+          sort_order?: number | null
+          updated_at?: string
         }
         Update: {
-          file_size_mb?: number | null
-          file_url?: string
-          format?: string | null
+          checksum?: string | null
+          created_at?: string
+          description?: string | null
+          display_name?: string | null
+          file_cache_id?: string
+          file_name?: string
+          file_size?: number
+          file_type?: string
+          hash?: string | null
           id?: string
-          is_primary?: boolean | null
-          product_id?: string | null
+          product_id?: string
+          provider?: Database["public"]["Enums"]["storage_provider"]
+          provider_metadata?: Json | null
+          sort_order?: number | null
+          updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "product_files_file_cache_id_fkey"
+            columns: ["file_cache_id"]
+            isOneToOne: false
+            referencedRelation: "external_file_cache"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_files_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_licenses: {
+        Row: {
+          base_price: number | null
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          is_lifetime: boolean
+          max_devices: number | null
+          max_downloads: number | null
+          name: string
+          product_id: string
+          sort_order: number | null
+          updated_at: string
+          validity_days: number | null
+        }
+        Insert: {
+          base_price?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          is_lifetime?: boolean
+          max_devices?: number | null
+          max_downloads?: number | null
+          name: string
+          product_id: string
+          sort_order?: number | null
+          updated_at?: string
+          validity_days?: number | null
+        }
+        Update: {
+          base_price?: number | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          is_lifetime?: boolean
+          max_devices?: number | null
+          max_downloads?: number | null
+          name?: string
+          product_id?: string
+          sort_order?: number | null
+          updated_at?: string
+          validity_days?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_licenses_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       product_tags: {
         Row: {
@@ -1189,9 +1463,13 @@ export type Database = {
       }
     }
     Enums: {
+      crypto_currency: "SOL" | "USDC"
+      crypto_network: "solana"
+      fiat_currency: "USD" | "EUR"
       membership_status: "active" | "paused" | "expired"
       membership_tier: "Free" | "Basic" | "Creator"
       membership_tier_old: "Basic" | "Personal" | "Business"
+      payment_type: "fiat" | "crypto"
       product_status:
         | "Draft"
         | "Published"
@@ -1225,6 +1503,7 @@ export type Database = {
         | "audio"
         | "ebooks"
       profile_role: "user" | "team" | "admin"
+      storage_provider: "google_drive" | "onedrive" | "dropbox" | "box" | "s3"
       wallet_provider_enu:
         | "MetaMask"
         | "TrustWallet"
@@ -1359,9 +1638,13 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      crypto_currency: ["SOL", "USDC"],
+      crypto_network: ["solana"],
+      fiat_currency: ["USD", "EUR"],
       membership_status: ["active", "paused", "expired"],
       membership_tier: ["Free", "Basic", "Creator"],
       membership_tier_old: ["Basic", "Personal", "Business"],
+      payment_type: ["fiat", "crypto"],
       product_status: [
         "Draft",
         "Published",
@@ -1391,6 +1674,7 @@ export const Constants = {
       ],
       product_type_old: ["general", "3d", "image", "video", "audio", "ebooks"],
       profile_role: ["user", "team", "admin"],
+      storage_provider: ["google_drive", "onedrive", "dropbox", "box", "s3"],
       wallet_provider_enu: [
         "MetaMask",
         "TrustWallet",

@@ -1,3 +1,5 @@
+import { GoogleDriveFileMetadata } from "@/types/google";
+
 // lib/google-drive-utils.ts
 export const validateGoogleToken = async (accessToken: string): Promise<boolean> => {
     try {
@@ -8,6 +10,20 @@ export const validateGoogleToken = async (accessToken: string): Promise<boolean>
     } catch {
         return false;
     }
+};
+
+export const getDriveFileMetadata = async (fileId: string, accessToken: string): Promise<GoogleDriveFileMetadata> => {
+    // We request specific fields to keep the response lightweight
+    const fields = 'id,name,mimeType,size,createdTime,modifiedTime,owners,webContentLink, md5Checksum';
+    const res = await fetch(
+        `https://www.googleapis.com/drive/v3/files/${fileId}?fields=${fields}`,
+        {
+            headers: { Authorization: `Bearer ${accessToken}` }
+        }
+    );
+
+    if (!res.ok) throw new Error('Failed to fetch file metadata');
+    return await res.json();
 };
 
 export const fetchDriveFileContent = async (fileId: string, accessToken: string) => {

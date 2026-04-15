@@ -1,52 +1,36 @@
-import { z } from "zod";
-import { NewWalletInputSchema } from "./NewWalletInput.Schema";
-import { INewWalletInput } from "./INewWalletInput";
+import { NewWalletInputSchema, NewWalletInputType } from "./NewWalletInput.Schema";
 
+export class NewWalletInput implements NewWalletInputType {
+  readonly user_id!: string;
+  readonly wallet_provider!: string;
+  readonly wallet_address!: string;
+  readonly chain_id!: number;
+  readonly token_address!: string;
+  readonly token_sym!: string;
 
-export class NewWalletInput implements INewWalletInput {
-  user_id: string;
-  wallet_provider: string;
-  wallet_address: string;
-  chain_id: number;
-  token_address: string;
-  token_sym: string;
-
-  constructor(
-    user_id: string,
-    wallet_provider: string,
-    wallet_address: string,
-    chain_id: number,
-    token_address: string,
-    token_sym: string
-  ) {
-    // Validate input using Zod
-    const validated = NewWalletInputSchema.parse({
-      user_id,
-      wallet_provider,
-      wallet_address,
-      chain_id,
-      token_address,
-      token_sym
-    });
+  constructor(data: NewWalletInputType) {
+    // Validate input using Zod Schema
+    const validated = NewWalletInputSchema.parse(data);
 
     // Assign validated values
-    this.user_id = validated.user_id;
-    this.wallet_provider = validated.wallet_provider;
-    this.wallet_address = validated.wallet_address;
-    this.chain_id = validated.chain_id;
-    this.token_address = validated.token_address;
-    this.token_sym = validated.token_sym;
+    Object.assign(this, validated);
   }
 
-  // Example method
-  toJSON(): INewWalletInput {
-    return {
-      user_id: this.user_id,
-      wallet_provider: this.wallet_provider,
-      wallet_address: this.wallet_address,
-      chain_id: this.chain_id,
-      token_address: this.token_address,
-      token_sym: this.token_sym
-    };
+  static fromValidated(data: NewWalletInputType): NewWalletInput {
+    // A faster way to create an instance without running Zod again
+    const instance = Object.create(NewWalletInput.prototype);
+    return Object.assign(instance, data);
   }
+
+
+  // The logic is clean, readable, and perfectly modular.
+  toJSON(): NewWalletInputType {
+    const { user_id, wallet_provider, wallet_address, chain_id, token_address, token_sym } = this;
+    return { user_id, wallet_provider, wallet_address, chain_id, token_address, token_sym };
+  }
+
+  toJSONString(): string {
+    return JSON.stringify(this.toJSON());
+  }
+
 }

@@ -1,8 +1,8 @@
 'use client';
 
-import ConnectGoogle from '@/components/auth/google/ConnectGoogle';
+import ConnectGoogle from '@/components/google/ConnectGoogle';
 import ErrorAlert from '@/components/banners/ErrorAlert';
-import Card_GoogleAccount from '@/components/auth/google/ui/Card_GoogleAccount';
+import Card_GoogleAccount from '@/components/google/ui/Card_GoogleAccount';
 import { useGoogle } from '@/context/GoogleContext'; // Updated import
 
 export default function ConnectGoogleAccountPage() {
@@ -35,13 +35,13 @@ export default function ConnectGoogleAccountPage() {
       {error && (
         <ErrorAlert
           message={error}
- 
+
         />
       )}
 
       {/* Connected Accounts List */}
       {googleAccounts && googleAccounts.length > 0 ? (
-        <div className="space-y-4">          
+        <div className="space-y-4">
           <div className="flex justify-between items-center">
             <h2 className="text-lg font-semibold">Linked Accounts</h2>
             <span className="text-sm text-gray-500 font-medium bg-gray-100 px-3 py-1 rounded-full">
@@ -62,7 +62,7 @@ export default function ConnectGoogleAccountPage() {
         <p className="text-gray-500 italic">No accounts connected yet.</p>
       )}
 
-      {/* Connect New Account Section */}      
+      {/* Connect New Account Section */}
       {accountCount < 5 && (
         <div className="pt-6 border-t">
           <h2 className="text-lg font-semibold mb-4">Connect New Account</h2>

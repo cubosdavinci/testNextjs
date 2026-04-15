@@ -1,3 +1,4 @@
+// lib/web3/wallets/db/types/INewWalletInput.ts
 export interface INewWalletInput {
   user_id: string;
   wallet_provider: string;

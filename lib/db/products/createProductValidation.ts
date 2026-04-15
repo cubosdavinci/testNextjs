@@ -5,7 +5,9 @@ import { titleSchema } from "@/lib/zod/titleSchema";
 import { validateGoogleDriveLink } from "@/lib/validate/products/validateGoogleDriveLink";
 import { LicenseForProductSchema } from "@/lib/validate/products/LicenseForProductSchema";
 //import { GoogleDriveMetadataSchema } from "@/lib/validate/products/googleDriveMetadata";
-import { ProdType } from "@/types/db/products";
+
+import { PRODUCT_TYPE } from "@/types/db/products/ProductType";
+
 import { consoleLog } from "@/lib/utils";
 
 /**
@@ -15,7 +17,7 @@ import { consoleLog } from "@/lib/utils";
 export const CreateProductVarsSchema = z.object({
   creatorId: z.string().uuid({ message: "creatorId must be a valid UUID" }),
   title: titleSchema(),                    // reuses title validation
-  type: z.nativeEnum(ProdType),           // enum validation
+  type: z.nativeEnum(PRODUCT_TYPE),           // enum validation
   slug: z.string().min(1, { message: "Slug is required" }),
   categoryId: z.union([ z.number()]).nullable(),
   description: z.string().optional(),

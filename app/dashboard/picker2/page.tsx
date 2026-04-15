@@ -5,7 +5,7 @@ import { supabaseBrowser } from '@/lib/supabase/clients/supabaseBrowser';
 import { browserConsoleLog } from '@/lib/utils';
 
 import ErrorAlert from '@/components/banners/ErrorAlert';
-import ConnectGoogle from '@/components/auth/google/ConnectGoogle';
+import ConnectGoogle from '@/components/google/ConnectGoogle';
 import GoogleDrivePicker from './GoogleDrivePicker';
 
 import { GoogleLinkedAccount } from '@/lib/services/google/GoogleAuthServiceTypes';

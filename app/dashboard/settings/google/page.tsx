@@ -1,8 +1,8 @@
 'use client';
 
-import ConnectGoogle from '@/components/auth/google/ConnectGoogle';
+import ConnectGoogle from '@/components/google/ConnectGoogle';
 import ErrorAlert from '@/components/banners/ErrorAlert';
-import Card_GoogleAccount from '@/components/auth/google/ui/Card_GoogleAccount';
+import Card_GoogleAccount from '@/components/google/ui/Card_GoogleAccount';
 import { useGoogle } from '@/context/GoogleContext';
 
 export default function ConnectGoogleAccountPage() {
