@@ -10,7 +10,7 @@ import { CurrencySymEnum } from "./enums/CurrencySymEnum";
 export interface License {
     id?:string              // (PK) optional
     fileId?: string;        // (FK) optional   
-    typeId: number;
+    typeId: string;
     typeName: string;
     price: number;
     region: RegionEnum;

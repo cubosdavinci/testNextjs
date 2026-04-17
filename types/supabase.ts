@@ -143,7 +143,7 @@ export type Database = {
           lft: number
           name: string
           parent_id: number | null
-          product_type: Database["public"]["Enums"]["product_type_old"] | null
+          product_type: Database["public"]["Enums"]["product_type"] | null
           products_count: number
           rght: number
           seo_description: string | null
@@ -162,7 +162,7 @@ export type Database = {
           lft: number
           name: string
           parent_id?: number | null
-          product_type?: Database["public"]["Enums"]["product_type_old"] | null
+          product_type?: Database["public"]["Enums"]["product_type"] | null
           products_count?: number
           rght: number
           seo_description?: string | null
@@ -181,7 +181,7 @@ export type Database = {
           lft?: number
           name?: string
           parent_id?: number | null
-          product_type?: Database["public"]["Enums"]["product_type_old"] | null
+          product_type?: Database["public"]["Enums"]["product_type"] | null
           products_count?: number
           rght?: number
           seo_description?: string | null

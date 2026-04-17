@@ -1,8 +1,9 @@
-'use client';
+"use client";
 
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { consoleLog } from "@/lib/utils";
+import ErrorAlert from "../banners/ErrorAlert";
 
 interface Category {
     id: number;
@@ -17,7 +18,7 @@ interface Category {
 interface CardSelectCategoryProps {
     cardTitle?: string;
     selectedCategory?: string | number | null;
-    productType: string; // REQUIRED NOW
+    productType: string;
     onSelectCategory?: (value: string | number | null) => void;
     returnId?: boolean;
 }
@@ -27,24 +28,20 @@ export default function CardSelectCategory({
     selectedCategory,
     productType,
     onSelectCategory,
-    returnId = false
+    returnId = false,
 }: CardSelectCategoryProps) {
-  consoleLog("💡 Component Start - components/products/CardProductType.tsx");
-  
+    consoleLog("💡 Component Start - CardSelectCategory");
 
     const [levels, setLevels] = useState<Category[][]>([]);
     const [selectedIds, setSelectedIds] = useState<(number | null)[]>([]);
     const [error, setError] = useState<string | null>(null);
 
     // -----------------------------
-    // FETCH FROM /api/categories
+    // FETCH CATEGORIES
     // -----------------------------
-    const fetchCategories = async (
-        level: number,
-        parentId: number | null = null
-    ) => {
+    const fetchCategories = async (level: number, parentId: number | null = null): Promise<Category[]> => {
         try {
-            const res = await fetch("/api/categories", {
+            const res = await fetch("/api/supabase/categories", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -53,34 +50,59 @@ export default function CardSelectCategory({
                         first: 50,
                         level,
                         productType,
-                        parentId
-                    }
-                })
+                        parentId,
+                    },
+                }),
             });
 
-            const json = await res.json();
+            let json;
+            try {
+                json = await res.json();
+            } catch {
+                json = {};
+            }
 
-            if (!res.ok || json.error) {
-                throw new Error(json.error?.message || "API error");
+            if (!res.ok) {
+                const errorMessage = json?.error?.message || `Server error (${res.status})`;
+                throw new Error(errorMessage);
+            }
+
+            if (json.error) {
+                throw new Error(json.error.message || "API returned error");
             }
 
             return json as Category[];
-        } catch (err) {
-            console.error("Error fetching categories:", err);
-            return [];
+        } catch (err: any) {
+            console.error(`Failed to fetch categories (level=${level}, parentId=${parentId}):`, err);
+
+            // Only set generic network error if it's not already a meaningful message
+            if (!error) {  // avoid overwriting specific errors
+                setError(err.message || "Network error while fetching categories");
+            }
+
+            throw err;        // ← Important: re-throw so caller knows it failed
         }
     };
-
     // -----------------------------
-    // RESET WHEN PRODUCT TYPE CHANGES
+    // RESET ON PRODUCT TYPE CHANGE
     // -----------------------------
     useEffect(() => {
         if (!productType) return;
 
         (async () => {
+            setError(null);
+            setLevels([]);
+            setSelectedIds([]);
+
             const rootCats = await fetchCategories(1, null);
-            setLevels([rootCats]);
-            setSelectedIds([null]);
+
+            if (rootCats.length > 0) {
+                setLevels([rootCats]);
+                setSelectedIds([null]);
+            } else {
+                // Optional: show a friendlier message if no categories at all
+                setError("No categories available for this product type");
+            }
         })();
     }, [productType]);
 
@@ -89,39 +111,51 @@ export default function CardSelectCategory({
     // -----------------------------
     const getSlugById = (id: number | null) => {
         for (const level of levels) {
-            const cat = level.find(c => c.id === id);
+            const cat = level.find((c) => c.id === id);
             if (cat) return cat.slug;
         }
         return null;
     };
 
     const handleSelect = async (levelIndex: number, value: string) => {
-        const id = value ? Number(value) : null;
+        try {
+            const id = value ? Number(value) : null;
 
-        const newSelected = [...selectedIds.slice(0, levelIndex), id];
-        setSelectedIds(newSelected);
+            // Update selected IDs up to this level
+            const newSelected = [...selectedIds.slice(0, levelIndex), id];
+            setSelectedIds(newSelected);
 
-        // If cleared
-        if (id === null) {
-            setLevels(levels.slice(0, levelIndex + 1));
-            const last = newSelected.slice(0, levelIndex).reverse().find(Boolean) || null;
-            onSelectCategory?.(returnId ? last : getSlugById(last));
-            return;
+            // If user cleared the selection (chose placeholder)
+            if (id === null) {
+                setLevels(levels.slice(0, levelIndex + 1));
+
+                const lastSelected = newSelected.slice(0, levelIndex).reverse().find(Boolean) || null;
+
+                onSelectCategory?.(returnId ? lastSelected : getSlugById(lastSelected));
+                return;
+            }
+
+            // Fetch next level subcategories
+            const nextLevel = (levels[levelIndex][0]?.level ?? 0) + 1;
+            const subcats = await fetchCategories(nextLevel, id);
+
+            if (subcats.length > 0) {
+                // Add next level only if there are subcategories
+                setLevels([...levels.slice(0, levelIndex + 1), subcats]);
+                setSelectedIds([...newSelected, null]);
+            } else {
+                // Leaf category selected → don't add empty next level
+                setLevels(levels.slice(0, levelIndex + 1));
+            }
+
+            // Notify parent with final selected value
+            const finalSelection = [...newSelected].reverse().find(Boolean) || null;
+            onSelectCategory?.(returnId ? finalSelection : getSlugById(finalSelection));
+
+        } catch (err) {
+            console.error("Error in handleSelect:", err);
+            setError("Something went wrong while selecting category");
         }
-
-        // Fetch subcategories
-        const nextLevel = (levels[levelIndex][0]?.level ?? 0) + 1;
-        const subcats = await fetchCategories(nextLevel, id);
-
-        if (subcats.length) {
-            setLevels([...levels.slice(0, levelIndex + 1), subcats]);
-            setSelectedIds([...newSelected, null]);
-        } else {
-            setLevels(levels.slice(0, levelIndex + 1));
-        }
-
-        const last = [...newSelected].reverse().find(Boolean) || null;
-        onSelectCategory?.(returnId ? last : getSlugById(last));
     };
 
     // -----------------------------
@@ -129,8 +163,12 @@ export default function CardSelectCategory({
     // -----------------------------
     useEffect(() => {
         const last = selectedIds.filter(Boolean).pop() || null;
-        if (levels.length && last == null) setError("Please select a category");
-        else setError(null);
+
+        if (levels.length && last == null) {
+            setError("Please select a category");
+        } else {
+            setError(null);
+        }
     }, [selectedIds, levels]);
 
     return (
@@ -139,7 +177,9 @@ export default function CardSelectCategory({
                 <CardHeader>
                     <CardTitle>{cardTitle}</CardTitle>
                 </CardHeader>
+
                 <CardContent className="flex flex-col gap-4">
+                    {/* Only render selects for levels that exist */}
                     {levels.map((cats, i) => (
                         <div key={i}>
                             <label className="block mb-1 font-semibold">
@@ -155,7 +195,7 @@ export default function CardSelectCategory({
                                     Select {i === 0 ? "Root Category" : "Subcategory"}
                                 </option>
 
-                                {cats.map(cat => (
+                                {cats.map((cat) => (
                                     <option key={cat.id} value={cat.id}>
                                         {cat.name}
                                     </option>
@@ -164,14 +204,20 @@ export default function CardSelectCategory({
                         </div>
                     ))}
 
-                    {error && <p className="text-red-500 text-sm">{error}</p>}
+                    {/* ERROR ALERT */}
+                    {error && (
+                        <ErrorAlert
+                            message={error}
+                            onClose={() => setError(null)}
+                        />
+                    )}
 
+                    {/* SELECTED RESULT */}
                     <div className="mt-2 text-sm">
                         <strong>Selected Category:</strong>{" "}
                         {returnId
                             ? selectedIds.filter(Boolean).pop() ?? "None"
-                            : getSlugById(selectedIds.filter(Boolean).pop() ?? null) ??
-                            "None"}
+                            : getSlugById(selectedIds.filter(Boolean).pop() ?? null) ?? "None"}
                     </div>
                 </CardContent>
             </Card>

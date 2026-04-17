@@ -17,6 +17,11 @@ export interface Category {
   thumbnailUrl?: string | null; 
   productsCount?: number; 
   subcategoriesCount?: number; 
+  lft?: number; 
+  rght?: number; 
+  description?: string | null;
+  created_at?: string | null; 
+  updated_at?: string | null;
 }
 
 export interface CategoryNode extends Category {
