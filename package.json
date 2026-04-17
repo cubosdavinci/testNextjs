@@ -5,8 +5,6 @@
   "scripts": {
     "supabase:types": "npx supabase gen types typescript --project-id gzjluxccvxvjfywbwonv --schema public > ./types/supabase.ts",
     "supabase:types:local": "npx supabase gen types typescript --local > ./types/supabase.ts",
-    "predev": "pnpm supabase:types",
-    "prebuild": "pnpm supabase:types",
     "dev": "next dev",
     "build": "next build",
     "lint": "eslint"

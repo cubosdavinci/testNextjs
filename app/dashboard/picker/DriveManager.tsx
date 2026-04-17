@@ -15,6 +15,7 @@ interface SelectedFile {
   sizeBytes?: number;
 }
 
+
 export default function DriveManager({ initialAccounts }: { initialAccounts: GoogleLinkedAccount[] }) {
   const [googleAccounts] = useState<GoogleLinkedAccount[]>(initialAccounts);
   const [selectedFile, setSelectedFile] = useState<SelectedFile | null>(null);
@@ -68,9 +69,10 @@ export default function DriveManager({ initialAccounts }: { initialAccounts: Goo
       setIsDownloading(false);
     }
   };
+  
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6">      
       {error && <ErrorAlert message={error} onClose={() => setError(null)} />}
 
       <GoogleDrivePicker

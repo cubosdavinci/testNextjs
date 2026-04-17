@@ -12,6 +12,67 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "13.0.4"
   }
+  gotit: {
+    Tables: {
+      google_linked_accounts: {
+        Row: {
+          access_token: string
+          consent_expired: boolean | null
+          created_at: string | null
+          expires_at: string
+          google_email: string
+          google_sub: string
+          id: string
+          is_main: boolean
+          refresh_token: string | null
+          scopes: string[]
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          access_token: string
+          consent_expired?: boolean | null
+          created_at?: string | null
+          expires_at: string
+          google_email: string
+          google_sub: string
+          id?: string
+          is_main?: boolean
+          refresh_token?: string | null
+          scopes?: string[]
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          access_token?: string
+          consent_expired?: boolean | null
+          created_at?: string | null
+          expires_at?: string
+          google_email?: string
+          google_sub?: string
+          id?: string
+          is_main?: boolean
+          refresh_token?: string | null
+          scopes?: string[]
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      [_ in never]: never
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       accounts: {
@@ -313,6 +374,33 @@ export type Database = {
           size_bytes?: number
           supabase_path?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      license_types: {
+        Row: {
+          created_at: string | null
+          creator_id: string | null
+          description: string | null
+          id: string
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          creator_id?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          creator_id?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -1636,6 +1724,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  gotit: {
+    Enums: {},
+  },
   public: {
     Enums: {
       crypto_currency: ["SOL", "USDC"],

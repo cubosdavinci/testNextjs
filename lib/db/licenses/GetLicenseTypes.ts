@@ -5,16 +5,17 @@ import type { LicenseType } from '@/types/db/licenses';
 /**
  * Fetches license types from the `next_auth.license_types` table.
  *
- * @param clientId - The UUID of the client. If `null`, returns only global license types.
+ * @param creatorId - The UUID of the client. If `null`, returns only global license types.
  * @returns A promise resolving to an array of LicenseType objects.
  */
-export async function GetLicenseTypes(clientId: string | null): Promise<LicenseType[]> {
+export async function GetLicenseTypes(creatorId: string | null | undefined): Promise<LicenseType[]> {
   try {
-    let query = supabaseAdmin.from('license_types').select('*');
+    const supabase = supabaseAdmin();
+    let query = supabase.from('license_types').select('*');
 
-    if (clientId) {
+    if (creatorId) {
       // Include both client-specific and global (null) licenses
-      query = query.or(`client_id.eq.${clientId},client_id.is.null`);
+      query = query.or(`creator_id.eq.${creatorId},creator_id.is.null`);
     } else {
       // Only global licenses
       query = query.is('client_id', null);
@@ -31,8 +32,10 @@ export async function GetLicenseTypes(clientId: string | null): Promise<LicenseT
 
     consoleLog(`Fetched ${data?.length || 0} license types`);
     return data || [];
-  } catch (err: any) {
-    consoleLog('GetLicenseTypes Exception:', err.message);
+  } catch (err) {
+    if (err instanceof Error) {
+      consoleLog('GetLicenseTypes Exception:', err.message);
+    }
     throw err;
   }
 }

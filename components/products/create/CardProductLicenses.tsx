@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from "react";
-import { consoleLog } from "@/lib/utils";
+import { browserConsoleLog, consoleLog } from "@/lib/utils";
 import { RegionEnum } from "@/lib/db/licenses/types/enums/RegionEnum";
 import { ValidPeriodEnum } from "@/lib/db/licenses/types/enums/ValidPeriodEnum";
 import CardLicenseUsersAllowed from "./CardLicenseUsersAllowed";
@@ -51,7 +51,8 @@ export default function CardProductLicenses({
   useEffect(() => {
     async function fetchLicenseTypes() {
       try {
-        const res = await fetch("/api/licenses", {
+        browserConsoleLog("Fetching License Types (GetLicenseTypes)")
+        const res = await fetch("/api/supabase/licenses", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -59,6 +60,7 @@ export default function CardProductLicenses({
             variables: { clientId: fileId },
           }),
         });
+        browserConsoleLog("Response (License Types)", res)
         const data = await res.json();
         const types = (data ?? []).map((t: any) => ({ id: t.id, name: t.name }));
         setLicenseTypes(types);
@@ -77,7 +79,7 @@ export default function CardProductLicenses({
           }]);
         }
       } catch (err) {
-        console.error("Failed to fetch license types", err);
+        console.error("Error Fetching License Types", err);
       }
     }
 

@@ -1,22 +1,20 @@
+"use client"
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 
 const inter = Inter({ subsets: ['latin'] })
-import {Wallet} from '@/app/my-solana-provider'
+//import {Wallet} from '@/app/my-solana-provider'
 import { WalletSyncWarning } from '@/components/auth/WalletSyncWarning'
 import Script from 'next/script'
+import dynamic from 'next/dynamic';
+
+const Wallet = dynamic(() => import('@/app/my-solana-provider'), {
+  ssr: false // Disable SSR for this specific component
+});
 
 
-/*
-export const metadata: Metadata = {
-  title: 'AppKit Example App',
-  description: 'Powered by Reown'
-}*/
-
-export default async function RootLayout({
-  children
-}: Readonly<{
+export default function RootLayout({children}: Readonly<{
   children: React.ReactNode
 }>) {
 
@@ -27,7 +25,7 @@ export default async function RootLayout({
         <Script
           src="https://accounts.google.com/gsi/client"
           strategy="afterInteractive"
-        />          
+        />
         <Wallet>
           <div>
             <WalletSyncWarning />

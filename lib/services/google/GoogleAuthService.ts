@@ -9,6 +9,7 @@ import { supabaseAdmin } from '@/lib/supabase/clients/supabaseAdmin';
 // Import your generated types
 import { Database } from '@/types/supabase'
 import { IGoogleAuthService } from './IGoogleAuthService';
+import { requireEnv } from '@/lib/utils/requireEnv';
 type GoogleLinkedAccountRow = Database['gotit']['Tables']['google_linked_accounts']['Row']
 
 /*
@@ -30,12 +31,12 @@ export class GoogleAuthService implements IGoogleAuthService {
   // We default to false (popup/postmessage) because it's your main flow
   constructor(isRedirect: boolean = false) {
     const redirectUri = isRedirect
-      ? process.env.GOOGLE_REDIRECT_URI
+      ? requireEnv('GOOGLE_REDIRECT_URI')
       : 'postmessage';
 
     const options: OAuth2ClientOptions = {
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      clientId: requireEnv('GOOGLE_CLIENT_ID'),
+      clientSecret: requireEnv('GOOGLE_CLIENT_SECRET'),
       redirectUri,
     };
 
@@ -215,7 +216,7 @@ export class GoogleAuthService implements IGoogleAuthService {
 
       const ticket = await this.oauth2Client.verifyIdToken({
         idToken: tokens.id_token,
-        audience: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
+        audience: requireEnv('NEXT_PUBLIC_GOOGLE_CLIENT_ID'),
       });
 
       const payload = ticket.getPayload();
@@ -410,11 +411,6 @@ export class GoogleAuthService implements IGoogleAuthService {
         );
       }
       
-      const updatedToken: NewAccessToken = {
-        accessToken: credentials.access_token,
-        expiresAt: credentials.expiry_date,
-      };
-
       if (credentials?.refresh_token && credentials?.refresh_token !== refreshToken) {
         // Save this new refresh token to your database!
         refreshToken = credentials.refresh_token

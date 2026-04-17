@@ -4,6 +4,10 @@ export const GoogleAuthErrors = {
     code: 'SUPABASE_QUERY_ERROR',
     message: 'Supabase query error',
   },
+  MISSING_USER_ID: {
+    code: 'MISSING_USER_ID',
+    message: 'Missing user ID',
+  },
   SUPABASE_CATCHED_ERROR: {
     code: 'SUPABASE_CATCHED_ERROR',
     message: 'Supabase catched error.',
@@ -18,7 +22,7 @@ export const GoogleAuthErrors = {
   },
     MISSING_GOOGLE_LINKED_ACCOUNT_ID: {
     code: 'MISSING_GOOGLE_LINKED_ACCOUNT_ID',
-    message: 'Missing primary key (id) for google_linked_accounts table',
+    message: 'Removing Linked Account (missing id)',
   },
     GOOGLE_OAUTH2_REFRESH_ACCESS_TOKEN_FAILED: {
     code: 'GOOGLE_OAUTH2_REFRESH_ACCESS_TOKEN_FAILED',

@@ -37,8 +37,8 @@ export interface LicenseTypeTerm {
  * Represents a row from the `next_auth.license_types` table.
  */
 export interface LicenseType {
-  id: number; // bigint
-  client_id: string | null; // uuid
+  id: string; // bigint
+  creator_id: string | null; // uuid
   name: string;
   description: string | null;
   created_at: string | null; // ISO timestamp (with time zone)

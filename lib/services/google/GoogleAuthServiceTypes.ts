@@ -29,7 +29,7 @@ export type GoogleLinkedAccount = {
 
 export type NewAccessToken = { 
   /** The valid OAuth2 access token */
-  id: string
+  id?: string | null
   accessToken?: string | null ;
   expiresAt?: number | null
 };

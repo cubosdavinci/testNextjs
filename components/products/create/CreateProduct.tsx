@@ -187,7 +187,7 @@ export default function CreateProduct({ creatorId }: Props) {
           {loading ? "Creating..." : "Create New Product"}
         </button>
 
-        {error && <ErrorAlert message={error} />}
+        {error && <ErrorAlert message={error} onClose={() => setError(null)} />}
       </form>
     </section> 
   );

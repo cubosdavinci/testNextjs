@@ -10,8 +10,9 @@ import Header from './components/Header'
 import ActionButtonList from './components/ActionButton'
 import InfoList from './components/InfoList'
 import Footer from './components/Footer'
+import { requireEnv } from '@/lib/utils/requireEnv'
 
-const projectId = process.env.NEXT_PUBLIC_PROJECT_ID || 'b56e18d47c72ab683b10814fe9495694'
+const projectId = requireEnv('NEXT_PUBLIC_PROJECT_ID' || 'b56e18d47c72ab683b10814fe9495694')
 
 export default function App() {
   const { connector, chain } = useConnection()

@@ -77,7 +77,7 @@ wallet_address: z.string().superRefine((val, ctx) => {
         message: `Invalid token symbol '${token_sym}'`,
       })
     }
-})
+}).strict()
   
 // THIS IS THE KEY:
 // You don't need to manually write an interface anymore.
