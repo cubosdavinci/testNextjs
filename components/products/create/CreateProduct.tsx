@@ -24,6 +24,7 @@ import { titleSchema } from "@/lib/zod/titleSchema";
 import { ZodError } from "zod";
 import { validateGoogleDriveLink } from "@/lib/validate/products/validateGoogleDriveLink";
 import CardGenericTitle from "@/components/Cards/CardGenericTitle";
+import CardGoogleDriveFile from "./CardGoogleDriveFile";
 
 
 
@@ -160,6 +161,8 @@ export default function CreateProduct({ creatorId }: Props) {
           setValue={(newDescription) =>
             setDescription(newDescription)
           }
+        />
+        <CardGoogleDriveFile  title="Google Drive" metadataJson
         />
         <CardProductDownloadLink 
           cardTitle="🔗 Google Drive Link (source)"
