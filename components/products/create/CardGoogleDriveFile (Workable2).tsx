@@ -6,8 +6,7 @@ import GoogleDrivePicker from '@/components/google/ui/GoogleDrivePicker';
 import ErrorAlert from '@/components/banners/ErrorAlert';
 import FileMetadataDisplay from '@/components/google/ui/FileMetadataDisplay';
 
-import { useGoogle } from '@/context/GoogleContext';
-
+import { useSession } from '@/components/auth/useSession';
 import {
   getDriveFileMetadata,
   downloadDriveFileBlob,
@@ -28,6 +27,11 @@ interface Props {
   title?: string;
   value?: SelectedDriveFile[];
   onChange?: (files: SelectedDriveFile[]) => void;
+
+  /**
+   * If true → store RAW Google Drive API response
+   * If false → store minimal subset
+   */
   metadataJson?: boolean;
 }
 
@@ -38,27 +42,46 @@ export default function CardGoogleDriveFile({
   metadataJson = false,
 }: Props) {
 
-  const {
-    googleAccounts,
-    isLoading,
-    error: googleError,
-    clearError,
-    getValidToken,
-  } = useGoogle();
+  const { user, sessionLoading } = useSession();
 
+  const [accounts, setAccounts] = useState<GoogleLinkedAccount[]>([]);
   const [files, setFiles] = useState<SelectedDriveFile[]>(value);
+
   const [error, setError] = useState<string | null>(null);
+  const [loadingAccounts, setLoadingAccounts] = useState(false);
   const [loadingFileId, setLoadingFileId] = useState<string | null>(null);
 
-  // sync to parent
   useEffect(() => {
     onChange?.(files);
   }, [files, onChange]);
 
-  // merge google context errors
   useEffect(() => {
-    if (googleError) setError(googleError);
-  }, [googleError]);
+    const fetchAccounts = async () => {
+      if (!user?.id) return;
+
+      try {
+        setLoadingAccounts(true);
+
+        const res = await fetch(
+          `/api/auth/google/get-linked-accounts?user_id=${user.id}`
+        );
+
+        const json = await res.json();
+
+        if (!res.ok) {
+          throw new Error(json?.error || 'Failed to load accounts');
+        }
+
+        setAccounts(json.data.google_linked_accounts || []);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Unknown error');
+      } finally {
+        setLoadingAccounts(false);
+      }
+    };
+
+    if (!sessionLoading) fetchAccounts();
+  }, [user?.id, sessionLoading]);
 
   // ADD FILE
   const addFile = async (file: any, acc: GoogleLinkedAccount) => {
@@ -68,11 +91,9 @@ export default function CardGoogleDriveFile({
 
       if (files.some(f => f.id === file.id)) return;
 
-      const validAccount = await getValidToken(acc);
-
       const metadata = await getDriveFileMetadata(
         file.id,
-        validAccount.accessToken!
+        acc.accessToken!
       );
 
       const selectedFile: SelectedDriveFile = {
@@ -81,13 +102,16 @@ export default function CardGoogleDriveFile({
         mimeType: file.mimeType,
         sizeBytes: file.sizeBytes,
         accountId: acc.id,
-        metadata: metadataJson ? metadata : metadata,
+
+        metadata: metadataJson
+          ? metadata // ✅ RAW GOOGLE RESPONSE (UNCHANGED)
+          : metadata, // still raw here (no transformation anymore)
       };
 
       setFiles(prev => [...prev, selectedFile]);
 
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to add file');
+    } catch {
+      setError('Failed to add file');
     } finally {
       setLoadingFileId(null);
     }
@@ -103,14 +127,14 @@ export default function CardGoogleDriveFile({
     try {
       setError(null);
 
-      const acc = googleAccounts?.find(a => a.id === file.accountId);
-      if (!acc) throw new Error('Account not found');
-
-      const validAccount = await getValidToken(acc);
+      const acc = accounts.find(a => a.id === file.accountId);
+      if (!acc?.accessToken) {
+        throw new Error('Missing Google account token');
+      }
 
       const blob = await downloadDriveFileBlob(
         file.id,
-        validAccount.accessToken!
+        acc.accessToken
       );
 
       const url = window.URL.createObjectURL(blob);
@@ -129,8 +153,12 @@ export default function CardGoogleDriveFile({
     }
   };
 
-  if (isLoading) {
-    return <div className="p-4">Loading Google accounts...</div>;
+  if (sessionLoading) {
+    return <div className="p-4">Loading session...</div>;
+  }
+
+  if (!user) {
+    return <div className="p-4">Please log in to use Google Drive.</div>;
   }
 
   return (
@@ -142,31 +170,29 @@ export default function CardGoogleDriveFile({
       <CardContent className="space-y-4">
 
         {error && (
-          <ErrorAlert
-            message={error}
-            onClose={() => {
-              setError(null);
-              clearError();
-            }}
-          />
+          <ErrorAlert message={error} onClose={() => setError(null)} />
         )}
 
-        {/* ✅ SINGLE RESPONSIBILITY PICKER */}
-        {!!googleAccounts?.length && (
-          <GoogleDrivePicker
-
-            onError={setError}
-            onFileSelected={addFile}
-          />
+        {loadingAccounts && (
+          <p className="text-sm text-gray-500">
+            Loading Google accounts...
+          </p>
         )}
 
-        {/* FILE LIST */}
+        <GoogleDrivePicker
+          googleLinkedAccounts={accounts}
+          onError={setError}
+          onFileSelected={addFile}
+        />
+
         <div className="space-y-3">
+
           {files.map(file => (
             <div
               key={file.id}
               className="border rounded-lg p-3 space-y-2 relative"
             >
+
               <div className="flex justify-between items-start">
                 <div className="pr-10">
                   <p className="font-medium">{file.name}</p>
@@ -201,8 +227,10 @@ export default function CardGoogleDriveFile({
               {file.metadata && (
                 <FileMetadataDisplay metadata={file.metadata} />
               )}
+
             </div>
           ))}
+
         </div>
 
       </CardContent>

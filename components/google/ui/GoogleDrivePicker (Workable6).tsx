@@ -1,8 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useGoogle } from '@/context/GoogleContext';
-import ConnectGoogle from '@/components/google/ConnectGoogle';
 import { GoogleLinkedAccount } from '@/lib/services/google/GoogleAuthServiceTypes';
 
 const API_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_BROWSER_KEY;
@@ -28,13 +27,13 @@ export default function GoogleDrivePicker({
     onFileSelected,
     showConsent = false,
 }: Props) {
-    const { googleAccounts, getValidToken } = useGoogle();
+    const { googleAccounts, getValidToken, tokenError } = useGoogle();
 
     const [loadingId, setLoadingId] = useState<string | null>(null);
     const [isApiReady, setIsApiReady] = useState(false);
-    const pickerRef = useRef<any>(null);
+
     // -----------------------------
-    // Load Picker API
+    // Load Google Picker API
     // -----------------------------
     useEffect(() => {
         const checkApi = () => {
@@ -53,20 +52,30 @@ export default function GoogleDrivePicker({
         }
     }, []);
 
+    // -----------------------------
+    // Derived accounts
+    // -----------------------------
     const accounts = useMemo(() => googleAccounts ?? [], [googleAccounts]);
 
+    const hasExpired = useMemo(
+        () => accounts.some(a => a.consentExpired),
+        [accounts]
+    );
+
     // -----------------------------
-    // Picker
+    // Picker launcher (safe + timeout)
     // -----------------------------
     const openPicker = useCallback(
         (accessToken: string, account: GoogleLinkedAccount) => {
             const google = window.google;
 
-            const docsView = new google.picker.DocsView(google.picker.ViewId.DOCS)
+            const docsView = new google.picker.DocsView(
+                google.picker.ViewId.DOCS
+            )
                 .setIncludeFolders(true)
                 .setSelectFolderEnabled(true)
                 .setParent('root');
-        
+
             let timeout: NodeJS.Timeout;
 
             const picker = new google.picker.PickerBuilder()
@@ -76,80 +85,91 @@ export default function GoogleDrivePicker({
                 .setCallback((data: any) => {
                     clearTimeout(timeout);
                     setLoadingId(null);
-                    if (data.action === google.picker.Action.PICKED) {
+
+                    const action = data.action;
+
+                    if (action === google.picker.Action.PICKED) {
                         if (data.docs?.[0]) {
                             onFileSelected?.(data.docs[0], account);
                         } else {
                             onError?.('No file selected.');
                         }
                     }
-
-                    // If it closes naturally, clear the ref
-                    if (data.action === google.picker.Action.CANCEL) {
-                        pickerRef.current = null;
-                    }
                 })
                 .build();
-            
+
+            // 🔴 safety timeout
             timeout = setTimeout(() => {
-                // If the picker is stuck in a loading state after 10 seconds:
-                closePicker();
                 setLoadingId(null);
-                onError?.('Google Picker timed out or failed to initialize.');
-            }, 5000);
-
-            // Save to ref
-            pickerRef.current = picker;
-
+                onError?.('Google Picker timed out.');
+            }, 10000);
 
             picker.setVisible(true);
         },
-        []
+        [onError, onFileSelected]
     );
 
-    const closePicker = () => {
-        if (pickerRef.current) {
-            pickerRef.current.setVisible(false);
-            pickerRef.current = null;
-        }
-    };
-
+    // -----------------------------
+    // Open picker with token safety + retry
+    // -----------------------------
     const handleOpenPicker = useCallback(
         async (account: GoogleLinkedAccount) => {
             if (!API_KEY) return onError?.('Missing API key');
 
+            if (!window.google?.picker) {
+                return onError?.('Google Picker not loaded');
+            }
+
             setLoadingId(account.id);
 
             try {
-                const valid = await getValidToken(account);
+                const validAccount = await getValidToken(account);
 
-                if (!valid?.accessToken) {
-                    throw new Error('Missing token');
+                if (!validAccount?.accessToken) {
+                    throw new Error('Missing access token');
                 }
 
-                openPicker(valid.accessToken, valid);
+                openPicker(validAccount.accessToken, validAccount);
             } catch (err) {
-                setLoadingId(null);
-                onError?.(
-                    err instanceof Error ? err.message : 'Failed to open Drive'
-                );
+                // retry once (token refresh edge cases)
+                try {
+                    const retry = await getValidToken(account);
+
+                    if (!retry?.accessToken) {
+                        throw new Error('Token refresh failed');
+                    }
+
+                    openPicker(retry.accessToken, retry);
+                } catch (finalErr) {
+                    setLoadingId(null);
+                    onError?.(
+                        finalErr instanceof Error
+                            ? finalErr.message
+                            : 'Failed to open Google Drive'
+                    );
+                }
             }
         },
         [getValidToken, openPicker, onError]
     );
 
+    // -----------------------------
+    // Empty state
+    // -----------------------------
     if (!accounts.length) return null;
 
     // -----------------------------
-    // UI
+    // UI (CONSENT MODE = overlay, NOT replacement)
     // -----------------------------
     return (
         <div className="flex flex-col gap-3 mt-4">
 
-            {showConsent && accounts.some(a => a.consentExpired) && (
-                <p className="text-sm text-yellow-600">
-                    Some accounts need re-authorization:
-                </p>
+            {showConsent && hasExpired && (
+                <div className="space-y-2">
+                    <p className="text-sm text-yellow-600">
+                        Some accounts need re-authorization:
+                    </p>
+                </div>
             )}
 
             {accounts.map(acc => {
@@ -167,33 +187,28 @@ export default function GoogleDrivePicker({
                             {acc.googleEmail}
                         </span>
 
-                        {/* -----------------------------
-                EXPIRED → REAL CONSENT COMPONENT
-            ----------------------------- */}
+                        {/* Expired account */}
                         {expired ? (
-                            <ConnectGoogle sub={acc.googleEmail} />
+                            <button
+                                className="px-3 py-1 text-sm bg-yellow-500 text-white rounded"
+                                onClick={() => onError?.('Trigger OAuth reconnect here')}
+                            >
+                                Reconnect
+                            </button>
                         ) : (
-                            /* -----------------------------
-                                VALID → PICKER
-                            ----------------------------- */
+                            // Valid account → picker
                             <div className="flex items-center gap-2">
-                                    <button
-                                        onClick={() => handleOpenPicker(acc)}
-                                        disabled={!isApiReady || loadingId === acc.id}
-                                        className="px-4 py-1 bg-green-600 text-white rounded disabled:bg-green-400 flex items-center gap-2"
-                                    >
-                                        <img
-                                            src="/images/ico/google-drive_32.ico"
-                                            alt="Google Drive"
-                                            className="w-5 h-5 rounded-sm bg-white"
-                                        />
-
-                                        {!isApiReady
-                                            ? 'Loading...'
-                                            : loadingId === acc.id
-                                                ? 'Opening...'
-                                                : 'Drive'}
-                                    </button>
+                                <button
+                                    onClick={() => handleOpenPicker(acc)}
+                                    disabled={!isApiReady || loadingId === acc.id}
+                                    className="px-4 py-1 bg-green-600 text-white rounded disabled:bg-green-400"
+                                >
+                                    {!isApiReady
+                                        ? 'Loading...'
+                                        : loadingId === acc.id
+                                            ? 'Opening...'
+                                            : 'Drive'}
+                                </button>
 
                                 {loadingId === acc.id && (
                                     <button
@@ -208,6 +223,11 @@ export default function GoogleDrivePicker({
                     </div>
                 );
             })}
+
+            {/* token refresh errors */}
+            {tokenError && (
+                <p className="text-sm text-red-500">{tokenError}</p>
+            )}
         </div>
     );
 }

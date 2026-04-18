@@ -162,7 +162,7 @@ export default function CreateProduct({ creatorId }: Props) {
             setDescription(newDescription)
           }
         />
-        <CardGoogleDriveFile  title="Google Drive" metadataJson
+        <CardGoogleDriveFile  title="Google Drive (Files)" metadataJson
         />
         <CardProductDownloadLink 
           cardTitle="🔗 Google Drive Link (source)"

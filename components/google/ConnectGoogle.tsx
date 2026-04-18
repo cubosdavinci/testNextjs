@@ -1,3 +1,4 @@
+// components/google/ConnectGoogle.tsx
 'use client';
 
 import { useGoogle } from '@/context/GoogleContext';
@@ -32,8 +33,8 @@ export default function ConnectGoogle({ sub }: ConnectGoogleProps) {
   return (
     <>
       <button
-        onClick={handleConnect}
-        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition disabled:opacity-50"        
+        onClick={handleConnect}        
+        className="px-4 py-1 bg-yellow-600 hover:bg-yellow-700 text-white rounded transition disabled:opacity-50"        
       >
         {sub ? 'Give consent' : 'Connect New Account'}
       </button>

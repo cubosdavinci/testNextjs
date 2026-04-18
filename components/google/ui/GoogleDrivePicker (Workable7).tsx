@@ -62,11 +62,13 @@ export default function GoogleDrivePicker({
         (accessToken: string, account: GoogleLinkedAccount) => {
             const google = window.google;
 
-            const docsView = new google.picker.DocsView(google.picker.ViewId.DOCS)
+            const docsView = new google.picker.DocsView(
+                google.picker.ViewId.DOCS
+            )
                 .setIncludeFolders(true)
                 .setSelectFolderEnabled(true)
                 .setParent('root');
-        
+
             let timeout: NodeJS.Timeout;
 
             const picker = new google.picker.PickerBuilder()
@@ -76,6 +78,7 @@ export default function GoogleDrivePicker({
                 .setCallback((data: any) => {
                     clearTimeout(timeout);
                     setLoadingId(null);
+
                     if (data.action === google.picker.Action.PICKED) {
                         if (data.docs?.[0]) {
                             onFileSelected?.(data.docs[0], account);
@@ -83,36 +86,18 @@ export default function GoogleDrivePicker({
                             onError?.('No file selected.');
                         }
                     }
-
-                    // If it closes naturally, clear the ref
-                    if (data.action === google.picker.Action.CANCEL) {
-                        pickerRef.current = null;
-                    }
                 })
                 .build();
-            
+
             timeout = setTimeout(() => {
-                // If the picker is stuck in a loading state after 10 seconds:
-                closePicker();
                 setLoadingId(null);
-                onError?.('Google Picker timed out or failed to initialize.');
-            }, 5000);
-
-            // Save to ref
-            pickerRef.current = picker;
-
-
+                onError?.('Google Picker timed out.');
+            }, 10000);
+            
             picker.setVisible(true);
         },
-        []
+        [onError, onFileSelected]
     );
-
-    const closePicker = () => {
-        if (pickerRef.current) {
-            pickerRef.current.setVisible(false);
-            pickerRef.current = null;
-        }
-    };
 
     const handleOpenPicker = useCallback(
         async (account: GoogleLinkedAccount) => {
