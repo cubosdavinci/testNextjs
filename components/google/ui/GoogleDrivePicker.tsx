@@ -180,7 +180,7 @@ export default function GoogleDrivePicker({
                                     <button
                                         onClick={() => handleOpenPicker(acc)}
                                         disabled={!isApiReady || loadingId === acc.id}
-                                        className="px-4 py-1 bg-green-600 text-white rounded disabled:bg-green-400 flex items-center gap-2"
+                                        className="px-4 py-1 bg-green-600 hover:bg-green-700 text-white rounded disabled:bg-green-400 flex items-center gap-2"
                                     >
                                         <img
                                             src="/images/ico/google-drive_32.ico"
