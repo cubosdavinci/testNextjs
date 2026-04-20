@@ -1,62 +1,55 @@
-// components/products/create/CreateProduct.tsx
 'use client';
 
 import { useCallback, useState } from "react";
-
 // Helpers
 import { consoleLog } from "@/lib/utils";
-
 // Types
 import { ProductType } from "@/types/enums/ProductType";
-import { License } from "@/lib/db/licenses/types/License";
+import { License } from "@/lib/db/licenses/types/License"
 import { CreateProductVars } from "@/lib/db/products/types/CreateProductVars";
-import type { SelectedDriveFile } from "./CardGoogleDriveFile";
-
 // Cards
-import CardGenericTitle from "@/components/Cards/CardGenericTitle";
+import CardProductTitle from "@/components/products/create/CardProductTitle";
 import CardSelectCategory from "@/components/products/CardSelectCategory";
+import CardProductDownloadLink from "@/components/products/create/CardProductDownloadLink";
 import CardProductThumbnail from "@/components/products/create/CardProductThumbnail";
 import CardProductType from "./CardProductType";
 import CardProductVersion from "@/components/products/CardProductVersion";
 import CardProductDescription from "./CardProductDescription";
 import CardProductLicenses from "@/components/products/create/CardProductLicenses";
 import CardProductSlug from "./CardProductSlug";
-import CardGoogleDriveFile from "./CardGoogleDriveFile";
-
 // Banners
 import ErrorAlert from "@/components/banners/ErrorAlert";
-
-// Validation
 import { titleSchema } from "@/lib/zod/titleSchema";
-import { validateGoogleDriveLink } from "@/lib/validate/products/validateGoogleDriveLink";
+// Zod
 import { ZodError } from "zod";
+import { validateGoogleDriveLink } from "@/lib/validate/products/validateGoogleDriveLink";
+import CardGenericTitle from "@/components/Cards/CardGenericTitle";
+import CardGoogleDriveFile from "./CardGoogleDriveFile";
+
+
 
 interface Props {
   creatorId: string;
 }
 
 export default function CreateProduct({ creatorId }: Props) {
-  consoleLog("🔔 ⭐ Client Component Starts (CreateProduct)");
+  consoleLog("🔔 ⭐ Client Component Starts (components/products/CreateProduct.tsx)");
   consoleLog("🔍 Creator ID:", creatorId);
 
   const [title, setTitle] = useState("");
   const [productType, setProductType] = useState<ProductType>(ProductType.Image);
   const [categoryId, setCategoryId] = useState<string | number | null>(null);
-
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
-
   const [version, setVersion] = useState("");
   const [description, setDescription] = useState("");
   const [slug, setSlug] = useState("");
-
   const [licenses, setLicenses] = useState<License[]>([]);
-  const [files, setFiles] = useState<SelectedDriveFile[]>([]);
-
+  const [downLink, setDownLink] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const handleLicensesChange = useCallback((updated: License[]) => {
-    setLicenses(updated);
+  
+  const handleLicensesChange = useCallback((updatedLicenses: License[]) => {
+    setLicenses(updatedLicenses);
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -65,14 +58,24 @@ export default function CreateProduct({ creatorId }: Props) {
     setError(null);
 
     try {
-      // -------------------------
-      // LOCAL VALIDATION
-      // -------------------------
+      const variables: CreateProductVars = {
+        title,
+        type: productType,
+        slug,
+        categoryId: categoryId != null ? Number(categoryId) : null, // force number or null
+        description,
+        downLink,
+        licenses,
+        thumbnailFile: null // placeholder for GraphQL multipart spec
+      };
+
+      // Local validation
       try {
-        titleSchema(1, 50).parse(title);
+        titleSchema(1,50).parse(title);
+        validateGoogleDriveLink.parse(downLink);
       } catch (err) {
         if (err instanceof ZodError) {
-          setError(err.issues[0]?.message || "Invalid title");
+          setError(err.issues[0]?.message || "Invalid input");
         } else {
           setError("Unexpected error");
         }
@@ -80,25 +83,9 @@ export default function CreateProduct({ creatorId }: Props) {
         return;
       }
 
-      // -------------------------
-      // RPC VARIABLES
-      // -------------------------
-      const variables: CreateProductVars = {
-        title,
-        type: productType,
-        slug,
-        categoryId: categoryId != null ? Number(categoryId) : null,
-        description,
-        licenses,
-
-        // NEW: structured files array
-        files,
-
-        thumbnailFile: null
-      };
-
       const formData = new FormData();
 
+      // Always include operations
       formData.append(
         "operations",
         JSON.stringify({
@@ -107,6 +94,7 @@ export default function CreateProduct({ creatorId }: Props) {
         })
       );
 
+      // Conditional map
       if (thumbnailFile) {
         formData.append(
           "map",
@@ -117,10 +105,11 @@ export default function CreateProduct({ creatorId }: Props) {
 
         formData.append("0", thumbnailFile);
       } else {
+        // Prevent server crash — include empty map
         formData.append("map", JSON.stringify({}));
       }
 
-      const res = await fetch("/api/supabase/products", {
+      const res = await fetch("/api/products", {
         method: "POST",
         body: formData,
       });
@@ -131,19 +120,17 @@ export default function CreateProduct({ creatorId }: Props) {
         throw new Error(data?.error || "Failed to create product");
       }
 
-      window.location.href = `/dashboard/products/${data.data.id}`;
+      window.location.href = `/dashboard/products/${data?.data?.id}`;
 
-      // -------------------------
-      // RESET FORM
-      // -------------------------
+      // Reset form
       setTitle("");
       setSlug("");
       setCategoryId(null);
       setThumbnailFile(null);
       setDescription("");
+      setDownLink("");
       setVersion("");
       setLicenses([]);
-      setFiles([]);
     } catch (err: any) {
       setError(err.message || "Unexpected server error");
     } finally {
@@ -152,63 +139,48 @@ export default function CreateProduct({ creatorId }: Props) {
   };
 
   return (
-    <section id="create-new-product-form" className="space-y-2">
-      <form
-        className="space-y-4 max-w-xl mx-auto p-4"
-        onSubmit={handleSubmit}
-      >
-
+    <section id="create-new-product-form" className="space-y-2">      
+      <form className="space-y-4 max-w-xl mx-auto p-4" onSubmit={handleSubmit}>
         <CardGenericTitle
-          cardTitle="🏷️ Title"
-          value={title}
-          setValue={setTitle}
+          cardTitle="🏷️ Title" 
+          value={title} 
+          setValue = {(newTitle) => setTitle(newTitle)}
           minChars={5}
         />
-
         <CardProductSlug title={title} onChange={setSlug} />
-
-        <CardProductType
-          selectedProductType={productType}
-          onProductTypeChange={setProductType}
-        />
-
+        <CardProductType selectedProductType={productType} onProductTypeChange={setProductType} />
         <CardSelectCategory
           selectedCategory={categoryId}
           productType={productType}
           onSelectCategory={setCategoryId}
           returnId={true}
         />
-
         <CardProductDescription
           cardTitle="📝 Description"
           value={description}
-          setValue={setDescription}
+          setValue={(newDescription) =>
+            setDescription(newDescription)
+          }
         />
-
-        {/* NEW: FILES SYSTEM */}
-        <CardGoogleDriveFile
-          title="Google Drive (Files)"
-          metadataJson
-          value={files}
-          onChange={setFiles}
+        <CardGoogleDriveFile  title="Google Drive (Files)" metadataJson
         />
-
-        <CardProductVersion
-          cardTitle="#️⃣ Version"
-          value={version}
-          onChange={setVersion}
+        <CardProductDownloadLink 
+          cardTitle="🔗 Google Drive Link (source)"
+          value={downLink} 
+          onChange={setDownLink} 
         />
-
-        <CardProductLicenses
-          fileId={creatorId}
-          updateParentLicenses={handleLicensesChange}
+        <CardProductVersion 
+        cardTitle="#️⃣ Version"
+        value={version} onChange={setVersion} />
+        <CardProductLicenses 
+        fileId={creatorId} updateParentLicenses={handleLicensesChange} 
         />
-
         <CardProductThumbnail
-          thumbnailUrl={""}
-          onChange={setThumbnailFile}
+          thumbnailUrl={""} 
+          onChange={(file) => setThumbnailFile(file) } 
           maxSize={150 * 1024}
         />
+
 
         <button
           type="submit"
@@ -218,10 +190,8 @@ export default function CreateProduct({ creatorId }: Props) {
           {loading ? "Creating..." : "Create New Product"}
         </button>
 
-        {error && (
-          <ErrorAlert message={error} onClose={() => setError(null)} />
-        )}
+        {error && <ErrorAlert message={error} onClose={() => setError(null)} />}
       </form>
-    </section>
+    </section> 
   );
 }

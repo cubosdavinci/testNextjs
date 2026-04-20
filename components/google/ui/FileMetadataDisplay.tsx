@@ -1,10 +1,13 @@
 import { GoogleDriveFileMetadata } from "@/types/google";
+import { useState } from "react";
 
 interface Props {
     metadata: GoogleDriveFileMetadata;
 }
 
 export default function FileMetadataDisplay({ metadata }: Props) {
+    
+    const [expanded, setExpanded] = useState(false);
     // Helper to format bytes to a human-readable string
     const formatSize = (bytes: string | undefined) => {
         if (!bytes) return 'N/A';
@@ -22,8 +25,20 @@ export default function FileMetadataDisplay({ metadata }: Props) {
             <p><strong>Owner:</strong> {metadata.owners?.[0]?.displayName || 'Unknown'}</p>
 
             {metadata.md5Checksum && (
-                <p className="truncate">
-                    <strong>MD5:</strong> <code>{metadata.md5Checksum}</code>
+                <p>
+                    <strong>MD5:</strong>{" "}
+                    <code className="font-mono break-all">
+                        {expanded
+                            ? metadata.md5Checksum
+                            : `${metadata.md5Checksum.slice(0, 12)}...`}
+                    </code>
+
+                    <button
+                        onClick={() => setExpanded(v => !v)}
+                        className="ml-2 text-xs text-blue-500"
+                    >
+                        {expanded ? "less" : "more"}
+                    </button>
                 </p>
             )}
 

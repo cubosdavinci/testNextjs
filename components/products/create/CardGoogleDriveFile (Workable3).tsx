@@ -15,14 +15,29 @@ import {
 } from '@/lib/google-drive-utils';
 
 import type { GoogleLinkedAccount } from '@/lib/services/google/GoogleAuthServiceTypes';
-import type { CreateProductFileInput } from '@/lib/supabase/types';
-import { STORAGE_PROVIDER } from '@/types/db/product-files/StorageProvider';
-import { Json } from '@/types/supabase';
+import type { RPCProductFileInsert } from '@/lib/supabase/types';
+
+
+
+
+
+export interface SelectedDriveFile {
+  id: string;
+  name: string;
+  mimeType: string;
+  sizeBytes?: number;
+  linkedAccount?: string;
+  metadata?: any;
+}
+
+
+
+
 
 interface Props {
   title?: string;
-  value?: CreateProductFileInput[];
-  onChange?: (files: CreateProductFileInput[]) => void;
+  value?: SelectedDriveFile[];
+  onChange?: (files: SelectedDriveFile[]) => void;
   metadataJson?: boolean;
 }
 
@@ -32,6 +47,7 @@ export default function CardGoogleDriveFile({
   onChange,
   metadataJson = false,
 }: Props) {
+
   const {
     googleAccounts,
     isLoading,
@@ -40,16 +56,16 @@ export default function CardGoogleDriveFile({
     getValidToken,
   } = useGoogle();
 
-  const [files, setFiles] = useState<CreateProductFileInput[]>(value);
+  const [files, setFiles] = useState<SelectedDriveFile[]>(value);
   const [error, setError] = useState<string | null>(null);
   const [loadingFileId, setLoadingFileId] = useState<string | null>(null);
 
-  // Sync with parent
+  // sync to parent
   useEffect(() => {
     onChange?.(files);
   }, [files, onChange]);
 
-  // Merge Google context errors
+  // merge google context errors
   useEffect(() => {
     if (googleError) setError(googleError);
   }, [googleError]);
@@ -60,8 +76,7 @@ export default function CardGoogleDriveFile({
       setError(null);
       setLoadingFileId(file.id);
 
-      // prevent duplicates
-      if (files.some(f => f.file_id === file.id)) return;
+      if (files.some(f => f.id === file.id)) return;
 
       const validAccount = await getValidToken(linkedAccount);
 
@@ -70,23 +85,17 @@ export default function CardGoogleDriveFile({
         validAccount.accessToken!
       );
 
-      const newFile: CreateProductFileInput = {
-        file_id: file.id,
-        file_name: file.name,
-        file_type: file.mimeType,
-        file_size: metadata?.size ? Number(metadata.size) : 0,
-        linked_account_id: linkedAccount.id,
-        provider: STORAGE_PROVIDER.GoogleDrive,
-
-        // ✅ FIXED CHECKSUM
-        checksum: metadata?.md5Checksum ?? 'not available',
-
-        provider_metadata: metadata as Json,
-        provider_user_name:
-          metadata?.owners?.[0]?.displayName || null,
+      const selectedFile: SelectedDriveFile = {
+        id: file.id,
+        name: file.name,
+        mimeType: file.mimeType,
+        sizeBytes: file.sizeBytes,
+        linkedAccount: linkedAccount.id,
+        metadata: metadataJson ? metadata : metadata,
       };
 
-      setFiles(prev => [...prev, newFile]);
+      setFiles(prev => [...prev, selectedFile]);
+
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to add file');
     } finally {
@@ -96,23 +105,21 @@ export default function CardGoogleDriveFile({
 
   // REMOVE FILE
   const removeFile = (id: string) => {
-    setFiles(prev => prev.filter(f => f.file_id !== id));
+    setFiles(prev => prev.filter(f => f.id !== id));
   };
 
   // DOWNLOAD FILE
-  const handleDownload = async (file: CreateProductFileInput) => {
+  const handleDownload = async (file: SelectedDriveFile) => {
     try {
       setError(null);
 
-      const linkedAccount = googleAccounts?.find(
-        a => a.id === file.linked_account_id
-      );
+      const linkedAccount = googleAccounts?.find(a => a.id === file.linkedAccount);
       if (!linkedAccount) throw new Error('Account not found');
 
       const validAccount = await getValidToken(linkedAccount);
 
       const blob = await downloadDriveFileBlob(
-        file.file_id,
+        file.id,
         validAccount.accessToken!
       );
 
@@ -120,12 +127,13 @@ export default function CardGoogleDriveFile({
 
       const a = document.createElement('a');
       a.href = url;
-      a.download = file.file_name;
+      a.download = file.name;
       document.body.appendChild(a);
       a.click();
       a.remove();
 
       window.URL.revokeObjectURL(url);
+
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Download failed');
     }
@@ -142,6 +150,7 @@ export default function CardGoogleDriveFile({
       </CardHeader>
 
       <CardContent className="space-y-4">
+
         {error && (
           <ErrorAlert
             message={error}
@@ -152,9 +161,10 @@ export default function CardGoogleDriveFile({
           />
         )}
 
-        {/* GOOGLE DRIVE PICKER */}
+        {/* ✅ SINGLE RESPONSIBILITY PICKER */}
         {!!googleAccounts?.length && (
           <GoogleDrivePicker
+
             onError={setError}
             onFileSelected={addFile}
           />
@@ -164,19 +174,19 @@ export default function CardGoogleDriveFile({
         <div className="space-y-3">
           {files.map(file => (
             <div
-              key={file.file_id}
+              key={file.id}
               className="border rounded-lg p-3 space-y-2 relative"
             >
               <div className="flex justify-between items-start">
                 <div className="pr-10">
-                  <p className="font-medium">{file.file_name}</p>
+                  <p className="font-medium">{file.name}</p>
                   <p className="text-xs text-gray-500">
-                    {file.file_type}
+                    {file.mimeType}
                   </p>
                 </div>
 
                 <button
-                  onClick={() => removeFile(file.file_id)}
+                  onClick={() => removeFile(file.id)}
                   className="absolute top-2 right-2 text-gray-400 hover:text-red-500 text-xl"
                 >
                   ×
@@ -192,18 +202,19 @@ export default function CardGoogleDriveFile({
                 </button>
               </div>
 
-              {loadingFileId === file.file_id && (
+              {loadingFileId === file.id && (
                 <p className="text-blue-500 text-sm">
                   Loading metadata...
                 </p>
               )}
 
-              {file.provider_metadata && (
-                <FileMetadataDisplay metadata={file.provider_metadata} />
+              {file.metadata && (
+                <FileMetadataDisplay metadata={file.metadata} />
               )}
             </div>
           ))}
         </div>
+
       </CardContent>
     </Card>
   );
