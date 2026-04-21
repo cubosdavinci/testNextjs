@@ -343,7 +343,8 @@ export type Database = {
           provider_md5: string | null
           raw_metadata: Json | null
           size_bytes: number
-          supabase_path: string
+          storage_path: string
+          storage_url: string | null
           updated_at: string
         }
         Insert: {
@@ -360,7 +361,8 @@ export type Database = {
           provider_md5?: string | null
           raw_metadata?: Json | null
           size_bytes: number
-          supabase_path: string
+          storage_path: string
+          storage_url?: string | null
           updated_at?: string
         }
         Update: {
@@ -377,7 +379,8 @@ export type Database = {
           provider_md5?: string | null
           raw_metadata?: Json | null
           size_bytes?: number
-          supabase_path?: string
+          storage_path?: string
+          storage_url?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -1533,6 +1536,19 @@ export type Database = {
           expires_at: string
           reservation_id: string
         }[]
+      }
+      rpc_create_external_file_cache: {
+        Args: {
+          p_file_name: string
+          p_mime_type: string
+          p_product_file_id: string
+          p_provider: Database["public"]["Enums"]["storage_provider"]
+          p_provider_file_id: string
+          p_size_bytes: number
+          p_storage_path: string
+          p_storage_url: string
+        }
+        Returns: string
       }
       uid: { Args: never; Returns: string }
       update_membership_json: {

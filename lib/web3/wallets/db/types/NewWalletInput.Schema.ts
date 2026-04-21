@@ -83,36 +83,53 @@ wallet_address: z.string().superRefine((val, ctx) => {
 // You don't need to manually write an interface anymore.
 // This type is automatically generated from your schema's output.
 export type NewWalletInputType = z.infer<typeof NewWalletInputSchema>;
-/*.superRefine((obj, ctx) => {
-    const errors: string[] = [];
 
-    // Check each field individually
-    if (!obj.user_id || obj.user_id === "00000000-0000-0000-0000-000000000000") {
-      errors.push("Missing or invalid user_id");
-    }
+/*/*.superRefine((obj, ctx) => {
+  // Validate user_id
+  if (!obj.user_id || obj.user_id === "00000000-0000-0000-0000-000000000000") {
+    ctx.addIssue({
+      code: "custom",
+      message: "Missing or invalid user_id",
+      path: ["user_id"],
+    });
+  }
 
-    if (!obj.wallet_provider || !SUPPORTED_WALLET_PROVIDER_KEYS.includes(obj.wallet_provider)) {
-      errors.push("Missing or unsupported wallet_provider");
-    }
+  // Validate wallet_provider
+  if (!obj.wallet_provider || !SUPPORTED_WALLET_PROVIDER_KEYS.includes(obj.wallet_provider)) {
+    ctx.addIssue({
+      code: "custom",
+      message: "Missing or unsupported wallet_provider",
+      path: ["wallet_provider"],
+    });
+  }
 
-    if (!obj.wallet_address || !/^0x[a-fA-F0-9]{40}$/.test(obj.wallet_address)) {
-      errors.push("Missing or invalid wallet_address");
-    }
+  // Validate wallet_address
+  if (!obj.wallet_address || !/^0x[a-fA-F0-9]{40}$/.test(obj.wallet_address)) {
+    ctx.addIssue({
+      code: "custom",
+      message: "Missing or invalid wallet_address",
+      path: ["wallet_address"],
+    });
+  }
 
-    if (!obj.chain_id || !Number.isInteger(obj.chain_id) || obj.chain_id <= 0) {
-      errors.push("Missing or invalid chain_id");
-    }
+  // Validate chain_id
+  if (!obj.chain_id || !Number.isInteger(obj.chain_id) || obj.chain_id <= 0) {
+    ctx.addIssue({
+      code: "custom",
+      message: "Missing or invalid chain_id",
+      path: ["chain_id"],
+    });
+  }
 
-    if (!obj.token_address || !/^0x[a-fA-F0-9]{40}$/.test(obj.token_address)) {
-      errors.push("Missing or invalid token_address");
-    }
+  // Validate token_address
+  if (!obj.token_address || !/^0x[a-fA-F0-9]{40}$/.test(obj.token_address)) {
+    ctx.addIssue({
+      code: "custom",
+      message: "Missing or invalid token_address",
+      path: ["token_address"],
+    });
+  }
+});*/
 
-    // If any errors, add one combined issue
-    if (errors.length > 0) {
-      ctx.addIssue({
-        code: "custom",
-        message: errors.join("\n"),
-      });
-    }
-  });*/
+
 

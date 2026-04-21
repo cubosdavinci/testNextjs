@@ -27,6 +27,7 @@ export type ProductFileToCacheInput = Pick<
     | "file_name"
     | "file_type"
     | "provider"
+    | "file_size"
     >;
 
 export type ProductFileInsert = TableInsert<'product_files'>;
@@ -66,3 +67,20 @@ export type ProductWithRelations = Product & {
 };
 
 export type CategoryDb = TableRow<'categories'>;
+
+
+
+export type ExternalFileCacheRow = TableRow<'external_file_cache'>;
+
+export type FileCacheSyncResult = Pick<
+    ExternalFileCacheRow,
+    "provider_file_id" |
+    "storage_path" |
+    "storage_url"
+> & {
+    externalFileCacheId: string; // external_file_cache.id
+    productFileId: string;       // product_files.id
+
+    status: "uploaded" | "skipped" | "failed";
+    error?: string;
+};
