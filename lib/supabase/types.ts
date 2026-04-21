@@ -19,6 +19,16 @@ export type ProductInsert = TableInsert<'products'>;
 export type ProductUpdate = TableUpdate<'products'>;
 
 export type ProductFile = TableRow<'product_files'>;
+export type ProductFileToCacheInput = Pick<
+    ProductFile,
+    | "id"
+    | "file_id"
+    | "linked_account_id"
+    | "file_name"
+    | "file_type"
+    | "provider"
+    >;
+
 export type ProductFileInsert = TableInsert<'product_files'>;
 export type CreateProductFileInput = Omit<
     ProductFileInsert,
@@ -36,10 +46,14 @@ export type CreateProductFileInput = Omit<
 };
 
 
-
-
 export type ProductFileUpdate = TableUpdate<'product_files'>;
 
+/* Custom output type for supabase upload (to storage) file operations*/
+export type UploadToStorageOutput = {
+    path: string;
+    url: string;
+    contentType: string;
+};
 
 export type ProductLicense = TableRow<'product_licenses'>;
 export type ProductLicenseInsert = TableInsert<'product_licenses'>;

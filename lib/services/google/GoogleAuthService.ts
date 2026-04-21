@@ -534,4 +534,62 @@ export class GoogleAuthService implements IGoogleAuthService {
         throw error;
     }   
   }
+
+  async getValidAccessToken(accountId: string): Promise<string> {
+    if (!accountId) {
+      throw errorGoogleAuthService(
+        'MISSING_GOOGLE_LINKED_ACCOUNT_ID',
+        new Error('accountId is required')
+      );
+    }
+
+    // 1. Fetch account
+    const { data, error } = await this.supabase
+      .from('google_linked_accounts')
+      .select('id, access_token, expires_at, refresh_token, consent_expired')
+      .eq('id', accountId)
+      .single();
+
+    if (error || !data) {
+      throw errorGoogleAuthService(
+        'SUPABASE_QUERY_ERROR',
+        error ?? new Error('Account not found')
+      );
+    }
+
+    const now = Date.now();
+    const expiryMs = new Date(data.expires_at).getTime();
+
+    const isExpired = expiryMs <= now;
+    const willExpireSoon = expiryMs - now <= 5 * 60 * 1000;
+
+    const shouldRefresh =
+      !!data.refresh_token &&
+      !data.consent_expired &&
+      (isExpired || willExpireSoon);
+
+    // 2. Refresh if needed
+    if (shouldRefresh) {
+      try {
+        const refreshed = await this.refreshAccessToken(
+          data.refresh_token!,
+          data.id
+        );
+
+        if (!refreshed?.accessToken) {
+          throw new Error("Missing access_token for Google account");
+        }
+       
+        return refreshed.accessToken;
+
+      } catch (err) {
+        consoleLog('Token refresh failed, fallback to existing token', err);
+
+      }
+    }
+
+    // 3. Return existing token
+    return data.access_token;
+  }
+
 }
