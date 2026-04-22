@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ProductType } from "@/types/enums/ProductType";
+import { ProductType } from "@/types/db/products/ProductType";
 import ErrorAlert from "@/components/banners/ErrorAlert";
 
 // Interface for props

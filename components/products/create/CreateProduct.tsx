@@ -7,10 +7,8 @@ import { useCallback, useState } from "react";
 import { consoleLog } from "@/lib/utils";
 
 // Types
-import { ProductType } from "@/types/enums/ProductType";
-import { License } from "@/lib/db/licenses/types/License";
-import { CreateProductVars } from "@/lib/db/products/types/CreateProductVars";
-import type { SelectedDriveFile } from "./CardGoogleDriveFile";
+import { PRODUCT_TYPE, ProductType } from "@/types/db/products/ProductType";
+import type { CreateProductFileInput, CreateProductInput, CreateProductLicenseInput } from "@/lib/supabase/types";
 
 // Cards
 import CardGenericTitle from "@/components/Cards/CardGenericTitle";
@@ -29,7 +27,7 @@ import ErrorAlert from "@/components/banners/ErrorAlert";
 // Validation
 import { titleSchema } from "@/lib/zod/titleSchema";
 import { validateGoogleDriveLink } from "@/lib/validate/products/validateGoogleDriveLink";
-import { ZodError } from "zod";
+import { ZodError, file } from "zod";
 
 interface Props {
   creatorId: string;
@@ -40,7 +38,7 @@ export default function CreateProduct({ creatorId }: Props) {
   consoleLog("🔍 Creator ID:", creatorId);
 
   const [title, setTitle] = useState("");
-  const [productType, setProductType] = useState<ProductType>(ProductType.Image);
+  const [productType, setProductType] = useState<ProductType>(PRODUCT_TYPE.Image);
   const [categoryId, setCategoryId] = useState<string | number | null>(null);
 
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
@@ -49,107 +47,70 @@ export default function CreateProduct({ creatorId }: Props) {
   const [description, setDescription] = useState("");
   const [slug, setSlug] = useState("");
 
-  const [licenses, setLicenses] = useState<License[]>([]);
-  const [files, setFiles] = useState<SelectedDriveFile[]>([]);
+  const [licenses, setLicenses] = useState<CreateProductLicenseInput[]>([]);
+  const [files, setFiles] = useState<CreateProductFileInput[]>([]);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleLicensesChange = useCallback((updated: License[]) => {
+  const handleLicensesChange = useCallback((updated: CreateProductLicenseInput[]) => {
     setLicenses(updated);
   }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setLoading(true);
+  setError(null);
 
-    try {
-      // -------------------------
-      // LOCAL VALIDATION
-      // -------------------------
-      try {
-        titleSchema(1, 50).parse(title);
-      } catch (err) {
-        if (err instanceof ZodError) {
-          setError(err.issues[0]?.message || "Invalid title");
-        } else {
-          setError("Unexpected error");
-        }
-        setLoading(false);
-        return;
-      }
+  try {
+    // Validation
+    titleSchema(1, 50).parse(title);
 
-      // -------------------------
-      // RPC VARIABLES
-      // -------------------------
-      const variables: CreateProductVars = {
-        title,
-        type: productType,
-        slug,
-        categoryId: categoryId != null ? Number(categoryId) : null,
-        description,
-        licenses,
+    const product: CreateProductInput = {
+      title,
+      description,
+      type: productType,
+      category_id: categoryId != null ? Number(categoryId) : undefined,
+      version,
+      only_for_followers: false,
+      tags: [],
+      user_tags: [],
+    };
 
-        // NEW: structured files array
-        files,
+    const productFiles = files;
+    const productLicenses = licenses;
 
-        thumbnailFile: null
-      };
+    const formData = new FormData();
 
-      const formData = new FormData();
+    formData.append("newProduct", JSON.stringify(product));
+    formData.append("newProductFiles", JSON.stringify(productFiles));
+    formData.append("newProductLicenses", JSON.stringify(productLicenses));
 
-      formData.append(
-        "operations",
-        JSON.stringify({
-          operationName: "InsertNewProduct",
-          variables,
-        })
-      );
-
-      if (thumbnailFile) {
-        formData.append(
-          "map",
-          JSON.stringify({
-            "0": ["variables.thumbnailFile"],
-          })
-        );
-
-        formData.append("0", thumbnailFile);
-      } else {
-        formData.append("map", JSON.stringify({}));
-      }
-
-      const res = await fetch("/api/supabase/products", {
-        method: "POST",
-        body: formData,
-      });
-
-      const data = await res.json();
-
-      if (!res.ok || !data?.data?.id) {
-        throw new Error(data?.error || "Failed to create product");
-      }
-
-      window.location.href = `/dashboard/products/${data.data.id}`;
-
-      // -------------------------
-      // RESET FORM
-      // -------------------------
-      setTitle("");
-      setSlug("");
-      setCategoryId(null);
-      setThumbnailFile(null);
-      setDescription("");
-      setVersion("");
-      setLicenses([]);
-      setFiles([]);
-    } catch (err: any) {
-      setError(err.message || "Unexpected server error");
-    } finally {
-      setLoading(false);
+    if (thumbnailFile) {
+      formData.append("thumbnail", thumbnailFile);
     }
-  };
+
+    const res = await fetch("/api/supabase/product/create", {
+      method: "POST",
+      body: formData,
+    });
+
+    const data = await res.json();
+
+    if (!res.ok || !data?.data?.id) {
+      throw new Error(data?.error || "Failed to create product");
+    }
+
+    window.location.href = `/dashboard/products/${data.data.id}`;
+
+  } catch (err) {
+    const error = err as Error;
+
+    setError(error.message || "Unexpected server error");
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <section id="create-new-product-form" className="space-y-2">

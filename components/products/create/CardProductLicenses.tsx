@@ -10,8 +10,9 @@ import CardLicensePrice from "./CardLicensePrice";
 import CardRegionSelector from "@/components/Cards/CardRegionSelector";
 import { regionIcons } from "@/lib/db/licenses/types/enums/RegionEnumIcons";
 import CardGenericDropDown from "@/components/Cards/CardGenericDropDown";
-import { License } from "@/lib/db/licenses/types/License";
+//import { License } from "@/lib/db/licenses/types/License";
 import { MembershipEnum } from "@/lib/enum/MembershipEnum";
+import { CreateProductLicenseInput } from "@/lib/supabase/types";
 
 interface LicenseType {
   id: string;
@@ -21,7 +22,7 @@ interface LicenseType {
 
 interface CardProductLicensesProps {
   fileId: string;
-  updateParentLicenses: (licenses: License[]) => void;
+  updateParentLicenses: (licenses: CreateProductLicenseInput[]) => void;
   membership: MembershipEnum;
 }
 
