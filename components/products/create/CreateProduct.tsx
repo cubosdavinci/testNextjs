@@ -8,8 +8,8 @@ import { consoleLog } from "@/lib/utils";
 
 // Types
 import { PRODUCT_TYPE, ProductType } from "@/types/db/products/ProductType";
-import type { CreateProductFileInput, CreateProductInput, CreateProductLicenseInput } from "@/lib/supabase/types";
-
+import type {  ProductCreateInput, ProductFileCreateInput, ProductLicenseCreateInput } from "@/lib/supabase/types";
+import { MembershipEnum } from "@/lib/enum/MembershipEnum"
 // Cards
 import CardGenericTitle from "@/components/Cards/CardGenericTitle";
 import CardSelectCategory from "@/components/products/CardSelectCategory";
@@ -47,13 +47,13 @@ export default function CreateProduct({ creatorId }: Props) {
   const [description, setDescription] = useState("");
   const [slug, setSlug] = useState("");
 
-  const [licenses, setLicenses] = useState<CreateProductLicenseInput[]>([]);
-  const [files, setFiles] = useState<CreateProductFileInput[]>([]);
+  const [licenses, setLicenses] = useState<ProductLicenseCreateInput[]>([]);
+  const [files, setFiles] = useState<ProductFileCreateInput[]>([]);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleLicensesChange = useCallback((updated: CreateProductLicenseInput[]) => {
+  const handleLicensesChange = useCallback((updated: ProductLicenseCreateInput[]) => {
     setLicenses(updated);
   }, []);
 
@@ -66,7 +66,7 @@ const handleSubmit = async (e: React.FormEvent) => {
     // Validation
     titleSchema(1, 50).parse(title);
 
-    const product: CreateProductInput = {
+    const product: ProductCreateInput = {
       title,
       description,
       type: productType,
@@ -118,6 +118,11 @@ const handleSubmit = async (e: React.FormEvent) => {
         className="space-y-4 max-w-xl mx-auto p-4"
         onSubmit={handleSubmit}
       >
+        <CardProductThumbnail
+          thumbnailUrl={""}
+          onChange={setThumbnailFile}
+          maxSize={150 * 1024}
+        />
 
         <CardGenericTitle
           cardTitle="🏷️ Title"
@@ -163,12 +168,7 @@ const handleSubmit = async (e: React.FormEvent) => {
         <CardProductLicenses
           fileId={creatorId}
           updateParentLicenses={handleLicensesChange}
-        />
-
-        <CardProductThumbnail
-          thumbnailUrl={""}
-          onChange={setThumbnailFile}
-          maxSize={150 * 1024}
+          membership = { MembershipEnum.Free }
         />
 
         <button

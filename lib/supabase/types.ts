@@ -19,7 +19,7 @@ export type ProductRow = TableRow<'products'>;
 export type ProductInsert = TableInsert<'products'>;
 export type ProductUpdate = TableUpdate<'products'>;
 
-export type CreateProductInput = Pick<ProductInsert,
+export type ProductCreateInput = Pick<ProductInsert,
     | "title"
     | "description"
     | "type"
@@ -30,7 +30,7 @@ export type CreateProductInput = Pick<ProductInsert,
     | "user_tags"
     >
 
-export type CreateProductInputExtended = CreateProductInput & Pick<ProductInsert,
+export type ProductCreateInputExtended = ProductCreateInput & Pick<ProductInsert,
     | "creator_id"
     | "slug"
 >
@@ -62,7 +62,7 @@ export type ProductFileToCacheInput = Pick<
 
 export type ProductFileInsert = TableInsert<'product_files'>;
 
-export type CreateProductFileInput = {
+export type ProductFileCreateInput = {
         provider: StorageProvider;
     } & Pick<ProductFileInsert,
         | "product_id"        
@@ -89,7 +89,7 @@ export type UploadToStorageOutput = {
 export type ProductLicense = TableRow<'product_licenses'>;
 export type ProductLicenseInsert = TableInsert<'product_licenses'>;
 export type ProductLicenseUpdate = TableUpdate<'product_licenses'>;
-export type CreateProductLicenseInput = Pick<ProductLicenseInsert,
+export type ProductLicenseCreateInput = Pick<ProductLicenseInsert,
     | "name"
     | "description"
     | "base_price_cents"

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ProductType } from "@/types/db/products/ProductType";
+import { PRODUCT_TYPE, ProductType } from "@/types/db/products/ProductType";
 import ErrorAlert from "@/components/banners/ErrorAlert";
 
 // Interface for props
@@ -33,13 +33,27 @@ export default function CardProductType({
   };
 
   // Map of product types to icons
-  const iconMap: Record<ProductType, string> = {
-    [ProductType.ThreeD]: "/images/root-categories/3d_64x64.png",
-    [ProductType.Image]: "/images/root-categories/image_64x64.png",
-    [ProductType.Video]: "/images/root-categories/video_64x64.png",
-    [ProductType.Audio]: "/images/root-categories/audio_64x64.png",
-    [ProductType.EBooks]: "/images/root-categories/books2_64x64.png",
-  };
+const iconMap: Record<ProductType, string> = {
+  [PRODUCT_TYPE.ThreeD]: "/images/root-categories/3d_64x64.png",
+  [PRODUCT_TYPE.Image]: "/images/root-categories/image_64x64.png",
+  [PRODUCT_TYPE.Video]: "/images/root-categories/video_64x64.png",
+  [PRODUCT_TYPE.Music]: "/images/root-categories/audio_64x64.png",
+  [PRODUCT_TYPE.EBooks]: "/images/root-categories/books2_64x64.png",
+  [PRODUCT_TYPE.ABooks]: "/images/root-categories/books2_64x64.png",
+  [PRODUCT_TYPE.Apps]: "/images/root-categories/apps_64x64.png",
+  [PRODUCT_TYPE.Games]: "/images/root-categories/games_64x64.png",
+  [PRODUCT_TYPE.Courses]: "/images/root-categories/courses_64x64.png",
+  [PRODUCT_TYPE.Fonts]: "/images/root-categories/fonts_64x64.png",
+  [PRODUCT_TYPE.Icons]: "/images/root-categories/logos_64x64.png",
+  [PRODUCT_TYPE.Templates]: "/images/root-categories/templates_64x64.png",
+  [PRODUCT_TYPE.Vector]: "/images/root-categories/tools_64x64.png",
+
+  [PRODUCT_TYPE.ARVR]: "/images/root-categories/arvr_64x64.png",
+  [PRODUCT_TYPE.IoT]: "/images/root-categories/iot_64x64.png",
+  [PRODUCT_TYPE.Technical]: "/images/root-categories/technical_64x64.png",
+
+  [PRODUCT_TYPE.Other]: "/images/root-categories/other_64x64.png",
+};
 
   return (
     <section id="product-type">
@@ -62,7 +76,7 @@ export default function CardProductType({
 
             {isOpen && (
               <div className="absolute top-full left-0 right-0 bg-white border rounded mt-1 shadow-lg z-10">
-                {Object.entries(ProductType).map(([key, value]) => (
+                {Object.entries(productType).map(([key, value]) => (
                   <div
                     key={key}
                     className="flex items-center px-4 py-2 cursor-pointer hover:bg-gray-200"
@@ -80,7 +94,7 @@ export default function CardProductType({
             )}
           </div>
 
-          {error && <ErrorAlert message={error} />}
+          {error && <ErrorAlert message={error} onClose={() => setError(null)} />}
         </CardContent>
       </Card>
     </section>
