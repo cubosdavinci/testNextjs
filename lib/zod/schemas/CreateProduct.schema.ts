@@ -1,10 +1,25 @@
 // lib/web3/wallets/db/types/NewWalletInput.Schema.ts
 import { z } from "zod/v4"
-import { SUPPORTED_WALLET_PROVIDER_KEYS } from "../../types/SupportedWalletProviders"
-import { getTokenSym } from "../../types/SupportedBNetworks";
-import { Web3AddressSchema } from "@/lib/zod/Web3AddressSchema";
+import type { CreateProductInputExtended } from "@/lib/supabase/types";
+
+export const myType: CreateProductInputExtended = {
+    creator_id,
+    title,
+    description,
+    type,
+    category_id,
+    version,
+    only_for_followers,
+    tags,
+    user_tags,
+    slug,
+}
 export const CreateProductSchema = z.object({
-    user_id: z
+    tags: z.
+        array(z.string())
+        .optional(),
+
+    creator_id: z
         .string()
         .superRefine((val, ctx) => {
             // optional extra checks, e.g., not empty or not all zeros
@@ -16,6 +31,7 @@ export const CreateProductSchema = z.object({
                 });
             }
         }),
+
 
     wallet_provider: z.enum(SUPPORTED_WALLET_PROVIDER_KEYS).superRefine(
         (val, ctx) => {

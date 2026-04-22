@@ -385,6 +385,41 @@ export type Database = {
         }
         Relationships: []
       }
+      license_download_links: {
+        Row: {
+          created_at: string
+          expires_at: string | null
+          id: string
+          link_token: string
+          order_license_id: string
+          revoked: boolean
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          link_token: string
+          order_license_id: string
+          revoked?: boolean
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          link_token?: string
+          order_license_id?: string
+          revoked?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_license"
+            columns: ["order_license_id"]
+            isOneToOne: false
+            referencedRelation: "order_licenses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       license_types: {
         Row: {
           created_at: string | null
@@ -492,6 +527,67 @@ export type Database = {
           },
         ]
       }
+      order_licenses: {
+        Row: {
+          created_at: string
+          expires_at: string | null
+          id: string
+          issued_at: string
+          license_key: string | null
+          order_id: string
+          product_license_id: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          issued_at?: string
+          license_key?: string | null
+          order_id: string
+          product_license_id: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          issued_at?: string
+          license_key?: string | null
+          order_id?: string
+          product_license_id?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_license"
+            columns: ["product_license_id"]
+            isOneToOne: false
+            referencedRelation: "product_licenses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_license"
+            columns: ["product_license_id"]
+            isOneToOne: false
+            referencedRelation: "product_licenses_pricing"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_order"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       orders: {
         Row: {
           created_at: string
@@ -568,6 +664,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "orders_license_id_fkey"
+            columns: ["license_id"]
+            isOneToOne: false
+            referencedRelation: "product_licenses_pricing"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "orders_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
@@ -609,6 +712,36 @@ export type Database = {
           provider?: string | null
           provider_price_id?: string | null
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      platform_config: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          key: string
+          updated_at: string
+          value: number | null
+          value_json: Json | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          key: string
+          updated_at?: string
+          value?: number | null
+          value_json?: Json | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          key?: string
+          updated_at?: string
+          value?: number | null
+          value_json?: Json | null
         }
         Relationships: []
       }
@@ -683,16 +816,16 @@ export type Database = {
       }
       product_files: {
         Row: {
-          checksum: string | null
           created_at: string
           description: string | null
           file_cache_expires_at: string | null
           file_cache_id: string | null
+          file_checksum: string | null
+          file_hash: string | null
           file_id: string
           file_name: string
           file_size: number
           file_type: string
-          hash: string | null
           id: string
           linked_account_id: string
           product_id: string
@@ -703,16 +836,16 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          checksum?: string | null
           created_at?: string
           description?: string | null
           file_cache_expires_at?: string | null
           file_cache_id?: string | null
+          file_checksum?: string | null
+          file_hash?: string | null
           file_id: string
           file_name: string
           file_size: number
           file_type: string
-          hash?: string | null
           id?: string
           linked_account_id: string
           product_id: string
@@ -723,16 +856,16 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          checksum?: string | null
           created_at?: string
           description?: string | null
           file_cache_expires_at?: string | null
           file_cache_id?: string | null
+          file_checksum?: string | null
+          file_hash?: string | null
           file_id?: string
           file_name?: string
           file_size?: number
           file_type?: string
-          hash?: string | null
           id?: string
           linked_account_id?: string
           product_id?: string
@@ -761,49 +894,52 @@ export type Database = {
       }
       product_licenses: {
         Row: {
-          base_price: number | null
+          base_price_cents: number | null
           created_at: string
           description: string | null
           id: string
           is_active: boolean
-          is_lifetime: boolean
-          max_devices: number | null
+          is_main: boolean
+          license_duration: Database["public"]["Enums"]["license_duration"]
           max_downloads: number | null
+          max_license_users: number
+          max_user_devices: number
           name: string
           product_id: string
           sort_order: number | null
           updated_at: string
-          validity_days: number | null
         }
         Insert: {
-          base_price?: number | null
+          base_price_cents?: number | null
           created_at?: string
           description?: string | null
           id?: string
           is_active?: boolean
-          is_lifetime?: boolean
-          max_devices?: number | null
+          is_main?: boolean
+          license_duration?: Database["public"]["Enums"]["license_duration"]
           max_downloads?: number | null
+          max_license_users?: number
+          max_user_devices?: number
           name: string
           product_id: string
           sort_order?: number | null
           updated_at?: string
-          validity_days?: number | null
         }
         Update: {
-          base_price?: number | null
+          base_price_cents?: number | null
           created_at?: string
           description?: string | null
           id?: string
           is_active?: boolean
-          is_lifetime?: boolean
-          max_devices?: number | null
+          is_main?: boolean
+          license_duration?: Database["public"]["Enums"]["license_duration"]
           max_downloads?: number | null
+          max_license_users?: number
+          max_user_devices?: number
           name?: string
           product_id?: string
           sort_order?: number | null
           updated_at?: string
-          validity_days?: number | null
         }
         Relationships: [
           {
@@ -1449,6 +1585,35 @@ export type Database = {
       }
     }
     Views: {
+      product_licenses_pricing: {
+        Row: {
+          base_price_cents: number | null
+          created_at: string | null
+          description: string | null
+          final_price_cents: number | null
+          id: string | null
+          is_active: boolean | null
+          license_duration:
+            | Database["public"]["Enums"]["license_duration"]
+            | null
+          max_downloads: number | null
+          max_license_users: number | null
+          max_user_devices: number | null
+          name: string | null
+          product_id: string | null
+          sort_order: number | null
+          updated_at: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_licenses_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       web3_user_wallets_v: {
         Row: {
           chain_id: number | null
@@ -1584,6 +1749,13 @@ export type Database = {
       crypto_currency: "SOL" | "USDC"
       crypto_network: "solana"
       fiat_currency: "USD" | "EUR"
+      license_duration:
+        | "Forever"
+        | "1 Year"
+        | "2 Years"
+        | "3 Years"
+        | "4 Years"
+        | "5 Years"
       membership_status: "active" | "paused" | "expired"
       membership_tier: "Free" | "Basic" | "Creator"
       membership_tier_old: "Basic" | "Personal" | "Business"
@@ -1762,6 +1934,14 @@ export const Constants = {
       crypto_currency: ["SOL", "USDC"],
       crypto_network: ["solana"],
       fiat_currency: ["USD", "EUR"],
+      license_duration: [
+        "Forever",
+        "1 Year",
+        "2 Years",
+        "3 Years",
+        "4 Years",
+        "5 Years",
+      ],
       membership_status: ["active", "paused", "expired"],
       membership_tier: ["Free", "Basic", "Creator"],
       membership_tier_old: ["Basic", "Personal", "Business"],
