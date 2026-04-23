@@ -105,7 +105,7 @@ export const useGoogleAccounts = () => {
 
         setIsRefreshing(true);
         try {
-            const res = await fetch('/api/auth/google/refreshAccessToken', {
+            const res = await fetch('/api/auth/google/access-token', {
                 method: 'POST',
                 body: JSON.stringify({ accountId: account.id }),
                 headers: { 'Content-Type': 'application/json' }

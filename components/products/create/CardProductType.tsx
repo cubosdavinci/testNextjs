@@ -34,25 +34,25 @@ export default function CardProductType({
 
   // Map of product types to icons
 const iconMap: Record<ProductType, string> = {
-  [PRODUCT_TYPE.ThreeD]: "/images/root-categories/3d_64x64.png",
-  [PRODUCT_TYPE.Image]: "/images/root-categories/image_64x64.png",
-  [PRODUCT_TYPE.Video]: "/images/root-categories/video_64x64.png",
-  [PRODUCT_TYPE.Music]: "/images/root-categories/audio_64x64.png",
-  [PRODUCT_TYPE.EBooks]: "/images/root-categories/books2_64x64.png",
-  [PRODUCT_TYPE.ABooks]: "/images/root-categories/books2_64x64.png",
-  [PRODUCT_TYPE.Apps]: "/images/root-categories/apps_64x64.png",
-  [PRODUCT_TYPE.Games]: "/images/root-categories/games_64x64.png",
-  [PRODUCT_TYPE.Courses]: "/images/root-categories/courses_64x64.png",
-  [PRODUCT_TYPE.Fonts]: "/images/root-categories/fonts_64x64.png",
-  [PRODUCT_TYPE.Icons]: "/images/root-categories/logos_64x64.png",
-  [PRODUCT_TYPE.Templates]: "/images/root-categories/templates_64x64.png",
-  [PRODUCT_TYPE.Vector]: "/images/root-categories/tools_64x64.png",
+  [PRODUCT_TYPE.ThreeD]: "/icons/product-type/streamline-ultimate-color--shape-cube.svg",
+  [PRODUCT_TYPE.Image]: "/icons/product-type/streamline-ultimate-color:picture-sun.svg",
+  [PRODUCT_TYPE.Video]: "/icons/product-type/streamline-ultimate-color:video-player.svg",
+  [PRODUCT_TYPE.Music]: "/icons/product-type/streamline-ultimate-color:voice-id-approved.svg",
+  [PRODUCT_TYPE.EBooks]: "/icons/product-type/streamline-ultimate-color:book-close-bookmark-1.svg",
+  [PRODUCT_TYPE.ABooks]: "/icons/product-type/streamline-ultimate-color:vinyl-record.svg",
+  [PRODUCT_TYPE.Apps]: "/icons/product-type/streamline-ultimate-color:app-window-two.svg",
+  [PRODUCT_TYPE.Games]: "/icons/product-type/streamline-ultimate-color:skiing-snow-scooter-person.svg",
+  [PRODUCT_TYPE.Courses]: "/icons/product-type/streamline-ultimate-color:archive-books.svg",
+  [PRODUCT_TYPE.Fonts]: "/icons/product-type/streamline-ultimate-color:font-size.svg",
+  [PRODUCT_TYPE.Icons]: "/icons/product-type/streamline-ultimate-color:shape-triangle-circle.svg",
+  [PRODUCT_TYPE.Templates]: "/icons/product-type/streamline-ultimate-color:shapes.svg",
+  [PRODUCT_TYPE.Vector]: "/icons/product-type/streamline-ultimate-color:vectors-pen-draw.svg",
 
-  [PRODUCT_TYPE.ARVR]: "/images/root-categories/arvr_64x64.png",
-  [PRODUCT_TYPE.IoT]: "/images/root-categories/iot_64x64.png",
-  [PRODUCT_TYPE.Technical]: "/images/root-categories/technical_64x64.png",
+  [PRODUCT_TYPE.ARVR]: "/icons/product-type/streamline-ultimate-color:composition-window-human.svg",
+  [PRODUCT_TYPE.IoT]: "/icons/product-type/streamline-ultimate-color:hard-drive-1.svg",
+  [PRODUCT_TYPE.Technical]: "/icons/product-type/streamline-ultimate-color:project-blueprint-home.svg",
 
-  [PRODUCT_TYPE.Other]: "/images/root-categories/other_64x64.png",
+  [PRODUCT_TYPE.Other]: "/icons/product-type/streamline-ultimate-color:human-resources-rating-woman.svg",
 };
 
   return (
@@ -70,13 +70,22 @@ const iconMap: Record<ProductType, string> = {
             onClick={() => setIsOpen(!isOpen)} // Toggle dropdown visibility on click
           >
             <div className="flex justify-between items-center">
-              <span>{productType.charAt(0).toUpperCase() + productType.slice(1)}</span> {/* Display the selected value */}
-              <span className="text-gray-500">▼</span> {/* Dropdown arrow */}
+              <div className="flex items-center gap-2">
+                <img
+                  src={iconMap[productType]}
+                  alt={productType}
+                  className="w-6 h-6"
+                />
+                <span>
+                  {productType.charAt(0).toUpperCase() + productType.slice(1)}
+                </span>
+              </div>
+              <span className="text-gray-500">▼</span>
             </div>
 
             {isOpen && (
               <div className="absolute top-full left-0 right-0 bg-white border rounded mt-1 shadow-lg z-10">
-                {Object.entries(productType).map(([key, value]) => (
+                {Object.entries(PRODUCT_TYPE).map(([key, value]) => (
                   <div
                     key={key}
                     className="flex items-center px-4 py-2 cursor-pointer hover:bg-gray-200"

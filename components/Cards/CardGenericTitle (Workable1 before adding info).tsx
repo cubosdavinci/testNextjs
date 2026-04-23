@@ -1,10 +1,12 @@
 'use client';
-
+// React
 import { useState, useEffect } from "react";
+// Cards
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+// Zod
 import { ZodError } from "zod";
 import { titleSchema } from "@/lib/zod/titleSchema";
-
+// Banners
 import FieldError from "@/components/banners/FieldError";
 import FieldInfo from "@/components/banners/FieldInfo";
 import FieldWarning from "@/components/banners/FieldWarning";
@@ -17,9 +19,10 @@ interface CardGenericTitleProps {
   setValue?: (value: string) => void;
   minChars?: number;
   maxChars?: number;
-  regExp?: string;
-  errMessage?: string;
+  regExp?: string;              // Optional regex pattern as string
+  errMessage?: string;    // Custom error message for regex validation
 }
+
 
 export default function CardGenericTitle({
   required = true,
@@ -30,30 +33,21 @@ export default function CardGenericTitle({
   minChars,
   maxChars,
   regExp,
-  errMessage,
+  errMessage, // <-- new prop
 }: CardGenericTitleProps) {
-
   const [title, setTitle] = useState(value);
-
   const [error, setError] = useState<string | null>(null);
-  const [isValid, setIsValid] = useState(false);
-  const [touched, setTouched] = useState(false);
 
   useEffect(() => {
     setTitle(value);
   }, [value]);
 
-  const isEmpty = !title || title.trim().length === 0;
-
-  const showRequiredWarning =
-    required && isEmpty && !error;
-
   const handleBlur = () => {
-    setTouched(true);
-
     try {
+      // Convert string to RegExp if provided
       const regex = regExp ? new RegExp(regExp) : undefined;
 
+      // Pass custom regex error message to validation
       const parsed = titleSchema(
         minChars,
         maxChars,
@@ -62,14 +56,9 @@ export default function CardGenericTitle({
       ).parse(title);
 
       setError(null);
-      setIsValid(true);
-
       setTitle(parsed);
       if (setValue) setValue(parsed);
-
     } catch (err: unknown) {
-      setIsValid(false);
-
       if (err instanceof ZodError) {
         setError(err.issues[0]?.message || "Invalid title");
       } else {
@@ -78,12 +67,7 @@ export default function CardGenericTitle({
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setTitle(e.target.value);
-    setError(null);
-    setIsValid(false);
-  };
-
+  // Modify placeholder based on required flag
   const placeholderWithSuffix = `${placeholder}${required ? " (required)" : " (optional)"}`;
 
   return (
@@ -97,38 +81,15 @@ export default function CardGenericTitle({
         </CardHeader>
 
         <CardContent className="flex flex-col gap-2">
-
           <input
             type="text"
             placeholder={placeholderWithSuffix}
             value={title}
-            onChange={handleChange}
+            onChange={(e) => setTitle(e.target.value)}
             onBlur={handleBlur}
-            className={`border p-2 rounded w-full ${error ? "border-red-500" : "border-gray-300"
-              }`}
+            className={`border p-2 rounded w-full ${error ? "border-red-500" : ""}`}
           />
-
-          {/* REQUIRED WARNING */}
-          {showRequiredWarning && (
-            <FieldWarning
-              message="This field is required"
-              iconSize={20}
-            />
-          )}
-
-          {/* ERROR STATE */}
-          {error && (
-            <FieldError message={error} iconSize={20} />
-          )}
-
-          {/* SUCCESS STATE */}
-          {!error && isValid && touched && !isEmpty && (
-            <FieldInfo
-              message="Title is valid"
-              iconSize={20}
-            />
-          )}
-
+          {error && <FieldError message={error} />}
         </CardContent>
       </Card>
     </section>

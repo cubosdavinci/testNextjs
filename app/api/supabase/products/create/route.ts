@@ -6,7 +6,7 @@ import { ProductManager } from "@/lib/db/services/ProductManager";
 import { CreateProductSchema } from "@/lib/zod/schemas/CreateProduct.schema";
 import { CreateProductFileSchema } from "@/lib/zod/schemas/CreateProductFile.schema";
 import { CreateProductLicenseSchema } from "@/lib/zod/schemas/CreateProductLicense.schema";
-import { CreateProductFileInput, CreateProductInput, CreateProductLicenseInput } from "@/lib/supabase/types";
+import { ProductCreateInput, ProductFileCreateInput, ProductLicenseCreateInput } from "@/lib/supabase/types";
 
 function parseJSON(field: FormDataEntryValue, name: string) {
     try {
@@ -58,9 +58,9 @@ export async function POST(req: NextRequest) {
         }
 
         // 3. Parse JSON safely
-        let newProduct: CreateProductInput;
-        let newProductFiles: CreateProductFileInput[];
-        let newProductLicenses: CreateProductLicenseInput[];
+        let newProduct: ProductCreateInput;
+        let newProductFiles: ProductFileCreateInput[];
+        let newProductLicenses: ProductLicenseCreateInput[];
         try {
             newProduct = parseJSON(rawProduct, "newProduct");
             newProductFiles = parseJSON(rawFiles, "newProductFiles");

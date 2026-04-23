@@ -72,7 +72,7 @@ export default function CardSelectCategory({
             }
 
             return json as Category[];
-        } catch (err: any) {
+        } catch (err) {
             console.error(`Failed to fetch categories (level=${level}, parentId=${parentId}):`, err);
 
             // Only set generic network error if it's not already a meaningful message

@@ -1,12 +1,14 @@
-// app/api/auth/google/remove-linked-account/route.ts
+// app/api/auth/google/access-token/route.ts
+
 import { supabaseServer } from '@/lib/supabase/clients/supabaseServer';
 import { GoogleAuthService } from '@/lib/services/google/GoogleAuthService';
 import { NextRequest, NextResponse } from 'next/server';
 import { consoleLog } from '@/lib/utils';
 
-export async function DELETE(request: NextRequest) {
+export async function GET(request: NextRequest) {
     try {
         const supabase = await supabaseServer();
+
         const {
             data: { user },
             error: authError,
@@ -30,15 +32,11 @@ export async function DELETE(request: NextRequest) {
 
         const googleAuthService = new GoogleAuthService();
 
-        // 🔥 now returns deleted row
-        const deletedAccount = await googleAuthService.removeAccount(
-            accountId,
-            user.id
-        );
+        const accessToken = await googleAuthService.getValidAccessToken(accountId);
 
         return NextResponse.json({
             data: {
-                deleted_account: deletedAccount,
+                access_token: accessToken,
             },
         });
 
@@ -48,7 +46,10 @@ export async function DELETE(request: NextRequest) {
                 ? err.message
                 : 'An unexpected error occurred';
 
-        consoleLog('Error in /api/auth/google/remove-account:', errorMessage);
+        consoleLog(
+            'Error in /api/auth/google/refresh-access-token:',
+            errorMessage
+        );
 
         return NextResponse.json(
             { error: errorMessage },

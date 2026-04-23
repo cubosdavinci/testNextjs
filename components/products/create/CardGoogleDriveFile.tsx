@@ -1,4 +1,3 @@
-// components/products/create/CardGoogleDriveFile.tsx
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -15,14 +14,14 @@ import {
 } from '@/lib/google-drive-utils';
 
 import type { GoogleLinkedAccount } from '@/lib/services/google/GoogleAuthServiceTypes';
-import type { CreateProductFileInput } from '@/lib/supabase/types';
+import type { ProductFileCreateInput } from '@/lib/supabase/types';
 import { STORAGE_PROVIDER } from '@/types/db/product-files/StorageProvider';
 import { Json } from '@/types/supabase';
 
 interface Props {
   title?: string;
-  value?: CreateProductFileInput[];
-  onChange?: (files: CreateProductFileInput[]) => void;
+  value?: ProductFileCreateInput[];
+  onChange?: (files: ProductFileCreateInput[]) => void;
   metadataJson?: boolean;
 }
 
@@ -30,7 +29,6 @@ export default function CardGoogleDriveFile({
   title = 'Google Drive Files',
   value = [],
   onChange,
-  metadataJson = false,
 }: Props) {
   const {
     googleAccounts,
@@ -40,14 +38,19 @@ export default function CardGoogleDriveFile({
     getValidToken,
   } = useGoogle();
 
-  const [files, setFiles] = useState<CreateProductFileInput[]>(value);
+  const [productFiles, setProductFiles] = useState<ProductFileCreateInput[]>(value);
   const [error, setError] = useState<string | null>(null);
   const [loadingFileId, setLoadingFileId] = useState<string | null>(null);
 
-  // Sync with parent
+  // ✅ Sync DOWN from parent (important for edit mode / resets)
   useEffect(() => {
-    onChange?.(files);
-  }, [files, onChange]);
+    setProductFiles(value);
+  }, [value]);
+
+  // ✅ Sync UP to parent
+  useEffect(() => {
+    onChange?.(productFiles);
+  }, [productFiles, onChange]);
 
   // Merge Google context errors
   useEffect(() => {
@@ -56,12 +59,12 @@ export default function CardGoogleDriveFile({
 
   // ADD FILE
   const addFile = async (file: any, linkedAccount: GoogleLinkedAccount) => {
+    // prevent duplicates early
+    if (productFiles.some(f => f.file_id === file.id)) return;
+
     try {
       setError(null);
       setLoadingFileId(file.id);
-
-      // prevent duplicates
-      if (files.some(f => f.file_id === file.id)) return;
 
       const validAccount = await getValidToken(linkedAccount);
 
@@ -70,23 +73,19 @@ export default function CardGoogleDriveFile({
         validAccount.accessToken!
       );
 
-      const newFile: CreateProductFileInput = {
+      const newFile: ProductFileCreateInput = {
         file_id: file.id,
         file_name: file.name,
         file_type: file.mimeType,
         file_size: metadata?.size ? Number(metadata.size) : 0,
         linked_account_id: linkedAccount.id,
         provider: STORAGE_PROVIDER.GoogleDrive,
-
-        // ✅ FIXED CHECKSUM
-        checksum: metadata?.md5Checksum ?? 'not available',
-
+        file_checksum: metadata?.md5Checksum ?? 'not available',
         provider_metadata: metadata as Json,
-        provider_user_name:
-          metadata?.owners?.[0]?.displayName || null,
+        provider_user_name: metadata?.owners?.[0]?.displayName || null,
       };
 
-      setFiles(prev => [...prev, newFile]);
+      setProductFiles(prev => [...prev, newFile]);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to add file');
     } finally {
@@ -96,11 +95,11 @@ export default function CardGoogleDriveFile({
 
   // REMOVE FILE
   const removeFile = (id: string) => {
-    setFiles(prev => prev.filter(f => f.file_id !== id));
+    setProductFiles(prev => prev.filter(f => f.file_id !== id));
   };
 
   // DOWNLOAD FILE
-  const handleDownload = async (file: CreateProductFileInput) => {
+  const handleDownload = async (file: ProductFileCreateInput) => {
     try {
       setError(null);
 
@@ -152,7 +151,6 @@ export default function CardGoogleDriveFile({
           />
         )}
 
-        {/* GOOGLE DRIVE PICKER */}
         {!!googleAccounts?.length && (
           <GoogleDrivePicker
             onError={setError}
@@ -160,9 +158,8 @@ export default function CardGoogleDriveFile({
           />
         )}
 
-        {/* FILE LIST */}
         <div className="space-y-3">
-          {files.map(file => (
+          {productFiles.map(file => (
             <div
               key={file.file_id}
               className="border rounded-lg p-3 space-y-2 relative"

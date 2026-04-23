@@ -131,7 +131,7 @@ const handleSubmit = async (e: React.FormEvent) => {
           minChars={5}
         />
 
-        <CardProductSlug title={title} onChange={setSlug} />
+        {/*<CardProductSlug title={title} onChange={setSlug} />*/}
 
         <CardProductType
           selectedProductType={productType}
@@ -153,7 +153,7 @@ const handleSubmit = async (e: React.FormEvent) => {
 
         {/* NEW: FILES SYSTEM */}
         <CardGoogleDriveFile
-          title="Google Drive (Files)"
+          title="Attach Files (google Drive)"
           metadataJson
           value={files}
           onChange={setFiles}
