@@ -1,38 +1,57 @@
 // lib/web3/wallets/db/types/NewWalletInput.Schema.ts
 import { z } from "zod/v4"
-import type { CreateProductInputExtended } from "@/lib/supabase/types";
-
-export const myType: CreateProductInputExtended = {
-    creator_id,
-    title,
-    description,
-    type,
-    category_id,
-    version,
+import type { ProductCreateInput } from "@/lib/supabase/types";
+import { isUUID, isVersion } from "@/lib/utils/validation";
+import { titleSchema } from "@/lib/zod/titleSchema";
+import { descriptionSchema } from "../descriptionSchema";
+import { enumSchema } from "../enumSchema";
+import { PRODUCT_TYPE } from "@/types/db/products/ProductType";
+import { versionSchema } from "./version.schema";
+/*
+export const myType: ProductCreateInput = {
+    creator_id, slug, title, type, category_id, description, version,
     only_for_followers,
     tags,
     user_tags,
-    slug,
-}
+    thumbnail_url,
+
+    Unrecognized keys: 
+    "title", "description", "type", "version", "only_for_followers", "user_tags", "slug"
+}*/
+
+
 export const CreateProductSchema = z.object({
-    tags: z.
-        array(z.string())
+    tags: z
+        .array(z.string())
         .optional(),
+    user_tags: z
+        .array(z.string())
+        .optional(),
+    version: versionSchema(true),
+    type: enumSchema(PRODUCT_TYPE, "Please provide a valid product type"),
+    
+    
+    title: titleSchema(5, 30),
+    description: descriptionSchema(0,300, true),
+    only_for_followers: z
+        .boolean({ message: "Invalid value for only_for_followers" })
+        /*.optional()*/,
 
     creator_id: z
         .string()
         .superRefine((val, ctx) => {
             // optional extra checks, e.g., not empty or not all zeros
-            if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(val) || val === "00000000-0000-0000-0000-000000000000") {
+            if (!isUUID(val)) {
                 ctx.addIssue({
                     code: "custom",
-                    message: `You must be logged in to add a wallet. Invalid User Id: ${val === '' || val === undefined ? '(empty)' : val
+                    message: `Invalid user id: ${val === '' || val === undefined ? '(empty)' : val
                         }.`,
                 });
             }
-        }),
+        }
+    ),
 
-
+/*
     wallet_provider: z.enum(SUPPORTED_WALLET_PROVIDER_KEYS).superRefine(
         (val, ctx) => {
             if (!SUPPORTED_WALLET_PROVIDER_KEYS.includes(val)) {
@@ -91,12 +110,13 @@ export const CreateProductSchema = z.object({
             code: "custom",
             message: `Invalid token symbol '${token_sym}'`,
         })
-    }
+    }*/
 }).strict()
+
 
 // THIS IS THE KEY:
 // You don't need to manually write an interface anymore.
 // This type is automatically generated from your schema's output.
-export type NewWalletInputType = z.infer<typeof NewWalletInputSchema>;
+//export type NewWalletInputType = z.infer<typeof NewWalletInputSchema>;
 
 

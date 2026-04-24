@@ -19,7 +19,7 @@ export type ProductRow = TableRow<'products'>;
 export type ProductInsert = TableInsert<'products'>;
 export type ProductUpdate = TableUpdate<'products'>;
 
-export type ProductCreateInput = Pick<ProductInsert,
+export type ProductCreateClientInput = Pick<ProductInsert,
     | "title"
     | "description"
     | "type"
@@ -30,7 +30,7 @@ export type ProductCreateInput = Pick<ProductInsert,
     | "user_tags"
     >
 
-export type ProductCreateInputExtended = ProductCreateInput & Pick<ProductInsert,
+export type ProductCreateInput = ProductCreateClientInput & Pick<ProductInsert,
     | "creator_id"
     | "slug"
 >
@@ -64,8 +64,7 @@ export type ProductFileInsert = TableInsert<'product_files'>;
 
 export type ProductFileCreateInput = {
         provider: StorageProvider;
-    } & Pick<ProductFileInsert,
-        | "product_id"        
+    } & Pick<ProductFileInsert,      
         | "provider_user_name"
         | "provider_metadata"
         | "file_name"
@@ -76,6 +75,14 @@ export type ProductFileCreateInput = {
         | "linked_account_id"
         | "file_id"
     >;
+
+export type ProductFileClientInput = {
+    provider: StorageProvider;
+} & Pick<ProductFileInsert,
+    | 'linked_account_id'
+    | 'file_id'
+    | 'file_name'
+>
 
 export type ProductFileUpdate = TableUpdate<'product_files'>;
 

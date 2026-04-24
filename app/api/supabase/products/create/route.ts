@@ -1,12 +1,25 @@
 // app/api/supabase/product/create/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
+
 import { ProductManager } from "@/lib/db/services/ProductManager";
+import { buildProductFiles } from "@/lib/db/products/helpers/buildProductFiles";
+import { generateSafeSlug } from "@/lib/db/products/helpers/generateSafeSlug";
 
 import { CreateProductSchema } from "@/lib/zod/schemas/CreateProduct.schema";
-import { CreateProductFileSchema } from "@/lib/zod/schemas/CreateProductFile.schema";
-import { CreateProductLicenseSchema } from "@/lib/zod/schemas/CreateProductLicense.schema";
-import { ProductCreateInput, ProductFileCreateInput, ProductLicenseCreateInput } from "@/lib/supabase/types";
+//import { CreateProductFileSchema } from "@/lib/zod/schemas/CreateProductFile.schema";
+//import { CreateProductLicenseSchema } from "@/lib/zod/schemas/CreateProductLicense.schema";
+
+import type {
+    ProductCreateClientInput,
+    ProductCreateInput,
+    ProductFileClientInput,
+    ProductLicenseCreateInput,
+} from "@/lib/supabase/types";
+
+import { saveThumbnail } from "@/lib/db/storage/saveThumbnail";
+import { supabaseServer } from "@/lib/supabase/clients/supabaseServer";
+import { consoleLog } from "@/lib/utils";
 
 function parseJSON(field: FormDataEntryValue, name: string) {
     try {
@@ -18,6 +31,23 @@ function parseJSON(field: FormDataEntryValue, name: string) {
 
 export async function POST(req: NextRequest) {
     try {
+
+
+        const supabase = await supabaseServer();
+
+        const {
+            data: { user },
+            error: authError,
+        } = await supabase.auth.getUser();
+
+        if (authError || !user) {
+            return NextResponse.json(
+                { error: 'Unauthorized - No valid session found' },
+                { status: 401 }
+            );
+        }
+
+
         const contentType = req.headers.get("content-type") || "";
 
         if (!contentType.includes("multipart/form-data")) {
@@ -27,15 +57,17 @@ export async function POST(req: NextRequest) {
             );
         }
 
+       
         const formData = await req.formData();
 
+        // =========================
         // 1. Extract fields
+        // =========================
         const rawProduct = formData.get("newProduct");
         const rawFiles = formData.get("newProductFiles");
         const rawLicenses = formData.get("newProductLicenses");
         const thumbnail = formData.get("thumbnail") as File | null;
 
-        // 2. Validate required fields
         if (!rawProduct) {
             return NextResponse.json(
                 { error: "Missing field: newProduct" },
@@ -43,6 +75,8 @@ export async function POST(req: NextRequest) {
             );
         }
 
+            
+/*
         if (!rawFiles) {
             return NextResponse.json(
                 { error: "Missing field: newProductFiles" },
@@ -56,72 +90,113 @@ export async function POST(req: NextRequest) {
                 { status: 400 }
             );
         }
-
-        // 3. Parse JSON safely
+*/
+        // =========================
+        // 2. Parse JSON
+        // =========================
         let newProduct: ProductCreateInput;
-        let newProductFiles: ProductFileCreateInput[];
-        let newProductLicenses: ProductLicenseCreateInput[];
+       // let newProductFiles: ProductFileClientInput[];
+       // let newProductLicenses: ProductLicenseCreateInput[];
+
         try {
             newProduct = parseJSON(rawProduct, "newProduct");
-            newProductFiles = parseJSON(rawFiles, "newProductFiles");
-            newProductLicenses = parseJSON(rawLicenses, "newProductLicenses");
+            newProduct.creator_id = user.id;
+            newProduct.slug = generateSafeSlug(newProduct.title)
+
+           // newProductFiles = parseJSON(rawFiles, "newProductFiles");
+            //newProductLicenses = parseJSON(rawLicenses, "newProductLicenses");
         } catch (err) {
-            const error = err as Error
             return NextResponse.json(
-                { error: error.message},
+                { error: (err as Error).message },
                 { status: 400 }
             );
         }
 
-        // 4. Validate with Zod
-        const validatedProduct = CreateProductSchema.parse(newProduct);
-        
-        const validatedFiles = Array.isArray(newProductFiles)
-            ? newProductFiles.map((f: any) =>
-                CreateProductFileSchema.parse(f)
-            )
-            : [];
-        
+        // =========================
+        // 3. Validate product
+        // =========================
+        const validatedProduct: ProductCreateInput = CreateProductSchema.parse(newProduct);
+
+        // =========================
+        // 6. Handle thumbnail (UPLOAD FIRST)
+        // =========================
+        let uploadedThumbnailUrl: string | undefined;
+
+        // =========================
+        // 4. Build full file objects (IMPORTANT STEP)
+        // =========================
+        const builtFiles = await buildProductFiles(newProductFiles);
+
+        // Validate built files
+        const validatedFiles = builtFiles.map((f) =>
+            CreateProductFileSchema.parse(f)
+        );
+
+        // =========================
+        // 5. Validate licenses
+        // =========================
         const validatedLicenses = Array.isArray(newProductLicenses)
-            ? newProductLicenses.map((l: any) =>
+            ? newProductLicenses.map((l) =>
                 CreateProductLicenseSchema.parse(l)
             )
             : [];
 
-        // 5. Execute
+        // =========================
+        // 6. Execute business logic
+        // =========================
         const productManager = new ProductManager();
 
         const result = await productManager.create(
             validatedProduct,
             validatedFiles,
             validatedLicenses,
-            thumbnail // optional
         );
+
+        if (thumbnail) {
+
+            let uploadedThumbnailUrl: string;
+            
+            try {
+                uploadedThumbnailUrl = await saveThumbnail(
+                    thumbnail,
+                    `${validatedProduct.creator_id}/${productId}/thumbnail/${Date.now()}.${ext}`
+                );
+            }
+            catch (err) { }
+        }
 
         return NextResponse.json(
             { success: true, data: result },
             { status: 200 }
         );
+    } catch (err) {
+        consoleLog("Catching Error", err)
 
-    } catch (error) {
-        // Zod validation errors
-        if (error instanceof ZodError) {
+        // =========================
+        // Zod errors
+        // =========================
+        if (err instanceof ZodError) {
+            consoleLog("Zod Error", err)
             return NextResponse.json(
                 {
-                    error: "Validation failed",
-                    details: error.issues,
+                    error: err.issues[0].message,                    
                 },
                 { status: 422 }
             );
         }
 
-        console.error(
+        // =========================
+        // Generic errors (including buildProductFiles)
+        // =========================
+        /*console.error(
             "💥 Route Exception - api/supabase/product/create:",
             error
-        );
+        );*/
 
         return NextResponse.json(
-            { error: error.message || "Internal Server Error" },
+            {
+                error: (err as Error)?.message || "Internal Server Error",
+            },
             { status: 500 }
         );
     }

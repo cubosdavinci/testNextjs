@@ -3,12 +3,12 @@ import { consoleLog } from "@/lib/utils";
 import { createNewProduct } from "../createNewProduct";
 import { createProductValidation } from "../createProductValidation";
 import { CreateProductVars } from "../types/CreateProductVars";
-import { fetchMetadataFromDownloadLink  } from "./fetchMetadataFromDownloadLink";
+import { fetchMetadataFromDownloadLink } from "./fetchMetadataFromDownloadLink";
 import { generateSafeSlug } from "./generateSafeSlug";
-import { saveThumbnail } from "./saveThumbnail";
+import { saveThumbnail } from "../../storage/saveThumbnail";
 import { deleteFile } from "../../storage/deleteFile";
 
-export async function logicCreateNewProduct(vars: CreateProductVars, file: File | null) {
+export async function logicCreateNewProduct(vars: CreateProductVars, thumbnail: File | null) {
     // ✅ Server-side validation using Zod (lib/db/createProductValidation)
     const validatedVars = createProductValidation(vars);
 
@@ -25,9 +25,9 @@ export async function logicCreateNewProduct(vars: CreateProductVars, file: File 
 
     // ✅ Upload  thumbnail to Supabase storage
     let uploadedThumbnailUrl: string | null = null;
-    if (file) {
-        const fileName = `${file.name}-thumbnail-${Date.now()}`;
-        uploadedThumbnailUrl = await saveThumbnail(file, fileName);
+    if (thumbnail) {
+        const fileName = `${thumbnail.name}-thumbnail-${Date.now()}`;
+        uploadedThumbnailUrl = await saveThumbnail(thumbnail, fileName);
         validatedVars.thumbnailUrl = uploadedThumbnailUrl;
     }
 

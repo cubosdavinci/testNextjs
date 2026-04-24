@@ -1,9 +1,11 @@
+// lib/db/storage/providers/GoogleDriveProvider.ts
 import { ProductFileToCacheInput, UploadToStorageOutput } from "@/lib/supabase/types";
-import { IStorageProviderHandler } from "./IStorageProviderHandler";
+
 import { GoogleAuthService } from "@/lib/services/google/GoogleAuthService";
 import { supabaseAdmin } from "@/lib/supabase/clients/supabaseAdmin";
+import { IGoogleDriveProvider } from "./IGoogleDriveProvider";
 
-export class GoogleDriveProvider implements IStorageProviderHandler {
+export class GoogleDriveProvider implements IGoogleDriveProvider {
     async uploadToCache(file: ProductFileToCacheInput): Promise<UploadToStorageOutput> {
         const authService = new GoogleAuthService();
 
@@ -45,5 +47,28 @@ export class GoogleDriveProvider implements IStorageProviderHandler {
             url: data.publicUrl,
             contentType: file.file_type,
         };
+    }
+
+    async getFileMetadata(fileId: string, linkedAccountId: string) {
+        const authService = new GoogleAuthService();
+
+        const accessToken = await authService.getValidAccessToken(
+            linkedAccountId
+        );
+
+        const res = await fetch(
+            `https://www.googleapis.com/drive/v3/files/${fileId}?fields=id,name,mimeType,size,md5Checksum,owners,createdTime,modifiedTime,webContentLink`,
+            {
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+            }
+        );
+
+        if (!res.ok) {
+            throw new Error("Failed to fetch Google Drive metadata");
+        }
+
+        return res.json();
     }
 }

@@ -41,7 +41,7 @@ export default function CardProductDescription({
             value={description}
             onChange={setDescription}
             onBlur={handleBlur}
-            max={100} // optional maximum characters
+            max={300} // optional maximum characters
           />
         </CardContent>
       </Card>

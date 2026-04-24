@@ -4,7 +4,7 @@ import { createProductValidation } from "../createProductValidation";
 import { CreateProductVars } from "../types/CreateProductVars";
 import { fetchMetadataFromDownloadLink } from "./fetchMetadataFromDownloadLink";
 import { generateSafeSlug } from "./generateSafeSlug";
-import { saveThumbnail } from "./saveThumbnail";
+import { saveThumbnail } from "../../storage/saveThumbnail";
 import { deleteFile } from "../../storage/deleteFile";
 import { insertNewProduct } from "../insertNewProduct";
 import { validateImageFile } from "@/lib/validate/validateImageFile";
@@ -33,7 +33,7 @@ export async function logicInsertNewProduct(vars: CreateProductVars, file: File 
     let uploadedThumbnailUrl: string | null = null;
     if (file) {
         // ✅ Validate image file
-        validateImageFile(file, undefined, 150*1024)
+        validateImageFile(file, undefined, 150 * 1024)
         const fileName = `${file.name}-thumbnail-${Date.now()}`;
         uploadedThumbnailUrl = await saveThumbnail(file, fileName);
         validatedVars.thumbnailUrl = uploadedThumbnailUrl;

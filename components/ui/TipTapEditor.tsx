@@ -4,9 +4,10 @@ import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Underline from '@tiptap/extension-underline'
 import { useEffect, useState } from 'react'
-import WarningAlert from '@/components/banners/old/WarningAlert'
+import FieldWarning from '@/components/banners/FieldWarning'
 import { validateProductDescription } from '@/lib/validate/products/description'
 import { ZodError } from 'zod'
+import { descriptionSchema } from '@/lib/zod/descriptionSchema'
 
 interface TipTapEditorProps {
   value: string
@@ -32,8 +33,8 @@ const TipTapEditor = ({ value, onChange, onBlur, max = 50 }: TipTapEditorProps) 
   useEffect(() => {
     if (!editor) return
 
-    const validator = validateProductDescription(max)
-
+    //const validator = validateProductDescription(max)
+    const validator = descriptionSchema(0,max)
     const handleUpdate = () => {
       let plainText = editor.getText()
       let html = editor.getHTML()
@@ -121,7 +122,7 @@ const TipTapEditor = ({ value, onChange, onBlur, max = 50 }: TipTapEditorProps) 
       </p>
 
       {/* Error alert from Zod validation */}
-      {error && <WarningAlert message={error} />}
+      {error && <FieldWarning message={error} iconSize={20}/>}
     </div>
   )
 }

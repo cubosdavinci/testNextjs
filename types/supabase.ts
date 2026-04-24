@@ -1715,6 +1715,10 @@ export type Database = {
         }
         Returns: string
       }
+      rpc_create_product: {
+        Args: { p_files: Json; p_licenses: Json; p_product: Json }
+        Returns: string
+      }
       uid: { Args: never; Returns: string }
       update_membership_json: {
         Args: { p_fields: Json; p_saleor_user_id: string }

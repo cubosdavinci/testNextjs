@@ -78,7 +78,7 @@ export default function CardGoogleDriveFile({
 
       if (files.some(f => f.id === file.id)) return;
 
-      const validAccount = await getValidToken(linkedAccount);
+      const validAccount = await getValidToken(linkedAccount.id);
 
       const metadata = await getDriveFileMetadata(
         file.id,

@@ -5,7 +5,7 @@ import { GoogleAuthService } from '@/lib/services/google/GoogleAuthService';
 import { NextRequest, NextResponse } from 'next/server';
 import { consoleLog } from '@/lib/utils';
 
-export async function GET(request: NextRequest) {
+export async function POST(request: NextRequest) {
     try {
         const supabase = await supabaseServer();
 
@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
             );
         }
 
-        const accountId = request.nextUrl.searchParams.get('id');
+        const accountId = request.nextUrl.searchParams.get('google_linked_account_id');
 
         if (!accountId) {
             return NextResponse.json(

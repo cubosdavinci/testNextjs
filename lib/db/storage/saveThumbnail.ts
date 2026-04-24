@@ -1,4 +1,4 @@
-// lib/utils/saveThumbnail.ts
+// lib/db/storage/saveThumbnail.ts
 import { UploadFile } from "@/lib/db/storage/updateFile";
 import { consoleLog } from "@/lib/utils";
 import { validateSupabaseStorageLink } from "@/lib/validate/products/validateSupabaseStorageLink";

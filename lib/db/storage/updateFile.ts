@@ -38,7 +38,8 @@ export async function UploadFile(
     const filePath = `uploads/${finalFileName}`;
 
     // Upload the file to Supabase
-    const { data: storageData, error:storageError } = await supabaseAdmin.storage.from(bucket).upload(filePath, file);
+    const supabase = supabaseAdmin();
+    const { data: storageData, error: storageError } = await supabase.storage.from(bucket).upload(filePath, file);
     consoleLog("storageData Response: ", storageData);  
     consoleLog("storageError Response: ", storageError);  
 
@@ -48,7 +49,7 @@ export async function UploadFile(
       return { error: storageError.message };
     }
 
-    const { data: publicUrlData } = supabaseAdmin.storage.from(bucket).getPublicUrl(filePath);
+    const { data: publicUrlData } = supabase.storage.from(bucket).getPublicUrl(filePath);
     const newUrl = publicUrlData.publicUrl;
     
     consoleLog("🔔 ✅ File upladed to: ", newUrl)
@@ -56,8 +57,9 @@ export async function UploadFile(
     
     return { url: newUrl };
 
-  } catch (err: any) {
-    consoleLog("🔥 ❌ Catched Error (lib/db/storage/updateFile.ts):", err.message)
+  } catch (err) {
+    const error = err as Error;
+    consoleLog("🔥 ❌ Catched Error (lib/db/storage/updateFile.ts):", error.message)
     consoleLog("🔥🔥🔥 Rethrowing Error");
     throw err;
   }

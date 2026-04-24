@@ -18,7 +18,7 @@ export default function FieldError({
   return (
     <p
       role="alert"
-      className={`flex items-center text-sm text-red-700 bg-red-100 border border-red-700 rounded-md p-2 ${className}`}
+      className={`flex items-center text-red-700 bg-red-100 border border-red-700 rounded-md p-2 ${className}`}
     >
       <img
         src="/icons/ui/streamline-ultimate-color:delete-2.svg"

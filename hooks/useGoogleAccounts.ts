@@ -1,3 +1,4 @@
+// hooks/useGoogleAccounts.ts
 import { useState, useEffect, useCallback } from 'react';
 import { GoogleLinkedAccount } from '@/lib/services/google/GoogleAuthServiceTypes';
 import { supabaseBrowser } from '@/lib/supabase/clients/supabaseBrowser';

@@ -1,15 +1,16 @@
 // lib/db/services/ProductManager.ts
 "server-only";
 import { supabaseAdmin } from "@/lib/supabase/clients/supabaseAdmin";
+import { ProductCreateInput, ProductFileCreateInput, ProductLicenseCreateInput } from "@/lib/supabase/types";
 import { consoleLog } from "@/lib/utils";
 
 export class ProductManager {
     constructor(private supabase = supabaseAdmin()) { }
 
     async create(
-        product: any, // CreateProductInput
-        files: any[], // CreateProductFileInput[]
-        licenses: any[] // CreateProductLicenseInput[]
+        product: ProductCreateInput, // CreateProductInput
+        files: ProductFileCreateInput[], // CreateProductFileInput[]
+        licenses: ProductLicenseCreateInput[] // CreateProductLicenseInput[]
     ) {
         consoleLog("🔔 Executing rpc_create_product");
 

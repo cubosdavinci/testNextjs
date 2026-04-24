@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
             },
         });
 
-    } catch (err: unknown) {
+    } catch (err) {
         const errorMessage = err instanceof Error
             ? err.message
             : 'An unexpected error occurred while fetching linked Google accounts';

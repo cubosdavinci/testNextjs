@@ -8,7 +8,7 @@ import { consoleLog } from "@/lib/utils";
 
 // Types
 import { PRODUCT_TYPE, ProductType } from "@/types/db/products/ProductType";
-import type {  ProductCreateInput, ProductFileCreateInput, ProductLicenseCreateInput } from "@/lib/supabase/types";
+import type {  ProductCreateInput, ProductFileClientInput, ProductFileCreateInput, ProductLicenseCreateInput } from "@/lib/supabase/types";
 import { MembershipEnum } from "@/lib/enum/MembershipEnum"
 // Cards
 import CardGenericTitle from "@/components/Cards/CardGenericTitle";
@@ -77,7 +77,13 @@ const handleSubmit = async (e: React.FormEvent) => {
       user_tags: [],
     };
 
-    const productFiles = files;
+    const productFiles: ProductFileClientInput[] = files.map(file => ({
+      file_id: file.file_id,
+      linked_account_id: file.linked_account_id,
+      provider: file.provider,
+      file_name: file.file_name,
+    }));
+
     const productLicenses = licenses;
 
     const formData = new FormData();
@@ -90,7 +96,7 @@ const handleSubmit = async (e: React.FormEvent) => {
       formData.append("thumbnail", thumbnailFile);
     }
 
-    const res = await fetch("/api/supabase/product/create", {
+    const res = await fetch("/api/supabase/products/create", {
       method: "POST",
       body: formData,
     });

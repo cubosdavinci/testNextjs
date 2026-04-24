@@ -1,3 +1,4 @@
+"use server-only"
 // lib/services/google-auth-service.ts
 import { errorGoogleAuthService } from './GoogleAuthServiceError';
 import { OAuth2Client, OAuth2ClientOptions, } from 'google-auth-library';

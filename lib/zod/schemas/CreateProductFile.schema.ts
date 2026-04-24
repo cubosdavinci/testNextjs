@@ -1,8 +1,7 @@
 // lib/web3/wallets/db/types/NewWalletInput.Schema.ts
 import { z } from "zod/v4"
-import { SUPPORTED_WALLET_PROVIDER_KEYS } from "../../types/SupportedWalletProviders"
-import { getTokenSym } from "../../types/SupportedBNetworks";
-import { Web3AddressSchema } from "@/lib/zod/Web3AddressSchema";
+
+/*
 export const CreateProductFileSchema = z.object({
     user_id: z
         .string()
@@ -82,6 +81,10 @@ export const CreateProductFileSchema = z.object({
 // You don't need to manually write an interface anymore.
 // This type is automatically generated from your schema's output.
 export type NewWalletInputType = z.infer<typeof NewWalletInputSchema>;
+*/
+
+
+
 /*.superRefine((obj, ctx) => {
     const errors: string[] = [];
 

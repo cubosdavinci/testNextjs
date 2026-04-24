@@ -1,18 +1,22 @@
-import { z } from "zod/v4";
+import { z } from "zod";
 
-// Generic function to validate any enum type
-export function enumSchema<EnumType extends { [key: string]: string }>(
-  enumType: EnumType,
+export function enumSchema<T extends Record<string, string>>(
+  enumType: T,
   errorMessage?: string
 ) {
+  const values = Object.values(enumType);
+
   return z
     .string()
-    .refine((val) => Object.values(enumType).includes(val), {
-      message: errorMessage || "Invalid value for Enum type",
+    // Use superRefine to access the input 'val' and the validation context 'ctx'
+    .superRefine((val, ctx) => {
+      if (!values.includes(val)) {
+        ctx.addIssue({
+          code: "custom",
+          message: `${errorMessage || "Invalid value"}, (${val} is invalid).`,
+        });
+      }
     })
-    // Transform the string value to the corresponding enum value
-    .transform((val) => {
-      // Return the enum value directly instead of just a string
-      return enumType[val as keyof EnumType];
-    });
+    // Now transform the value
+    .transform((val) => val as T[keyof T]);
 }

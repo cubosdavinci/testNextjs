@@ -112,7 +112,7 @@ export function GoogleProvider({ children }: { children: React.ReactNode }) {
 
     setIsRefreshingToken(true);
     try {
-      const res = await fetch('/api/auth/google/refresh-access-token', {
+      const res = await fetch('/api/auth/google/access-token', {
         method: 'POST',
         body: JSON.stringify({ accountId: account.id }),
         headers: { 'Content-Type': 'application/json' }

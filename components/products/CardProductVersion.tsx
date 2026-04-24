@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { validateProductVersion } from "@/lib/validate/products/version"; // Import the version validation
 import { ZodError } from "zod";
+import { versionSchema } from "@/lib/zod/schemas/version.schema";
+import FieldError from "../banners/FieldError";
+import FieldWarning from "../banners/FieldWarning";
 
 interface ProductVersionCardProps {
   cardTitle?: string;
@@ -34,7 +36,8 @@ export default function CardProductVersion({
   // Validate on blur
   const handleBlur = () => {
     try {
-      const parsed = validateProductVersion.parse(version); // Validate the version
+      const schema = versionSchema(true);
+      const parsed = schema.parse(version); // Validate the version
       setError(null); // No error if valid
       setVersion(parsed || ""); // Set the validated version
     } catch (err: unknown) {
@@ -74,7 +77,12 @@ export default function CardProductVersion({
             disabled={!isChecked} // Disable input if checkbox is unchecked
             className={`border p-2 rounded w-full ${error ? "border-red-500" : ""}`}
           />
-          {error && <span className="text-red-500 text-sm">{error}</span>}
+          {error &&
+            <>
+            <FieldError message={error} iconSize={20} />
+            <FieldWarning message={"Version Format: 1.0.0"} iconSize={20} />
+          </>
+          }
 
           <div className="flex items-center mt-2">
             <input

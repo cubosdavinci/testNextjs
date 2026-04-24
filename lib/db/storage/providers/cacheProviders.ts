@@ -1,8 +1,8 @@
-import { GoogleDriveProvider } from "./GoogleDriveProvider";
-import { IStorageProviderHandler } from "./IStorageProviderHandler";
+import { GoogleDriveProvider } from "./google-drive/GoogleDriveProvider";
+import { IStorageProvider } from "./IStorageProvider";
 
-export const cacheProviders: Record<string, IStorageProviderHandler> = {
-    google_drive: new GoogleDriveProvider(),
+export const cacheProviders: Record<string, IStorageProvider> = {
+  google_drive: new GoogleDriveProvider(),
 };
 
 /*
