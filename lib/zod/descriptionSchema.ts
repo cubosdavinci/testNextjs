@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { stripHtml } from "@/lib/utils/stripHtml"; // Importing the helper
 
-const defaultTitleRegex = /^[A-Za-z0-9 .,:;!?'"()\[\]{}\-_%&@#*+=\/\\~]+$/;
+const defaultTitleRegex = /^[A-Za-z0-9 .,:;!?'"()\[\]{}\-_%&@#*+=\/\\~]*$/;
 
 export const descriptionSchema = (
   min: number = 5,
@@ -20,7 +20,7 @@ export const descriptionSchema = (
         processedValue = stripHtml(processedValue);
       }
 
-      return processedValue;
+      return processedValue === "" ? undefined : processedValue;
     },
     z
       .string()
@@ -30,4 +30,5 @@ export const descriptionSchema = (
         regexExpression || defaultTitleRegex,
         errorMessage || "Description contains invalid characters"
       )
+      .optional()
   );

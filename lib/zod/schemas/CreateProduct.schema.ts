@@ -7,6 +7,7 @@ import { descriptionSchema } from "../descriptionSchema";
 import { enumSchema } from "../enumSchema";
 import { PRODUCT_TYPE } from "@/types/db/products/ProductType";
 import { versionSchema } from "./version.schema";
+import { slugSchema } from "./slug.schema";
 /*
 export const myType: ProductCreateInput = {
     creator_id, slug, title, type, category_id, description, version,
@@ -29,7 +30,7 @@ export const CreateProductSchema = z.object({
         .optional(),
     version: versionSchema(true),
     type: enumSchema(PRODUCT_TYPE, "Please provide a valid product type"),
-    
+    slug: slugSchema(),
     
     title: titleSchema(5, 30),
     description: descriptionSchema(0,300, true),

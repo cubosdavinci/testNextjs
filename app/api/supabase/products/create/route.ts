@@ -31,8 +31,7 @@ function parseJSON(field: FormDataEntryValue, name: string) {
 
 export async function POST(req: NextRequest) {
     try {
-
-
+        /*
         const supabase = await supabaseServer();
 
         const {
@@ -45,7 +44,7 @@ export async function POST(req: NextRequest) {
                 { error: 'Unauthorized - No valid session found' },
                 { status: 401 }
             );
-        }
+        }*/
 
 
         const contentType = req.headers.get("content-type") || "";
@@ -57,7 +56,6 @@ export async function POST(req: NextRequest) {
             );
         }
 
-       
         const formData = await req.formData();
 
         // =========================
@@ -95,15 +93,16 @@ export async function POST(req: NextRequest) {
         // 2. Parse JSON
         // =========================
         let newProduct: ProductCreateInput;
-       // let newProductFiles: ProductFileClientInput[];
+        let newProductFiles: ProductFileClientInput[];
        // let newProductLicenses: ProductLicenseCreateInput[];
 
         try {
             newProduct = parseJSON(rawProduct, "newProduct");
-            newProduct.creator_id = user.id;
+            newProduct.creator_id = 'd745ad01-5efb-4241-b0e1-b50c97c0d0c3';
             newProduct.slug = generateSafeSlug(newProduct.title)
 
-           // newProductFiles = parseJSON(rawFiles, "newProductFiles");
+            if ()
+            newProductFiles = parseJSON(rawFiles, "newProductFiles");
             //newProductLicenses = parseJSON(rawLicenses, "newProductLicenses");
         } catch (err) {
             return NextResponse.json(
