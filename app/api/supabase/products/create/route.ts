@@ -22,6 +22,7 @@ import type {
 import { saveThumbnail } from "@/lib/db/storage/saveThumbnail";
 import { supabaseServer } from "@/lib/supabase/clients/supabaseServer";
 import { consoleLog } from "@/lib/utils";
+import { checkProductFileSizeLimit } from "@/lib/zod/helpers/checkProductFileSizeLimit";
 
 function parseJSON(field: FormDataEntryValue, name: string) {
     try {
@@ -95,31 +96,35 @@ export async function POST(req: NextRequest) {
         let newProduct: ProductCreateInput;
         let newProductFiles: ProductFileCreateInput[];
         try {
-            const parsed = parseJSON(rawFiles, "newProductFiles");
+            const parsedProductFiles: ProductFileClientInput[] = parseJSON(rawFiles, "newProductFiles");
 
-            if (!Array.isArray(parsed)) {
+            if (!Array.isArray(parsedProductFiles)) {
                 return NextResponse.json(
                 { error: "newProductFiles must be an array" },
                 { status: 422 }
                 );
             }
             
-            if (parsed.length === 0) {
+            if (parsedProductFiles.length === 0) {
                 return NextResponse.json(
                 { error: "The new product must have at least one file" },
                 { status: 422 }
                 );
             }
 
-            if (parsed.length > 10) {
+            if (parsedProductFiles.length > 10) {
                 return NextResponse.json(
                 { error: "The new product cannot have more than 10 files" },
                 { status: 422 }
                 );
             }
 
+            parsedProductFiles.map((file) => {
+                checkProductFileSizeLimit(file,100,"MB");
+            })
+
              // ✅ Validate each file individually
-            newProductFiles = parsed.map((file, fileIdx) => {
+            newProductFiles = parsedProductFiles.map((file, fileIdx) => {
                 try {
                     return CreateProductFileSchema.parse(file);
                 } catch (err) {

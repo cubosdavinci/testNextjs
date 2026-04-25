@@ -1,14 +1,12 @@
 // lib/web3/wallets/db/types/NewWalletInput.Schema.ts
 import { z } from "zod/v4"
 //import type { ProductFileCreateInput } from "@/lib/supabase/types";
-import { isUUID, isVersion } from "@/lib/utils/validation";
 import { titleSchema } from "@/lib/zod/titleSchema";
-import { descriptionSchema } from "../descriptionSchema";
 import { enumSchema } from "../enumSchema";
-import { PRODUCT_TYPE } from "@/types/db/products/ProductType";
 import { STORAGE_PROVIDER } from "@/types/db/product-files/StorageProvider";
 import { FileIdSchema } from "./FileId.schema";
 import { uuidSchema } from "@/lib/zod/schemas/uuidSchema.schema";
+import { fileSizeLimitSchema } from "./fileSizeLimitSchema";
 
 /*
 export const myType: ProductFileCreateInput = {
@@ -29,7 +27,8 @@ export const CreateProductFileSchema = z.object({
     provider: enumSchema(STORAGE_PROVIDER, "Please enter a valid storage provider"),    
     file_name: titleSchema(1, 200),
     file_id: FileIdSchema,
-    linked_account_id: uuidSchema("Storage Linked Account Id is invalid")
+    linked_account_id: uuidSchema("Storage Linked Account Id is invalid"),
+    file_size: fileSizeLimitSchema(100, "MB"),
 
 }).strict()
 

@@ -82,6 +82,7 @@ const handleSubmit = async (e: React.FormEvent) => {
       linked_account_id: file.linked_account_id,
       provider: file.provider,
       file_name: file.file_name,
+      file_size: file.file_size,      
     }));
 
     const productLicenses = licenses;

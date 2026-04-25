@@ -82,6 +82,7 @@ export type ProductFileClientInput = {
     | 'linked_account_id'
     | 'file_id'
     | 'file_name'
+    | 'file_size'
 >
 
 export type ProductFileUpdate = TableUpdate<'product_files'>;
