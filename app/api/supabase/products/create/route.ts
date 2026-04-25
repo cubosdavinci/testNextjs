@@ -1,12 +1,13 @@
 // app/api/supabase/product/create/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { ZodError } from "zod";
+import { ZodError } from "zod/v4";
 
 import { ProductManager } from "@/lib/db/services/ProductManager";
 import { buildProductFiles } from "@/lib/db/products/helpers/buildProductFiles";
 import { generateSafeSlug } from "@/lib/db/products/helpers/generateSafeSlug";
 
 import { CreateProductSchema } from "@/lib/zod/schemas/CreateProduct.schema";
+import { CreateProductFileSchema } from "@/lib/zod/schemas/CreateProductFile.schema";
 //import { CreateProductFileSchema } from "@/lib/zod/schemas/CreateProductFile.schema";
 //import { CreateProductLicenseSchema } from "@/lib/zod/schemas/CreateProductLicense.schema";
 
@@ -14,6 +15,7 @@ import type {
     ProductCreateClientInput,
     ProductCreateInput,
     ProductFileClientInput,
+    ProductFileCreateInput,
     ProductLicenseCreateInput,
 } from "@/lib/supabase/types";
 
@@ -73,15 +75,13 @@ export async function POST(req: NextRequest) {
             );
         }
 
-            
-/*
         if (!rawFiles) {
             return NextResponse.json(
                 { error: "Missing field: newProductFiles" },
                 { status: 400 }
             );
         }
-
+/*
         if (!rawLicenses) {
             return NextResponse.json(
                 { error: "Missing field: newProductLicenses" },
@@ -90,10 +90,61 @@ export async function POST(req: NextRequest) {
         }
 */
         // =========================
-        // 2. Parse JSON
+        // 2. Parse JSON onto Objects
         // =========================
         let newProduct: ProductCreateInput;
-        let newProductFiles: ProductFileClientInput[];
+        let newProductFiles: ProductFileCreateInput[];
+        try {
+            const parsed = parseJSON(rawFiles, "newProductFiles");
+
+            if (!Array.isArray(parsed)) {
+                return NextResponse.json(
+                { error: "newProductFiles must be an array" },
+                { status: 422 }
+                );
+            }
+            
+            if (parsed.length === 0) {
+                return NextResponse.json(
+                { error: "The new product must have at least one file" },
+                { status: 422 }
+                );
+            }
+
+            if (parsed.length > 10) {
+                return NextResponse.json(
+                { error: "The new product cannot have more than 10 files" },
+                { status: 422 }
+                );
+            }
+
+             // ✅ Validate each file individually
+            newProductFiles = parsed.map((file, fileIdx) => {
+                try {
+                    return CreateProductFileSchema.parse(file);
+                } catch (err) {
+                    if (err instanceof ZodError) {
+                        const issue = err.issues[0];
+
+                        throw new Error(
+                            `Error detected in file ${file?.file_name ?? fileIdx}: ${issue.path.join(".")} - ${issue.message}`
+                        );
+                    }
+
+                    throw err;
+                }
+            });     
+        } catch (err) {
+        return NextResponse.json(
+            { error: (err as Error).message },
+            { status: 400 }
+        );
+        }
+
+        return NextResponse.json(
+            { id:'2342343-24244-2424224-324524' },
+            { status: 200 }
+        );
        // let newProductLicenses: ProductLicenseCreateInput[];
 
         try {
@@ -101,7 +152,6 @@ export async function POST(req: NextRequest) {
             newProduct.creator_id = 'd745ad01-5efb-4241-b0e1-b50c97c0d0c3';
             newProduct.slug = generateSafeSlug(newProduct.title)
 
-            if ()
             newProductFiles = parseJSON(rawFiles, "newProductFiles");
             //newProductLicenses = parseJSON(rawLicenses, "newProductLicenses");
         } catch (err) {
