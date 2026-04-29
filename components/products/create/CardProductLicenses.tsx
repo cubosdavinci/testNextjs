@@ -1,109 +1,133 @@
 'use client';
 
-import { useState, useEffect, useCallback } from "react";
-import { browserConsoleLog, consoleLog } from "@/lib/utils";
-import { RegionEnum } from "@/lib/db/licenses/types/enums/RegionEnum";
-import { ValidPeriodEnum } from "@/lib/db/licenses/types/enums/ValidPeriodEnum";
+import { useState, useEffect } from "react";
+import { MembershipEnum } from "@/lib/enum/MembershipEnum";
+import { ProductLicenseClientInput } from "@/lib/supabase/types";
+
 import CardLicenseUsersAllowed from "./CardLicenseUsersAllowed";
 import CardLicenseDevicesAllowed from "./CardLicenseDevicesAllowed";
 import CardLicensePrice from "./CardLicensePrice";
-import CardRegionSelector from "@/components/Cards/CardRegionSelector";
-import { regionIcons } from "@/lib/db/licenses/types/enums/RegionEnumIcons";
 import CardGenericDropDown from "@/components/Cards/CardGenericDropDown";
-//import { License } from "@/lib/db/licenses/types/License";
-import { MembershipEnum } from "@/lib/enum/MembershipEnum";
-import { CreateProductLicenseInput } from "@/lib/supabase/types";
+
+import {
+  LICENSE_DURATION_OPTIONS,
+  LicenseDuration,
+} from "types/db/product-licenses/LicenseDuration";
+
+import { supabaseBrowser } from "@/lib/supabase/clients/supabaseBrowser";
 
 interface LicenseType {
   id: string;
   name: string;
-  description?: string;
+  description?: string | null;
 }
 
 interface CardProductLicensesProps {
-  fileId: string;
-  updateParentLicenses: (licenses: CreateProductLicenseInput[]) => void;
+  productId: string;
+  updateParentLicenses: (licenses: ProductLicenseClientInput[]) => void;
   membership: MembershipEnum;
 }
 
+function createDefaultLicense(productId: string): ProductLicenseClientInput {
+  return {
+    product_id: productId,
+    name: "Default License",
+    description: "",
+    base_price_cents: 0,
+    max_license_users: 1,
+    max_user_devices: 1,
+    license_duration: "Forever",
+    is_main: true,
+    sort_order: 0,
+  };
+}
+
 export default function CardProductLicenses({
-  fileId,
+  productId,
   updateParentLicenses,
   membership = MembershipEnum.Free,
 }: CardProductLicensesProps) {
-  consoleLog("🔔 ⭐ Client Component Starts (CardProductLicenses)");
-
-  const icons = regionIcons;
+  const [licenses, setLicenses] = useState<ProductLicenseClientInput[]>(
+    () => [createDefaultLicense(productId)]
+  );
 
   const [licenseTypes, setLicenseTypes] = useState<LicenseType[]>([]);
-  const [licenses, setLicenses] = useState<License[]>([]);
 
+  // =========================
+  // FETCH LICENSE TYPES (TEMPLATES)
+  // =========================
   useEffect(() => {
-    async function fetchLicenseTypes() {
-      try {
-        browserConsoleLog("Fetching License Types");
+    const fetchLicenseTypes = async () => {
 
-        const res = await fetch("/api/supabase/licenses", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            operationName: "GetLicenseTypes",
-            variables: { clientId: fileId },
-          }),
-        });
+      const supabase = supabaseBrowser();
 
-        const data = await res.json();
+      const { data, error } = await supabase
+        .from("license_types")
+        .select("id, name, description")
+        .order("name");
 
-        const types = (data ?? []).map((t: any) => ({
-          id: t.id,
-          name: t.name,
-          description: t.description,
-        }));
-
-        setLicenseTypes(types);
-
-        if (types.length > 0 && licenses.length === 0) {
-          setLicenses([
-            {
-              price: 0,
-              typeId: types[0].id,
-              typeName: types[0].name,
-              region: RegionEnum.Global,
-              usersAllowed: 1,
-              devicesAllowed: 1,
-              validPeriod: ValidPeriodEnum.Forever,
-              isMain: true,
-            },
-          ]);
-        }
-      } catch (err) {
-        console.error("Error Fetching License Types", err);
+      if (error) {
+        console.error("Error fetching license types", error);
+        return;
       }
-    }
+
+      setLicenseTypes(data ?? []);
+    };
 
     fetchLicenseTypes();
-  }, [fileId]);
+  }, []);
 
+  // =========================
+  // RESET ON PRODUCT CHANGE
+  // =========================
   useEffect(() => {
-    updateParentLicenses?.(licenses);
+    setLicenses([createDefaultLicense(productId)]);
+  }, [productId]);
+
+  // =========================
+  // SYNC WITH PARENT
+  // =========================
+  useEffect(() => {
+    updateParentLicenses(licenses);
   }, [licenses, updateParentLicenses]);
 
+  // =========================
+  // HELPERS
+  // =========================
+  const updateField = <K extends keyof ProductLicenseClientInput>(
+    index: number,
+    field: K,
+    value: ProductLicenseClientInput[K]
+  ) => {
+    setLicenses((prev) =>
+      prev.map((l, i) =>
+        i === index ? { ...l, [field]: value } : l
+      )
+    );
+  };
+
+  const setMain = (index: number) => {
+    setLicenses((prev) =>
+      prev.map((l, i) => ({
+        ...l,
+        is_main: i === index,
+      }))
+    );
+  };
+
   const addLicense = () => {
-    if (!licenseTypes.length) return;
-
-    const defaultType = licenseTypes[0];
-
     setLicenses((prev) => [
       ...prev,
       {
-        price: 0,
-        typeId: defaultType.id,
-        typeName: defaultType.name,
-        region: RegionEnum.Global,
-        usersAllowed: 1,
-        devicesAllowed: 1,
-        validPeriod: ValidPeriodEnum.Forever,
-        isMain: false,
+        product_id: productId,
+        name: "",
+        description: "",
+        base_price_cents: 0,
+        max_license_users: 1,
+        max_user_devices: 1,
+        license_duration: "Forever",
+        is_main: false,
+        sort_order: prev.length,
       },
     ]);
   };
@@ -111,46 +135,53 @@ export default function CardProductLicenses({
   const removeLicense = (index: number) => {
     setLicenses((prev) => {
       const updated = prev.filter((_, i) => i !== index);
-      if (updated.length && !updated.some((l) => l.isMain)) {
-        updated[0].isMain = true;
+
+      if (updated.length && !updated.some((l) => l.is_main)) {
+        updated[0] = { ...updated[0], is_main: true };
       }
+
       return updated;
     });
   };
 
-  const handleLicenseChange = useCallback(
-    (index: number, field: keyof License, value: any) => {
-      setLicenses((prev) =>
-        prev.map((license, i) => {
-          if (field === "isMain") return { ...license, isMain: i === index };
-          if (i === index) return { ...license, [field]: value };
-          return license;
-        })
-      );
-    },
-    []
-  );
+  // =========================
+  // APPLY TEMPLATE
+  // =========================
+  const applyTemplate = (index: number, templateId: string) => {
+    const template = licenseTypes.find((t) => t.id === templateId);
+    if (!template) return;
+
+    setLicenses((prev) =>
+      prev.map((l, i) => {
+        if (i !== index) return l;
+
+        return {
+          ...l,
+          name: l.name || template.name,
+          description: l.description || template.description || "",
+        };
+      })
+    );
+  };
 
   // =========================
-  // LICENSE CARD COMPONENT
+  // CARD
   // =========================
   const LicenseCard = ({
     index,
     license,
   }: {
     index: number;
-    license: License;
+    license: ProductLicenseClientInput;
   }) => {
-    const [open, setOpen] = useState(false);
-
     return (
       <div className="border p-4 my-4 rounded-md shadow-sm">
         <div className="flex justify-between items-center">
           <h3 className="font-semibold">
-            🔑 License {index + 1} {license.isMain && "(Main)"}
+            🔑 License {index + 1} {license.is_main && "(Main)"}
           </h3>
 
-          {!license.isMain && (
+          {!license.is_main && (
             <button
               type="button"
               onClick={() => removeLicense(index)}
@@ -162,80 +193,64 @@ export default function CardProductLicenses({
         </div>
 
         <div className="space-y-4 mt-4">
-          {/* PRICE */}
-          <CardLicensePrice
-            cardTitle="💰 License - Price"
-            membership={membership}
-            value={license.price}
-            setValue={(newPrice) =>
-              setLicenses((prev) => {
-                const updated = [...prev];
-                updated[index].price = newPrice;
-                return updated;
-              })
-            }
-          />
 
-          {/* LICENSE TYPE */}
-          <div className="relative">
-            <label className="block font-medium mb-1">
-              License Type
-            </label>
-
-            <div className="flex items-center gap-2">
+          {/* TEMPLATE SELECTOR */}
+          {licenseTypes.length > 0 && (
+            <div>
+              <label className="block font-medium mb-1">
+                License Template
+              </label>
               <select
-                value={license.typeId}
                 className="border p-2 rounded w-full"
-                onChange={(e) => {
-                  const typeId = e.target.value;
-                  const type = licenseTypes.find((t) => t.id === typeId);
-                  if (!type) return;
-
-                  handleLicenseChange(index, "typeId", type.id);
-                  handleLicenseChange(index, "typeName", type.name);
-                }}
+                onChange={(e) =>
+                  applyTemplate(index, e.target.value)
+                }
               >
+                <option value="">Select template...</option>
                 {licenseTypes.map((lt) => (
                   <option key={lt.id} value={lt.id}>
                     {lt.name}
                   </option>
                 ))}
               </select>
-
-              <button
-                type="button"
-                className="w-9 h-9 flex items-center justify-center rounded border hover:bg-gray-100 transition"
-                onClick={() => setOpen((v) => !v)}
-                title="View description"
-              >
-                ℹ️
-              </button>
             </div>
+          )}
 
-            {open && (
-              <div className="absolute z-10 mt-2 w-full bg-white border shadow-lg rounded p-3 text-sm">
-                {licenseTypes.find(
-                  (t) => t.id === license.typeId
-                )?.description ?? "No description available."}
-
-                <div className="text-right mt-2">
-                  <button
-                    className="text-blue-500 text-xs"
-                    onClick={() => setOpen(false)}
-                  >
-                    Close
-                  </button>
-                </div>
-              </div>
-            )}
+          {/* NAME */}
+          <div>
+            <label className="block font-medium mb-1">
+              License Name
+            </label>
+            <input
+              value={license.name}
+              onChange={(e) =>
+                updateField(index, "name", e.target.value)
+              }
+              className="border p-2 rounded w-full"
+            />
           </div>
 
-          {/* REGION */}
-          <CardRegionSelector
-            membership={MembershipEnum.Partner}
-            regionIcons={icons}
-            setValue={(newRegion) =>
-              handleLicenseChange(index, "region", newRegion)
+          {/* DESCRIPTION */}
+          <div>
+            <label className="block font-medium mb-1">
+              Description
+            </label>
+            <textarea
+              value={license.description ?? ""}
+              onChange={(e) =>
+                updateField(index, "description", e.target.value)
+              }
+              className="border p-2 rounded w-full"
+            />
+          </div>
+
+          {/* PRICE */}
+          <CardLicensePrice
+            cardTitle="💰 License Price"
+            membership={membership}
+            value={license.base_price_cents ?? 0}
+            setValue={(val) =>
+              updateField(index, "base_price_cents", val)
             }
           />
 
@@ -243,42 +258,29 @@ export default function CardProductLicenses({
           <CardLicenseUsersAllowed
             cardTitle="👥 Users per License"
             membership={membership}
-            value={license.usersAllowed}
+            value={license.max_license_users}
             setValue={(val) =>
-              setLicenses((prev) => {
-                const updated = [...prev];
-                updated[index].usersAllowed = val;
-                return updated;
-              })
+              updateField(index, "max_license_users", val)
             }
           />
 
           {/* DEVICES */}
           <CardLicenseDevicesAllowed
-            cardTitle="🖥️ Devices per user"
+            cardTitle="🖥️ Devices per User"
             membership={membership}
-            value={license.devicesAllowed}
+            value={license.max_user_devices}
             setValue={(val) =>
-              setLicenses((prev) => {
-                const updated = [...prev];
-                updated[index].devicesAllowed = val;
-                return updated;
-              })
+              updateField(index, "max_user_devices", val)
             }
           />
 
-          {/* VALID PERIOD */}
+          {/* DURATION */}
           <CardGenericDropDown
-            cardTitle="License - Valid Period"
-            enumType={ValidPeriodEnum}
-            enumArray={Object.values(ValidPeriodEnum)}
-            value={license.validPeriod}
-            setValue={(val) =>
-              setLicenses((prev) => {
-                const updated = [...prev];
-                updated[index].validPeriod = val;
-                return updated;
-              })
+            cardTitle="License Duration"
+            options={LICENSE_DURATION_OPTIONS}
+            value={license.license_duration}
+            setValue={(val: LicenseDuration) =>
+              updateField(index, "license_duration", val)
             }
           />
 
@@ -287,10 +289,8 @@ export default function CardProductLicenses({
             <label className="flex items-center space-x-1">
               <input
                 type="radio"
-                checked={license.isMain}
-                onChange={() =>
-                  handleLicenseChange(index, "isMain", true)
-                }
+                checked={license.is_main}
+                onChange={() => setMain(index)}
                 className="accent-blue-600"
               />
               <span>Main License</span>
@@ -301,6 +301,9 @@ export default function CardProductLicenses({
     );
   };
 
+  // =========================
+  // RENDER
+  // =========================
   return (
     <section id="product-licenses" className="space-y-2">
       {licenses.map((license, index) => (

@@ -8,7 +8,7 @@ import { generateSafeSlug } from "@/lib/db/products/helpers/generateSafeSlug";
 
 import { CreateProductSchema } from "@/lib/zod/schemas/CreateProduct.schema";
 import { CreateProductFileSchema } from "@/lib/zod/schemas/CreateProductFile.schema";
-//import { CreateProductFileSchema } from "@/lib/zod/schemas/CreateProductFile.schema";
+
 //import { CreateProductLicenseSchema } from "@/lib/zod/schemas/CreateProductLicense.schema";
 
 import type {
@@ -83,18 +83,42 @@ export async function POST(req: NextRequest) {
                 { status: 400 }
             );
         }
-/*
+
         if (!rawLicenses) {
             return NextResponse.json(
                 { error: "Missing field: newProductLicenses" },
                 { status: 400 }
             );
         }
-*/
+
         // =========================
         // 2. Parse JSON onto Objects
         // =========================
         let newProduct: ProductCreateInput;
+        
+
+        try {
+            newProduct = parseJSON(rawProduct, "newProduct");
+            newProduct.creator_id = 'd745ad01-5efb-4241-b0e1-b50c97c0d0c3';
+            newProduct.slug = generateSafeSlug(newProduct.title)
+            
+        } catch (err) {
+            return NextResponse.json(
+                { error: (err as Error).message },
+                { status: 400 }
+            );
+        }
+
+        // =========================
+        // 3. Validate product
+        // =========================
+        const validatedProduct: ProductCreateInput = CreateProductSchema.parse(newProduct);
+
+        
+
+        // =========================
+        // 3. Create Files
+        // =========================
         let newProductFiles: ProductFileCreateInput[];
         try {
             const parsedProductFiles: ProductFileClientInput[] = parseJSON(rawFiles, "newProductFiles");
@@ -126,8 +150,8 @@ export async function POST(req: NextRequest) {
 
             newProductFiles = await enrichFilesFromProviders(parsedProductFiles);
 
-             // ✅ Validate each file individually
-            newProductFiles = newProductFiles.map((file, fileIdx) => {
+            // ✅ Validate each file individually
+            const validatedFiles: ProductFileCreateInput[] = newProductFiles.map((file, fileIdx) => {
                 try {
                     return CreateProductFileSchema.parse(file);
                 } catch (err) {
@@ -144,62 +168,70 @@ export async function POST(req: NextRequest) {
             });     
         } catch (err) {
         return NextResponse.json(
-            { error: (err as Error).message },
+            { error: err instanceof Error ? err.message : "Unknown error" },
             { status: 400 }
         );
         }
 
         consoleLog("Files Ready To Be Uploaded to database", newProductFiles)
 
-        return NextResponse.json(
-            { id:'2342343-24244-2424224-324524' },
-            { status: 200 }
-        );
-       // let newProductLicenses: ProductLicenseCreateInput[];
-
-        try {
-            newProduct = parseJSON(rawProduct, "newProduct");
-            newProduct.creator_id = 'd745ad01-5efb-4241-b0e1-b50c97c0d0c3';
-            newProduct.slug = generateSafeSlug(newProduct.title)
-
-            newProductFiles = parseJSON(rawFiles, "newProductFiles");
-            //newProductLicenses = parseJSON(rawLicenses, "newProductLicenses");
-        } catch (err) {
-            return NextResponse.json(
-                { error: (err as Error).message },
-                { status: 400 }
-            );
-        }
-
-        // =========================
-        // 3. Validate product
-        // =========================
-        const validatedProduct: ProductCreateInput = CreateProductSchema.parse(newProduct);
-
-        // =========================
-        // 6. Handle thumbnail (UPLOAD FIRST)
-        // =========================
-        let uploadedThumbnailUrl: string | undefined;
-
-        // =========================
-        // 4. Build full file objects (IMPORTANT STEP)
-        // =========================
-        const builtFiles = await buildProductFiles(newProductFiles);
-
-        // Validate built files
-        const validatedFiles = builtFiles.map((f) =>
-            CreateProductFileSchema.parse(f)
-        );
+       
 
         // =========================
         // 5. Validate licenses
         // =========================
-        const validatedLicenses = Array.isArray(newProductLicenses)
-            ? newProductLicenses.map((l) =>
-                CreateProductLicenseSchema.parse(l)
-            )
-            : [];
 
+        let validatedLicenses: ProductLicenseClientInput[];
+
+        try {
+            const parsedProductLicenses: ProductLicenseClientInput[] =
+                parseJSON(rawLicenses, "newProductLicenses");
+
+            if (!Array.isArray(parsedProductLicenses)) {
+                return NextResponse.json(
+                    { error: "newProductLicenses must be an array" },
+                    { status: 422 }
+                );
+            }
+
+            if (parsedProductLicenses.length === 0) {
+                return NextResponse.json(
+                    { error: "The new product must have at least one license." },
+                    { status: 422 }
+                );
+            }
+
+            if (parsedProductLicenses.length > 10) {
+                return NextResponse.json(
+                    { error: "The new product cannot have more than 10 licenses" },
+                    { status: 422 }
+                );
+            }
+
+            validatedLicenses = parsedProductLicenses.map((license, idx) => {
+                try {
+                    return CreateProductLicenseSchema.parse(license);
+                } catch (err) {
+                    if (err instanceof ZodError) {
+                        const issue = err.issues[0];
+
+                        throw new Error(
+                            `Error in license ${license?.file_name ?? idx}: ${issue.path.join(".")} - ${issue.message}`
+                        );
+                    }
+
+                    throw err;
+                }
+            });
+
+        } catch (err) {
+            return NextResponse.json(
+                { error: err instanceof Error ? err.message : "Unknown error" },
+                { status: 400 }
+            );
+        }
+
+       
         // =========================
         // 6. Execute business logic
         // =========================
@@ -210,6 +242,16 @@ export async function POST(req: NextRequest) {
             validatedFiles,
             validatedLicenses,
         );
+
+        return NextResponse.json(
+            { id: '2342343-24244-2424224-324524' },
+            { status: 200 }
+        );
+
+        // =========================
+        // 6. Handle thumbnail (UPLOAD FIRST)
+        // =========================
+        let uploadedThumbnailUrl: string | undefined;
 
         if (thumbnail) {
 

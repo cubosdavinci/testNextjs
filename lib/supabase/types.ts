@@ -97,7 +97,8 @@ export type UploadToStorageOutput = {
 export type ProductLicense = TableRow<'product_licenses'>;
 export type ProductLicenseInsert = TableInsert<'product_licenses'>;
 export type ProductLicenseUpdate = TableUpdate<'product_licenses'>;
-export type ProductLicenseCreateInput = Pick<ProductLicenseInsert,
+export type ProductLicenseClientInput = Pick<ProductLicenseInsert,
+    | "product_id"
     | "name"
     | "description"
     | "base_price_cents"
@@ -105,9 +106,10 @@ export type ProductLicenseCreateInput = Pick<ProductLicenseInsert,
     | "max_user_devices"
     | "is_main"
     | "sort_order"
-    > & {
+> & {
         license_duration: LicenseDuration;    
-    }
+}
+
 
 // ← This is what you asked for
 export type ProductWithRelations = ProductRow & {

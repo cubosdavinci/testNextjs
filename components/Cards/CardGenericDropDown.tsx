@@ -3,59 +3,65 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-type StringEnum = Record<string, string>;
+/**
+ * Generic option shape (NEW standard)
+ */
+export type DropdownOption<T = string> = {
+  label: string;
+  value: T;
+};
 
-interface CardGenericDropDownProps<T extends StringEnum> {
+interface CardGenericDropDownProps<T extends string> {
   cardTitle?: string;
 
-  /** Enum object itself */
-  enumType: T;
+  /**
+   * NEW: preferred API
+   */
+  options?: DropdownOption<T>[];
 
-  /** Allowed enum values */
-  enumArray: readonly T[keyof T][];
+  /**
+   * LEGACY support (enum-style)
+   */
+  enumArray?: readonly T[];
 
-  /** Selected value */
-  value: T[keyof T];
+  /**
+   * Selected value
+   */
+  value: T;
 
-  /** Generic setter */
-  setValue?: (value: T[keyof T]) => void;
+  /**
+   * Setter
+   */
+  setValue?: (value: T) => void;
 }
 
-/**
- * CardGenericDropDown
- *
- * A reusable, generic dropdown component for selecting values from any string-based enum.
- * 
- * Props:
- * - cardTitle: Optional title displayed at the top of the card.
- * - enumType: The enum object itself, used for type safety.
- * - enumArray: Array of allowed values to display in the dropdown.
- * - value: Currently selected value (controlled prop).
- * - setValue: Callback to update the parent state when a new value is selected.
- *
- * Features:
- * - Fully generic and type-safe for any string enum.
- * - Displays the selected value in a card-style dropdown.
- * - Automatically synchronizes local state with parent prop `value`.
- * - Handles opening/closing dropdown and updating parent state on selection.
- */
-export default function CardGenericDropDown<T extends StringEnum>({
+export default function CardGenericDropDown<T extends string>({
   cardTitle = "Select",
-  enumType,
+  options,
   enumArray,
   value,
   setValue,
 }: CardGenericDropDownProps<T>) {
-  const [selected, setSelected] = useState<T[keyof T]>(value);
+  const [selected, setSelected] = useState<T>(value);
   const [isOpen, setIsOpen] = useState(false);
 
-  // Sync local state if parent value changes
+  // Sync with parent
   useEffect(() => {
     setSelected(value);
   }, [value]);
 
-  // Handler to update local and parent state
-  const handleSelect = (val: T[keyof T]) => {
+  /**
+   * Normalize input into a single format
+   */
+  const normalizedOptions: DropdownOption<T>[] =
+    options ??
+    (enumArray?.map((v) => ({
+      label: String(v),
+      value: v,
+    })) as DropdownOption<T>[]) ??
+    [];
+
+  const handleSelect = (val: T) => {
     setSelected(val);
     setValue?.(val);
     setIsOpen(false);
@@ -80,15 +86,16 @@ export default function CardGenericDropDown<T extends StringEnum>({
 
             {isOpen && (
               <div className="absolute top-full left-0 right-0 bg-white border rounded mt-1 shadow-lg z-10 max-h-60 overflow-y-auto">
-                {enumArray.map((item) => (
+                {normalizedOptions.map((item) => (
                   <div
-                    key={item}
-                    className={`px-4 py-2 cursor-pointer hover:bg-gray-200 ${
-                      item === selected ? "bg-gray-100 font-semibold" : ""
-                    }`}
-                    onClick={() => handleSelect(item)}
+                    key={item.value}
+                    className={`px-4 py-2 cursor-pointer hover:bg-gray-200 ${item.value === selected
+                        ? "bg-gray-100 font-semibold"
+                        : ""
+                      }`}
+                    onClick={() => handleSelect(item.value)}
                   >
-                    {item}
+                    {item.label}
                   </div>
                 ))}
               </div>

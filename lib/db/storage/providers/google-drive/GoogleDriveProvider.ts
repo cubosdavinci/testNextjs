@@ -3,8 +3,6 @@ import { ProductFileToCacheInput, UploadToStorageOutput } from "@/lib/supabase/t
 
 import { GoogleAuthService } from "@/lib/services/google/GoogleAuthService";
 import { supabaseAdmin } from "@/lib/supabase/clients/supabaseAdmin";
-import { IGoogleDriveProvider } from "./IGoogleDriveProvider";
-import { GoogleDriveFileMetadata } from "@/types/google";
 import { GoogleDriveMetadataSchema } from "@/lib/zod/schemas/GoogleDriveMetadata.schema";
 import { IStorageProvider } from "../IStorageProvider";
 import { consoleLog } from "@/lib/utils";
@@ -17,7 +15,6 @@ export type NormalizedFileMetadata = {
     hash?: string;
     createdAt?: string;
     updatedAt?: string;
-    linked_account_id: string;
 };
 export class GoogleDriveProvider implements IStorageProvider<NormalizedFileMetadata> {
     async uploadToCache(file: ProductFileToCacheInput): Promise<UploadToStorageOutput> {
@@ -87,9 +84,7 @@ export class GoogleDriveProvider implements IStorageProvider<NormalizedFileMetad
             name: parsed.name,
             mimeType: parsed.mimeType,
             size: Number(parsed.size || 0),
-            checksum: parsed.md5Checksum,
-            createdAt: parsed.createdTime,
-            updatedAt: parsed.modifiedTime,
+            checksum: parsed.md5Checksum,          
         };
     }
 }
