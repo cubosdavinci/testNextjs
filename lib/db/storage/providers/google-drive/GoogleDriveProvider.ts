@@ -4,8 +4,22 @@ import { ProductFileToCacheInput, UploadToStorageOutput } from "@/lib/supabase/t
 import { GoogleAuthService } from "@/lib/services/google/GoogleAuthService";
 import { supabaseAdmin } from "@/lib/supabase/clients/supabaseAdmin";
 import { IGoogleDriveProvider } from "./IGoogleDriveProvider";
-
-export class GoogleDriveProvider implements IGoogleDriveProvider {
+import { GoogleDriveFileMetadata } from "@/types/google";
+import { GoogleDriveMetadataSchema } from "@/lib/zod/schemas/GoogleDriveMetadata.schema";
+import { IStorageProvider } from "../IStorageProvider";
+import { consoleLog } from "@/lib/utils";
+export type NormalizedFileMetadata = {
+    id: string;
+    name: string;
+    mimeType: string;
+    size: number;
+    checksum?: string;
+    hash?: string;
+    createdAt?: string;
+    updatedAt?: string;
+    linked_account_id: string;
+};
+export class GoogleDriveProvider implements IStorageProvider<NormalizedFileMetadata> {
     async uploadToCache(file: ProductFileToCacheInput): Promise<UploadToStorageOutput> {
         const authService = new GoogleAuthService();
 
@@ -39,7 +53,7 @@ export class GoogleDriveProvider implements IGoogleDriveProvider {
         if (error) throw new Error(error.message);
 
         const { data } = supabase.storage
-            .from("product-files")
+            .from("product_files")
             .getPublicUrl(filePath);
 
         return {
@@ -49,12 +63,8 @@ export class GoogleDriveProvider implements IGoogleDriveProvider {
         };
     }
 
-    async getFileMetadata(fileId: string, linkedAccountId: string) {
-        const authService = new GoogleAuthService();
-
-        const accessToken = await authService.getValidAccessToken(
-            linkedAccountId
-        );
+    async getFileMetadata(fileId: string, accessToken: string): Promise<NormalizedFileMetadata> {
+        consoleLog("Fetching Metadata from Google Drive API service")
 
         const res = await fetch(
             `https://www.googleapis.com/drive/v3/files/${fileId}?fields=id,name,mimeType,size,md5Checksum,owners,createdTime,modifiedTime,webContentLink`,
@@ -69,6 +79,17 @@ export class GoogleDriveProvider implements IGoogleDriveProvider {
             throw new Error("Failed to fetch Google Drive metadata");
         }
 
-        return res.json();
+        const data = await res.json();
+        const parsed = GoogleDriveMetadataSchema.parse(data);
+
+        return {
+            id: parsed.id,
+            name: parsed.name,
+            mimeType: parsed.mimeType,
+            size: Number(parsed.size || 0),
+            checksum: parsed.md5Checksum,
+            createdAt: parsed.createdTime,
+            updatedAt: parsed.modifiedTime,
+        };
     }
 }

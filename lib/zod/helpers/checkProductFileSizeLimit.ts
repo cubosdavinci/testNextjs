@@ -13,6 +13,12 @@ export function checkProductFileSizeLimit(
         );
     }
 
+    if (fileSize <= 0) {
+        throw new Error(
+            `Invalid size (${fileSize}) for file ${file?.file_name ?? "unknown"}.`
+        );
+    }
+
     const multipliers: Record<FileSizeUnit, number> = {
         B: 1,
         KB: 1024,

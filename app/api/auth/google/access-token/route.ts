@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        const accountId = request.nextUrl.searchParams.get('google_linked_account_id');
+        const accountId = request.nextUrl.searchParams.get('accountId');
 
         if (!accountId) {
             return NextResponse.json(

@@ -1,7 +1,12 @@
-import { STORAGE_PROVIDER } from "@/types/db/product-files/StorageProvider";
-import { GoogleDriveProvider } from "./google-drive/GoogleDriveProvider";
+// lib/db/storage/providers/providerRegistry.ts
+import { STORAGE_PROVIDER, StorageProvider } from "@/types/db/product-files/StorageProvider";
+import { NormalizedFileMetadata } from "./google-drive/GoogleDriveProvider";
+type Provider = IStorageProvider<NormalizedFileMetadata> | null;
 
-export const providerRegistry = {
+import { GoogleDriveProvider } from "./google-drive/GoogleDriveProvider";
+import { IStorageProvider } from "./IStorageProvider";
+
+export const providerRegistry: Record<StorageProvider, Provider> = {
     [STORAGE_PROVIDER.GoogleDrive]: new GoogleDriveProvider(),
     [STORAGE_PROVIDER.OneDrive]: null,
     [STORAGE_PROVIDER.Dropbox]: null,

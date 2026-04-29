@@ -1,6 +1,6 @@
+// lib/google-drive-utils.ts
 import { GoogleDriveFileMetadata } from "@/types/google";
 
-// lib/google-drive-utils.ts
 export const validateGoogleToken = async (accessToken: string): Promise<boolean> => {
     try {
         const res = await fetch('https://www.googleapis.com/drive/v3/about?fields=user', {

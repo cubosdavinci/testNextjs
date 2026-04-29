@@ -23,6 +23,7 @@ import { saveThumbnail } from "@/lib/db/storage/saveThumbnail";
 import { supabaseServer } from "@/lib/supabase/clients/supabaseServer";
 import { consoleLog } from "@/lib/utils";
 import { checkProductFileSizeLimit } from "@/lib/zod/helpers/checkProductFileSizeLimit";
+import { enrichFilesFromProviders } from "@/lib/utils/enrichFilesFromProviders";
 
 function parseJSON(field: FormDataEntryValue, name: string) {
     try {
@@ -97,7 +98,7 @@ export async function POST(req: NextRequest) {
         let newProductFiles: ProductFileCreateInput[];
         try {
             const parsedProductFiles: ProductFileClientInput[] = parseJSON(rawFiles, "newProductFiles");
-
+                        
             if (!Array.isArray(parsedProductFiles)) {
                 return NextResponse.json(
                 { error: "newProductFiles must be an array" },
@@ -123,8 +124,10 @@ export async function POST(req: NextRequest) {
                 checkProductFileSizeLimit(file,100,"MB");
             })
 
+            newProductFiles = await enrichFilesFromProviders(parsedProductFiles);
+
              // ✅ Validate each file individually
-            newProductFiles = parsedProductFiles.map((file, fileIdx) => {
+            newProductFiles = newProductFiles.map((file, fileIdx) => {
                 try {
                     return CreateProductFileSchema.parse(file);
                 } catch (err) {
@@ -145,6 +148,8 @@ export async function POST(req: NextRequest) {
             { status: 400 }
         );
         }
+
+        consoleLog("Files Ready To Be Uploaded to database", newProductFiles)
 
         return NextResponse.json(
             { id:'2342343-24244-2424224-324524' },

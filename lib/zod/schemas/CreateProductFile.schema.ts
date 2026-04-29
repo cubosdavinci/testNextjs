@@ -24,13 +24,21 @@ export const myType: ProductFileCreateInput = {
 
 
 export const CreateProductFileSchema = z.object({
-    provider: enumSchema(STORAGE_PROVIDER, "Please enter a valid storage provider"),    
+    provider: enumSchema(STORAGE_PROVIDER, "Please enter a valid storage provider"),
+
     file_name: titleSchema(1, 200),
     file_id: FileIdSchema,
     linked_account_id: uuidSchema("Storage Linked Account Id is invalid"),
     file_size: fileSizeLimitSchema(100, "MB"),
+    file_type: z.string(),
 
-}).strict()
+    provider_metadata: z.unknown(),
+    provider_user_name: z.string().optional(),
+    file_checksum: z.string().optional(),    
+    file_hash: z.string().optional(),
+}).strict();
+
+
 
 
 // THIS IS THE KEY:
