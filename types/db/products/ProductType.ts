@@ -1,5 +1,4 @@
-
-
+// types/db/products/ProductType.ts
 import type { Database } from "@/types/supabase";
 
 export type DbProductType = Database["public"]["Enums"]["product_type"];

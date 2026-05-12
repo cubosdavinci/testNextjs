@@ -119,6 +119,8 @@ export async function POST(req: NextRequest) {
         // =========================
         // 3. Create Files
         // =========================
+        /*
+
         let newProductFiles: ProductFileCreateInput[];
         try {
             const parsedProductFiles: ProductFileClientInput[] = parseJSON(rawFiles, "newProductFiles");
@@ -175,7 +177,13 @@ export async function POST(req: NextRequest) {
 
         consoleLog("Files Ready To Be Uploaded to database", newProductFiles)
 
-       
+       */
+
+
+
+
+
+
 
         // =========================
         // 5. Validate licenses

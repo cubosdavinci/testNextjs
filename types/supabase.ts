@@ -427,6 +427,7 @@ export type Database = {
           description: string | null
           id: string
           name: string
+          ui_order: number
           updated_at: string | null
         }
         Insert: {
@@ -435,6 +436,7 @@ export type Database = {
           description?: string | null
           id?: string
           name: string
+          ui_order?: number
           updated_at?: string | null
         }
         Update: {
@@ -443,6 +445,7 @@ export type Database = {
           description?: string | null
           id?: string
           name?: string
+          ui_order?: number
           updated_at?: string | null
         }
         Relationships: []

@@ -21,28 +21,35 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        const body = await request.json();
-        const accountId = body.accountId;
+        const accountId = request.nextUrl.searchParams.get('accountId');
 
         if (!accountId) {
             return NextResponse.json(
-                { error: 'accountId is required in request body' },
+                { error: 'id query parameter is required' },
                 { status: 400 }
             );
         }
 
         const googleAuthService = new GoogleAuthService();
+
         const accessToken = await googleAuthService.getValidAccessToken(accountId);
 
         return NextResponse.json({
-            data: { access_token: accessToken },
+            data: {
+                access_token: accessToken,
+            },
         });
 
     } catch (err: unknown) {
         const errorMessage =
-            err instanceof Error ? err.message : 'An unexpected error occurred';
+            err instanceof Error
+                ? err.message
+                : 'An unexpected error occurred';
 
-        consoleLog('Error in /api/auth/google/refresh-access-token:', errorMessage);
+        consoleLog(
+            'Error in /api/auth/google/refresh-access-token:',
+            errorMessage
+        );
 
         return NextResponse.json(
             { error: errorMessage },

@@ -8,7 +8,6 @@ import CardLicenseUsersAllowed from "./CardLicenseUsersAllowed";
 import CardLicenseDevicesAllowed from "./CardLicenseDevicesAllowed";
 import CardLicensePrice from "./CardLicensePrice";
 import CardGenericDropDown from "@/components/Cards/CardGenericDropDown";
-import CardLicenseType from "./CardLicenseType";
 
 import {
   LICENSE_DURATION_OPTIONS,
@@ -32,7 +31,7 @@ interface CardProductLicensesProps {
 function createDefaultLicense(productId: string): ProductLicenseClientInput {
   return {
     product_id: productId,
-    name: "",
+    name: "Default License",
     description: "",
     base_price_cents: 0,
     max_license_users: 1,
@@ -40,9 +39,6 @@ function createDefaultLicense(productId: string): ProductLicenseClientInput {
     license_duration: "Forever",
     is_main: true,
     sort_order: 0,
-
-    // NEW (important for future-proofing)
-    license_type_id: null,
   };
 }
 
@@ -51,35 +47,35 @@ export default function CardProductLicenses({
   updateParentLicenses,
   membership = MembershipEnum.Free,
 }: CardProductLicensesProps) {
-
-  const [licenses, setLicenses] = useState<ProductLicenseClientInput[]>(() => [
-    createDefaultLicense(productId),
-  ]);
+  const [licenses, setLicenses] = useState<ProductLicenseClientInput[]>(
+    () => [createDefaultLicense(productId)]
+  );
 
   const [licenseTypes, setLicenseTypes] = useState<LicenseType[]>([]);
 
   // =========================
-// FETCH LICENSE TYPES
-// =========================
-useEffect(() => {
-  const fetchLicenseTypes = async () => {
-    const supabase = supabaseBrowser();
+  // FETCH LICENSE TYPES (TEMPLATES)
+  // =========================
+  useEffect(() => {
+    const fetchLicenseTypes = async () => {
 
-    const { data, error } = await supabase
-      .from("license_types")
-      .select("id, name, description, ui_order") // 1. Added ui_order here
-      .order("ui_order", { ascending: true });   // 2. Changed order from "name" to "ui_order"
+      const supabase = supabaseBrowser();
 
-    if (error) {
-      console.error("Error fetching license types", error);
-      return;
-    }
+      const { data, error } = await supabase
+        .from("license_types")
+        .select("id, name, description")
+        .order("name");
 
-    setLicenseTypes(data ?? []);
-  };
+      if (error) {
+        console.error("Error fetching license types", error);
+        return;
+      }
 
-  fetchLicenseTypes();
-}, []);
+      setLicenseTypes(data ?? []);
+    };
+
+    fetchLicenseTypes();
+  }, []);
 
   // =========================
   // RESET ON PRODUCT CHANGE
@@ -123,7 +119,13 @@ useEffect(() => {
     setLicenses((prev) => [
       ...prev,
       {
-        ...createDefaultLicense(productId),
+        product_id: productId,
+        name: "",
+        description: "",
+        base_price_cents: 0,
+        max_license_users: 1,
+        max_user_devices: 1,
+        license_duration: "Forever",
         is_main: false,
         sort_order: prev.length,
       },
@@ -143,21 +145,20 @@ useEffect(() => {
   };
 
   // =========================
-  // APPLY TEMPLATE (NEW FLOW)
+  // APPLY TEMPLATE
   // =========================
-  const applyTemplate = (index: number, template: LicenseType) => {
+  const applyTemplate = (index: number, templateId: string) => {
+    const template = licenseTypes.find((t) => t.id === templateId);
+    if (!template) return;
+
     setLicenses((prev) =>
       prev.map((l, i) => {
         if (i !== index) return l;
 
         return {
           ...l,
-
-          license_type_id: template.id,
-
-          // overwrite defaults from template
-          name: template.name,
-          description: template.description ?? "",
+          name: l.name || template.name,
+          description: l.description || template.description || "",
         };
       })
     );
@@ -175,7 +176,6 @@ useEffect(() => {
   }) => {
     return (
       <div className="border p-4 my-4 rounded-md shadow-sm">
-
         <div className="flex justify-between items-center">
           <h3 className="font-semibold">
             🔑 License {index + 1} {license.is_main && "(Main)"}
@@ -194,17 +194,56 @@ useEffect(() => {
 
         <div className="space-y-4 mt-4">
 
-          {/* TEMPLATE */}
+          {/* TEMPLATE SELECTOR */}
           {licenseTypes.length > 0 && (
-            <CardLicenseType
-              licenseTypes={licenseTypes}
-              selectedLicenseTypeId={license.license_type_id}
-              onSelect={(template) =>
-                applyTemplate(index, template)
-              }
-            />
+            <div>
+              <label className="block font-medium mb-1">
+                License Template
+              </label>
+              <select
+                className="border p-2 rounded w-full"
+                onChange={(e) =>
+                  applyTemplate(index, e.target.value)
+                }
+              >
+                <option value="">Select template...</option>
+                {licenseTypes.map((lt) => (
+                  <option key={lt.id} value={lt.id}>
+                    {lt.name}
+                  </option>
+                ))}
+              </select>
+            </div>
           )}
-        
+
+          {/* NAME */}
+          <div>
+            <label className="block font-medium mb-1">
+              License Name
+            </label>
+            <input
+              value={license.name}
+              onChange={(e) =>
+                updateField(index, "name", e.target.value)
+              }
+              className="border p-2 rounded w-full"
+            />
+          </div>
+
+          {/* DESCRIPTION */}
+          <div>
+            <label className="block font-medium mb-1">
+              Description
+            </label>
+            <textarea
+              value={license.description ?? ""}
+              onChange={(e) =>
+                updateField(index, "description", e.target.value)
+              }
+              className="border p-2 rounded w-full"
+            />
+          </div>
+
           {/* PRICE */}
           <CardLicensePrice
             cardTitle="💰 License Price"
@@ -257,7 +296,6 @@ useEffect(() => {
               <span>Main License</span>
             </label>
           </div>
-
         </div>
       </div>
     );
@@ -268,7 +306,6 @@ useEffect(() => {
   // =========================
   return (
     <section id="product-licenses" className="space-y-2">
-
       {licenses.map((license, index) => (
         <LicenseCard
           key={index}
@@ -284,7 +321,6 @@ useEffect(() => {
       >
         Add Another License
       </button>
-
     </section>
   );
 }
